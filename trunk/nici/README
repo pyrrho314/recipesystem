@@ -1,0 +1,15 @@
+
+NICI Reduction software 
+
+    This directory contains:
+doc          -- HTML documentation tree. Load file from your browser
+                and read: niciIndex.htm
+README       -- This file 
+test         -- Examples to run example dataset under pyraf, unix or python
+
+For further assistance please contact: 
+
+Nelson Zarate
+Gemini South Observatory - La Serena,Chile
+nzarate@gemini.edu
+phone: 56-51-205620

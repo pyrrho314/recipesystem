@@ -1,0 +1,49 @@
+{
+"correctWCSToReferenceImage":
+   {"method":
+       {"default":"sources",
+        "recipeOverride":True,
+        "userOverride":True,
+        "type":"str",
+        "uiLevel":"UIBASIC"
+       },
+    "fallback":
+       {"default":None,
+        "recipeOverride":True,
+        "userOverride":True,
+        "type":"str",
+        "uiLevel":"UIBASIC"
+       },
+    "cull_sources":
+       {"default":False,
+        "recipeOverride":True,
+        "userOverride":True,
+        "type":"bool",
+        "uiLevel":"UIBASIC"
+       },
+    "rotate":
+       {"default":False,
+        "recipeOverride":True,
+        "userOverride":True,
+        "type":"bool",
+        "uiLevel":"UIBASIC"
+       },
+    "scale":
+       {"default":False,
+        "recipeOverride":True,
+        "userOverride":True,
+        "type":"bool",
+        "uiLevel":"UIBASIC"
+       }
+   },
+
+"alignToReferenceImage":
+   {"interpolator":
+       {"default":"linear",
+        "recipeOverride":True,
+        "userOverride":True,
+        "type":"str",
+        "uiLevel":"UIBASIC"
+       }
+   }
+}

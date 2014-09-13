@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installation &mdash; ndoc v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ndoc v0.1 documentation" href="index.html" />
+    <link rel="next" title="NICI Commands" href="commands/index.html" />
+    <link rel="prev" title="Overview" href="overview.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="commands/index.html" title="NICI Commands"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="overview.html" title="Overview"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">ndoc v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>This is a preliminary release of the NICI Reduction package.</p>
+<p>The NICI module comes as a tar file: nici.tar.gz</p>
+<ol class="arabic simple">
+<li>Grab the tar file into your local directory.</li>
+<li>Untar</li>
+</ol>
+<blockquote>
+<div class="highlight-python"><pre>tar xf nici.tar.gz</pre>
+</div>
+</blockquote>
+<ol class="arabic simple" start="3">
+<li>Setting up the scripts:</li>
+</ol>
+<blockquote>
+<ul class="simple">
+<li>Define the unix environment variable <em>nicipath</em> that points to the directory
+where you untar  nici and add this path to your PYTHONPATH. Please put
+these in your .cshrc if you can.</li>
+</ul>
+<div class="highlight-python"><pre>(edit .cshrc)
+
+  setenv nicipath &lt;nicipath&gt;
+  setenv PYTHONPATH {$PYTHONPATH}:{$nicipath}
+
+Example: You untared in /home/user/gem_python
+  setenv nicipath /home/user/gem_python
+  setenv PYTHONPATH {$PYTHONPATH}:{$nicipath}</pre>
+</div>
+<ul class="simple">
+<li>Now update your environment variables:</li>
+</ul>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">source</span> <span class="o">.</span><span class="n">cshrc</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Define the reduction scripts by sourcing <em>nici.csh</em>:</li>
+</ul>
+<div class="highlight-python"><pre>cd $nicipath
+source nici.csh</pre>
+</div>
+</blockquote>
+<ol class="arabic simple" start="4">
+<li>This will define aliases to the nici scripts:</li>
+</ol>
+<blockquote>
+<ul class="simple">
+<li>alias ncqlook    $nicipath/nici/ncqlook.py</li>
+<li>alias ncprepare  $nicipath/nici/ncprepare.py</li>
+<li>alias ncmkflats  $nicipath/nici/ncmkflats.py</li>
+<li>alias ncscience  $nicipath/nici/ncscience.py</li>
+</ul>
+</blockquote>
+<ol class="arabic" start="5">
+<li><p class="first">Before running the nici scripts.</p>
+<p>Make sure that your can run python specially if you
+can access numpy and scipy packages.</p>
+</li>
+<li><p class="first">For help please see the URL:</p>
+</li>
+</ol>
+<blockquote>
+<div class="highlight-python"><pre>file://$nicipath/nici/doc/build/html/index.html</pre>
+</div>
+</blockquote>
+<ol class="arabic" start="7">
+<li><p class="first">Test:  ncqlook -h</p>
+<p>Should give you a menu of the scrip parameters.</p>
+</li>
+<li><p class="first">PROBLEMS and support.</p>
+<p>&#8211; Make sure you have an updated version of Python with scipy and numpy running.</p>
+<p>&#8211; If test7 fails with a Python problem; e.g. library not found, most probably
+is due to an incomplete or incompatible installation of the above 2 modules.</p>
+<dl class="docutils">
+<dt>&#8211; For Python support please see:</dt>
+<dd><p class="first last"><a class="reference external" href="http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python">http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python</a></p>
+</dd>
+</dl>
+<p>&#8211; For the nici scripts support please contact: <a class="reference external" href="mailto:nzarate&#37;&#52;&#48;gemini&#46;edu">nzarate<span>&#64;</span>gemini<span>&#46;</span>edu</a></p>
+</li>
+</ol>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="overview.html"
+                                  title="previous chapter">Overview</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="commands/index.html"
+                                  title="next chapter">NICI Commands</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/installation.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="commands/index.html" title="NICI Commands"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="overview.html" title="Overview"
+             >previous</a> |</li>
+        <li><a href="index.html">ndoc v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

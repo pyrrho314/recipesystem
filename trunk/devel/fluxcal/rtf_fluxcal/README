@@ -1,0 +1,32 @@
+The FITS FILES are not in this directory. Please ask
+Nelson Zarate about them.
+./testfluxcal/test1/python_out/mgN20100930S0366.fits
+./testfluxcal/test1/python_out/gN20100930S0366.fits
+./testfluxcal/test1/static/gS20101214S0041.fits
+./testfluxcal/test1/static/mgS20101214S0041.fits
+./testfluxcal/test1/static/mgS20101214S0040.fits
+./testfluxcal/test1/static/mgS20101105S0128.fits
+./testfluxcal/test1/static/mgN20100930S0366.fits
+./testfluxcal/test1/static/gN20100930S0366.fits
+./orig/gS20101214S0041.fits
+./orig/mgS20101214S0041.fits
+./orig/mgS20101214S0040.fits
+./orig/mgS20101105S0128.fits
+./orig/mgN20100930S0366.fits
+./orig/gN20100930S0366.fits
+./current/mgS20101214S0041.fits
+./current/mgS20101214S0040.fits
+./current/mgS20101105S0128.fits
+./current/mgN20100930S0366.fits
+./current/gN20100930S0366.fits
+
+
+To run this test, please use regress2.py 
+
+# run it from this directory.
+
+regress2.py -l 7
+or
+regress2 -l 7
+
+# -l 7 indicates a python script

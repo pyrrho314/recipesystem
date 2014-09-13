@@ -1,0 +1,6 @@
+infile,s,a,"",,,"Input file"
+outfile,s,a,"",,,"Output file"
+start,i,a,"",,,"Start of the window within the spectrum" 
+end,i,a,"",,,"End of the window within the spectrum"
+period,i,a,"",,,"Period of the ripple in pixels"
+mode,s,h,"ql",,,

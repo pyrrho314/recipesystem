@@ -1,0 +1,824 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Wavecal class &mdash; Wavelength calibration user guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wavelength calibration user guide 0.1 documentation" href="index.html" />
+    <link rel="next" title="Winter: Manual line identification program." href="winter.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="functionality.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="winter.html" title="Winter: Manual line identification program."
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="functionality.html" title="&lt;no title&gt;"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-wavecal">
+<span id="wavecal-class"></span><span id="wcal"></span><h1>Wavecal class<a class="headerlink" href="#module-wavecal" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="wavecal.Wavecal">
+<em class="property">class </em><tt class="descclassname">wavecal.</tt><tt class="descname">Wavecal</tt><big>(</big><em>ad</em>, <em>linelist=None</em>, <em>extv=1</em>, <em>fitfunction=None</em>, <em>fitorder=None</em>, <em>ntmax=None</em>, <em>fwidth=None</em>, <em>cradius=None</em>, <em>match=None</em>, <em>minsep=None</em>, <em>clip=None</em>, <em>nsum=None</em>, <em>nbins=None</em>, <em>best=None</em>, <em>bins_step=None</em>, <em>debug=False</em><big>)</big><a class="headerlink" href="#wavecal.Wavecal" title="Permalink to this definition">¶</a></dt>
+<dd><p>The wavelength calibration scripts allows the user to obtain a mapping from 
+pixel to wavelength coordinates given an ARC image from a reduced Gemini FITS
+file. The data requirements to run the Wavecal are:</p>
+<ul class="simple">
+<li>A prepared or reduced GEMINI ARC FITS file.</li>
+<li>A set of CRPIX, CRVAL and CDELT (CDn_n, n:1,2) values in the
+dispersion direction.</li>
+<li>A linelist data file with reference wavelength covering the range
+for the arc spectral lines in the image.</li>
+</ul>
+<dl class="method">
+<dt id="wavecal.Wavecal.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>ad</em>, <em>linelist=None</em>, <em>extv=1</em>, <em>fitfunction=None</em>, <em>fitorder=None</em>, <em>ntmax=None</em>, <em>fwidth=None</em>, <em>cradius=None</em>, <em>match=None</em>, <em>minsep=None</em>, <em>clip=None</em>, <em>nsum=None</em>, <em>nbins=None</em>, <em>best=None</em>, <em>bins_step=None</em>, <em>debug=False</em><big>)</big><a class="headerlink" href="#wavecal.Wavecal.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>ad: AstroData object containing a Gemini Instrument Arc image.</p>
+<dl class="docutils">
+<dt>extv = 1. </dt>
+<dd>The FITS extension number in the SCI extension name list.</dd>
+<dt>linelist = (None).</dt>
+<dd>An instrument dependent list of reference wavelengths.
+It should be one entry per line.</dd>
+<dt>fwidth = 10.</dt>
+<dd>Full-width at the base (in pixels) of features to be identified.</dd>
+<dt>cradius = 12.</dt>
+<dd>The maximum distance, in pixels, allowed between a line position
+and  the  initial  estimate  when  defining a new line. The user
+will need to increase cradius if wide slits (1 arcsec or  wider)
+are  used  with  the  detector  unbinned  or  binned by 2 in the
+spectral direction.</dd>
+<dt>minsep = 2.</dt>
+<dd>The    minimum   separation,   in   pixels,   allowed    between 
+line positions when defining a new line.  The user will need  to
+increase  minsep if wide slits (1 arcsec or wider) are used with
+the detector unbinned or binned by 2 in the spectral direction.</dd>
+<dt>ntmax = (None). </dt>
+<dd>An instrument dependent value. The maximum number of peaks to
+returns from the finding peaks algorithm. The selection is 
+based on peak intensity ranking.</dd>
+<dt>match = -6.  </dt>
+<dd>The  maximum  difference for a match between the line coordinate
+derived from the dispersion function and  a  coordinate  in  the
+coordinate  list.   Positive values are in user coordinate units
+and  negative values are in units of pixels.  The user will need
+to increase the absolute value of match if wide slits (1  arcsec
+or  wider) are used with the detector unbinned or binned by 2 in
+the spectral direction.</dd>
+<dt>fitfunction = &#8220;chebyshev&#8221;  (legendre|chebyshev|cubic)</dt>
+<dd>The function to be fit to user coordinates as a function of  the
+pixel  coordinates.   The  choices  are &#8220;chebyshev&#8221;, &#8220;legendre&#8221;,
+and &#8220;cubic&#8221; to fot a cubic Spline.</dd>
+<dt>fitorder = 4</dt>
+<dd>Order of the fitting function.   The  order  is  the  number  of
+polynomial terms (coefficients) or the number of spline pieces.</dd>
+<dt>clip = (none)</dt>
+<dd>An instrument dependent value. The number of sigma units use to
+reject peak coordinate positions when fitting (peaks,wavelengths)
+with the &#8216;fitfunction&#8217;.</dd>
+<dt>nbins = None  (Value between 4 and 6 depending on the instrument)</dt>
+<dd>The number of bins to divide the reference range to be used by 
+the matching algorithm.</dd>
+<dt>best = None (Value between 1.0 and 1.5 depending on the instrument)</dt>
+<dd>A value related to the matching fraction between the reference lines
+matched and the number of peaks.</dd>
+<dt>bins_step = None  (Value between 12 and 15 depending on the instrument)</dt>
+<dd>The step value to subdivide the array of triples composing one bin.
+If the number of triples is greater than 800 we subdivide by 12
+for example.</dd>
+</dl>
+<p><em>Example</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">wavecal</span> <span class="kn">import</span> <span class="n">Wavecal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ad</span> <span class="o">=</span> <span class="n">AstroData</span><span class="p">(</span><span class="s">&#39;wnN20130705S0176.fits&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wc</span> <span class="o">=</span> <span class="n">Wavecal</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>   <span class="c"># Create a Wavecal object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wc</span><span class="o">.</span><span class="n">wavecal</span><span class="p">()</span>  <span class="c"># Perform the wavelength calibration</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wc</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>     <span class="c"># A summary of parameters used an results</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wc</span><span class="o">.</span><span class="n">plot_ref</span><span class="p">()</span> <span class="c"># A subplot of the image middle line plus a reference arc</span>
+<span class="go">                  # subplot showing the associated matched lines.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wc</span><span class="o">.</span><span class="n">features</span>   <span class="c"># A list of peaks coordinates, the wavelength fitted value</span>
+<span class="go">                  # and the reference wavelength from the reference list.</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.wavecal">
+<tt class="descname">wavecal</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Wavecal.wavecal" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Algorithm</em></p>
+<ul class="simple">
+<li>Given an input image, collapse and take the mean of 
+self.nsum rows from the middle of the image.</li>
+<li>In this line, find upto self.ntmax peak coordinates 
+corresponfing to the arc spectrum peak positions.</li>
+<li>Using these peaks and an input linelist with reference
+wavelengths start the matching ratio algorithm to find
+the correct peak position with its linelist wavelength.</li>
+<li>Fit a function to set of (pix_array, user_array) where
+&#8216;user&#8217; is an alias for &#8216;wavelength&#8217;. The member self.z
+contains the object with a Gfit class members with 
+all the fit information.
+For the Matching ratio algorithm please see the docstring
+for the class MatchLines.</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.info">
+<tt class="descname">info</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Wavecal.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display information about input ARC data, input parameters
+seeting and wavelength calibration information.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.features">
+<tt class="descname">features</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Wavecal.features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the tuple (pix,fit,user), The final fitting was done
+using the pixel coordinates and the user (wavelength) values
+lists.</p>
+<p>The pixel and wavelength values are available with the
+class members &#8216;pix&#8217; and &#8216;user&#8217;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.plot_ref">
+<tt class="descname">plot_ref</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Wavecal.plot_ref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility function to plot resulting peaks with
+the associated wavelength making a good
+visual aid to quickly check the mapping.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.plot_residual">
+<tt class="descname">plot_residual</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Wavecal.plot_residual" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the fit residuals: (w, w-z(pix))
+where &#8216;w&#8217; is the wavelength and &#8216;z&#8217;
+if the fit function evaluator.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.plot_features">
+<tt class="descname">plot_features</tt><big>(</big><em>peaks=False</em>, <em>reverse=False</em>, <em>save=False</em><big>)</big><a class="headerlink" href="#wavecal.Wavecal.plot_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the features found along with their wavelengths.
+Notice that the horizontal axis is in pixel units.</p>
+<dl class="docutils">
+<dt>peaks: </dt>
+<dd>If True plots dashes on top of the found peaks.</dd>
+<dt>reverse:</dt>
+<dd>If True reverses the peaks order.</dd>
+<dt>save:</dt>
+<dd>If True saves the plot on a PDF in the &#8216;/tmp&#8217; directory 
+using the filename as root name.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<tt class="descname">plot_ref</tt><big>(</big><big>)</big></dt>
+<dd><p>Utility function to plot resulting peaks with
+the associated wavelength making a good
+visual aid to quickly check the mapping.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.pix2ref">
+<tt class="descname">pix2ref</tt><big>(</big><em>pixels</em>, <em>delta=None</em>, <em>linelist=None</em><big>)</big><a class="headerlink" href="#wavecal.Wavecal.pix2ref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of pixel coordinates, find the closest reference
+entry in the linelist that is within &#8216;delta&#8217; Angstroms 
+from the fitted value.</p>
+<dl class="docutils">
+<dt><em>Input</em></dt>
+<dd><dl class="first last docutils">
+<dt>pixels: </dt>
+<dd>A list of pixel coordinates.</dd>
+<dt>delta: </dt>
+<dd>The  maximum  difference for a match between the line coordinate
+derived from the dispersion function and  a  coordinate  in  the
+coordinate  list.   Positive values are in user coordinate units
+and  negative values are in units of pixels.  The user will need
+to increase the absolute value of match if wide slits (1  arcsec
+or  wider) are used with the detector unbinned or binned by 2 in
+the spectral direction.</dd>
+<dt>linelist = (None). </dt>
+<dd>An instrument dependent list of reference wavelengths.
+It should be one entry per line.</dd>
+</dl>
+</dd>
+</dl>
+<p><em>Output</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>pixs_waves: </dt>
+<dd>A list of tuples. The first element of each tuples
+if the input pixel coordinate and the second is the
+wavelength found that is closest to the fitted value
+within delta Angstroms.
+If no wavelengths are encountered it returs an empty list.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.fit_arcs">
+<tt class="descname">fit_arcs</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Wavecal.fit_arcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each arc in the ARC spectrum fit an order 2 polynomial.
+The algorithm: Find the peaks at the middle line that 
+is the sum of &#8216;nsum&#8217; rows. Traverse to the image top every 
+100 rows or so recording the (x,y) pairs for each arc at this
+position. The same from the the middle line to the bottom.
+Fit each arc&#8217;s (x,y)s to a 2nd order polynomial and add to a
+list of &#8216;zpeaks&#8217;. Finally do a 3-sigma rejection on the fits 
+that have bad coefficients.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.plot_arcs">
+<tt class="descname">plot_arcs</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Wavecal.plot_arcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>After fitting the arcs from the ARC spectrum plots
+the arcs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.fit_image">
+<tt class="descname">fit_image</tt><big>(</big><em>fit3d_function='chebyshev'</em>, <em>order=4</em><big>)</big><a class="headerlink" href="#wavecal.Wavecal.fit_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given that any point of in an arc has the same wavelength,
+we can assemble sets of (x,y,lambda) for each arc in the
+image and fit a 3D function f(x, y, wavelength) to it.</p>
+<p><em>Input</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>fit3d_function = &#8220;chebyshev&#8221;</dt>
+<dd>The surface fitting interpolation function  to
+fit (x_array, y_array, z_array) via the LSQ 
+(LeastSquate) method. Other functions are
+&#8216;legendre&#8217; and &#8216;cubic&#8217;</dd>
+<dt>order = 4</dt>
+<dd>The order of the fitting function to use. This
+value applies to both axis.</dd>
+<dt>self.zpeaks: </dt>
+<dd>list of evaluator functions for  most of the arcs
+in the spectrum such that for a given arc number &#8216;i&#8217;
+and a row zpeaks[i](row) gives the arc position in the
+dispersion direction.</dd>
+<dt>self.z: </dt>
+<dd>For a given arc position in the dispersion direction
+z(x) gives the wavelegnth associated to x.</dd>
+</dl>
+</div></blockquote>
+<p>The assumption is that for any row the x coordinates along the 
+dispersion direction corresponding to the arcs will have the 
+same wavelength.</p>
+<p><em>Output</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>self.zz:</dt>
+<dd>Function evaluator. Returns a wavelength array
+for and (x_array,y_array) input.</dd>
+</dl>
+</div></blockquote>
+<p><em>Example</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">wc</span><span class="o">.</span><span class="n">fit_image</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wc</span><span class="o">.</span><span class="n">zz</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>  <span class="c"># x: 2000, row: 500</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># For a GMOS LongSlit spectra using the zpeaks</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">yy</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span><span class="mi">4000</span><span class="p">,</span><span class="mi">200</span><span class="p">)</span>   <span class="c"># An array of rows</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">wc</span><span class="o">.</span><span class="n">zz</span><span class="p">(</span><span class="n">zpeaks</span><span class="p">[</span><span class="mi">10</span><span class="p">](</span><span class="n">yy</span><span class="p">),</span> <span class="n">yy</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Will return a list of wavelength (about the same value)</span>
+<span class="go">&gt;&gt;  # for positions along the image arc number 10. </span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.resample_image_to_linearCoords">
+<tt class="descname">resample_image_to_linearCoords</tt><big>(</big><em>image=None</em>, <em>fit3d_function='chebyshev'</em>, <em>order=4</em><big>)</big><a class="headerlink" href="#wavecal.Wavecal.resample_image_to_linearCoords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resample the image to linear wavelength co-ordinates by
+applying the surface function evaluator from the method 
+&#8216;fit_image&#8217;.</p>
+<p>Using the inverse function evaluator for each row of the 
+input image:
+pixel = self.zinv(lambda, row)</p>
+<p>Generating a set of lambdas with a dispertion value
+(cdelt = (self.z(nx) - self.z(1))/nx) as 
+(lambdas = (ixx-crpix)*cdelt + crval), where &#8216;ixx&#8217; is the
+array of indices (1..nx) along the dispersion axis.
+With the inverse function we obtain the pixel coordinates
+corresponding to each lambda value. Interpolating the
+input image values at each of these new pixel coordinates
+using spline interpolation we linearize the input image.</p>
+<p><em>Input</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>image: (None) </dt>
+<dd>If an ndarray is supplied use this one as the input
+image to linearize. It should have the same dispersion
+characteristics since it uses the ARC image dispersion
+and fitting functions.</dd>
+<dt>fit3d_function = &#8220;chebyshev&#8221;</dt>
+<dd>The function to fit the input image.  This is use 
+only if the method &#8216;fit_image&#8217; has not been ran.
+Other values are: &#8216;legendre&#8217; and &#8216;cubic&#8217; for a 
+bi-cubic spline function.</dd>
+<dt>order = 4</dt>
+<dd>Order of the fitting function</dd>
+</dl>
+</div></blockquote>
+<p><em>Output</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>new_image: </dt>
+<dd>Ndarray of the same shape as the input image.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.linear_wcs">
+<tt class="descname">linear_wcs</tt><big>(</big><em>image_shape=None</em><big>)</big><a class="headerlink" href="#wavecal.Wavecal.linear_wcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate values of crpix, crval and cdelt
+given a linearized middle line from the resample
+image.</p>
+<p><em>Input</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>image_shape: (None) Tuple (ny,nx)</dt>
+<dd>If None, it uses the input image.shape tuple.</dd>
+</dl>
+</div></blockquote>
+<p><em>Output</em></p>
+<blockquote>
+<div>lwcs: (dictionary) The lineariazed wcs values:
+{&#8216;crpix&#8217;:1,&#8217;crval&#8217;:z(1),&#8217;cdelt&#8217;:(z(nx)-z(1))/nx}</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Wavecal.im_astrodata">
+<tt class="descname">im_astrodata</tt><big>(</big><em>linearized_image</em>, <em>ad_in=None</em><big>)</big><a class="headerlink" href="#wavecal.Wavecal.im_astrodata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate an AstroData object from the linearized image array
+and the input image phu and hdu[&#8216;SCI&#8217;]</p>
+<p><em>Input</em></p>
+<dl class="docutils">
+<dt>linearized_image: ndarray</dt>
+<dd>Ndarray with a linearized image data.</dd>
+<dt>ad_in: None.</dt>
+<dd>if not None it uses this AD object&#8217;s phu and science
+header, otherwise it will be the minimum phu.</dd>
+</dl>
+<p><em>Output</em></p>
+<dl class="docutils">
+<dt>adout: Astrodata object.</dt>
+<dd>The science header will have the linearized WCS values.</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="instrument"></span><dl class="class">
+<dt id="wavecal.Instrument">
+<em class="property">class </em><tt class="descclassname">wavecal.</tt><tt class="descname">Instrument</tt><big>(</big><em>ad</em>, <em>param</em>, <em>pval</em><big>)</big><a class="headerlink" href="#wavecal.Instrument" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class to incorporate the common methods and
+attributes belonging to all supported instruments.</p>
+<p>The instruments and modes are:</p>
+<dl class="docutils">
+<dt>GMOS-S and GMOS-N:</dt>
+<dd>LongSlit
+IFU
+MOS</dd>
+<dt>GNIRS:</dt>
+<dd>LongSlit
+XD</dd>
+<dt>NIFS:</dt>
+<dd>IFU</dd>
+<dt>F2:</dt>
+<dd>LongSLit
+MOS</dd>
+<dt>NIRI:</dt>
+<dd>LongSlit</dd>
+</dl>
+<dl class="method">
+<dt id="wavecal.Instrument.add_linelist">
+<tt class="descname">add_linelist</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Instrument.add_linelist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add lines from a linelist that are inside the range 
+of the current features;e.i: fit[0] &lt; llist &lt; fit[n]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.add_peaks">
+<tt class="descname">add_peaks</tt><big>(</big><em>pix</em><big>)</big><a class="headerlink" href="#wavecal.Instrument.add_peaks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Match a feature in coordinate &#8216;pix&#8217; againt a line list and
+return the closest match within a tolerance given by the
+attribute self.match.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.clipData">
+<tt class="descname">clipData</tt><big>(</big><em>clip</em><big>)</big><a class="headerlink" href="#wavecal.Instrument.clipData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rejects data according to 
+clip*stddev, where stddev is std(y-z(x)).
+If points are rejected, it will refit again.
+Return the new arrays x,y and the new function &#8216;z&#8217;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.dofit">
+<tt class="descname">dofit</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Instrument.dofit" title="Permalink to this definition">¶</a></dt>
+<dd><p>From a set of candidate identifications features 
+fit and evaluate a dispersion solution.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.dofit_small_sample">
+<tt class="descname">dofit_small_sample</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Instrument.dofit_small_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>From a set of candidate identifications features 
+evaluate a dispersion solution.
+This function in use for small number of peaks (~10)
+and relies on a wcs set (crpix,crval,cdelt) and a linelist
+of reference wavelength for those peaks.</p>
+<ul class="simple">
+<li>If the number of lines fitted is too small you could
+increased &#8216;match&#8217; to a large number (~15) for a coarse match
+assuming that the linelist is not very populated as to not
+pick a bad wavelength.</li>
+<li>A new fit is calculated from the (peaks,users) and &#8216;dofit()&#8217;
+function is called to performed a better fit.</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.features">
+<tt class="descname">features</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Instrument.features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the tuple (pix,fit,user). The final fitting was done
+using the pixel coordinates and the user (wavelength) values
+lists.</p>
+<p>The pixel and wavelength values are available with the
+class members &#8216;pix&#8217; and &#8216;user&#8217;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.find_wavesolution">
+<tt class="descname">find_wavesolution</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Instrument.find_wavesolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matching ratios algorithm implementation</p>
+<ul class="simple">
+<li>Separate the input wavelength range into
+at most self.nbins subranges.</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.fit_pixel_user">
+<tt class="descname">fit_pixel_user</tt><big>(</big><em>pixWave</em><big>)</big><a class="headerlink" href="#wavecal.Instrument.fit_pixel_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>From the votes array (peaks_array, reference_array)
+fit a parabola if the number of elements in this list is less
+MIN_VOTES else fit with the input fitfunction name and order.</p>
+<dl class="docutils">
+<dt>pixWave: </dt>
+<dd>List of tuples (peak,reference) candidates for the final list.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.fit_to_pix">
+<tt class="descname">fit_to_pix</tt><big>(</big><em>fitcoord</em><big>)</big><a class="headerlink" href="#wavecal.Instrument.fit_to_pix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the pixel position of the input array given
+its wavelength (fitcoord).</p>
+<p>It uses the FITDATA array; i.e.
+FITDATA = (pix - crpix)*cdelt + crval
+in the 1st approximation or when a fitting solution is
+available:  FITDATA = eval_function(pix)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.newfeatures">
+<tt class="descname">newfeatures</tt><big>(</big><em>lpix</em>, <em>lfit</em>, <em>luser</em><big>)</big><a class="headerlink" href="#wavecal.Instrument.newfeatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append the input lists.</p>
+<p><em>Input</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>lpix:</dt>
+<dd>List of peak positions to be added to self.pix</dd>
+<dt>lfit:</dt>
+<dd>List of fit function evaluations of the peak positions
+to be added to self.fit.</dd>
+<dt>luser:</dt>
+<dd>List of reference lines to be added to self.user.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.set_wavecal_data">
+<tt class="descname">set_wavecal_data</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Instrument.set_wavecal_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize data for wavecal()</p>
+<ul class="simple">
+<li>setup the middle line self.lpix from the image
+as the mean of self.nsum rows.</li>
+<li>Find upto self.ntmax peak coordinates of the arcs in self.pix</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.Instrument.wavecal">
+<tt class="descname">wavecal</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.Instrument.wavecal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<span class="target" id="gmos"></span><dl class="class">
+<dt id="wavecal.GMOS">
+<em class="property">class </em><tt class="descclassname">wavecal.</tt><tt class="descname">GMOS</tt><big>(</big><em>ad</em>, <em>param</em><big>)</big><a class="headerlink" href="#wavecal.GMOS" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="wavecal.GMOS.ifu_ident">
+<tt class="descname">ifu_ident</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.GMOS.ifu_ident" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reidentify other rows in the IFU image given a default
+solution for an initial row.</p>
+<p>Given a z(pix) function and an xpeaks array find the solution 
+for another with an xpeaks</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="f2"></span><dl class="class">
+<dt id="wavecal.F2">
+<em class="property">class </em><tt class="descclassname">wavecal.</tt><tt class="descname">F2</tt><big>(</big><em>ad</em>, <em>param</em><big>)</big><a class="headerlink" href="#wavecal.F2" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="wavecal.F2.wavecal">
+<tt class="descname">wavecal</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.F2.wavecal" title="Permalink to this definition">¶</a></dt>
+<dd><p>F2 LongSlit wavelength solution.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="gnirs"></span><dl class="class">
+<dt id="wavecal.GNIRS">
+<em class="property">class </em><tt class="descclassname">wavecal.</tt><tt class="descname">GNIRS</tt><big>(</big><em>ad</em>, <em>param</em><big>)</big><a class="headerlink" href="#wavecal.GNIRS" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="wavecal.GNIRS.wavecal">
+<tt class="descname">wavecal</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.GNIRS.wavecal" title="Permalink to this definition">¶</a></dt>
+<dd><p>GNIRS LongSlit wavelength solution.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="niri"></span><dl class="class">
+<dt id="wavecal.NIRI">
+<em class="property">class </em><tt class="descclassname">wavecal.</tt><tt class="descname">NIRI</tt><big>(</big><em>ad</em>, <em>param</em><big>)</big><a class="headerlink" href="#wavecal.NIRI" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<span class="target" id="nifs"></span><dl class="class">
+<dt id="wavecal.NIFS">
+<em class="property">class </em><tt class="descclassname">wavecal.</tt><tt class="descname">NIFS</tt><big>(</big><em>ad</em>, <em>param</em><big>)</big><a class="headerlink" href="#wavecal.NIFS" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="wavecal.NIFS.nifs_offsets">
+<tt class="descname">nifs_offsets</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.NIFS.nifs_offsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>From an ARC file find the offset between the
+different slices by looking into a bright line&#8217;s peak
+position about the middle of the spectrum.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.NIFS.nifs_wcal">
+<tt class="descname">nifs_wcal</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.NIFS.nifs_wcal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wavecal a NIFS arc spectrum that has been already reduced
+and have more than one extension with slit data.</p>
+<ol class="arabic simple">
+<li>Wavecal</li>
+<li>fit2D_spectrum</li>
+<li>linearize
+- calculate dispersion cd1_1
+- calculate crval for crpix=1</li>
+</ol>
+<ol class="arabic simple" start="3">
+<li>update WCS in header</li>
+</ol>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="matchlines"></span><dl class="class">
+<dt id="wavecal.MatchLines">
+<em class="property">class </em><tt class="descclassname">wavecal.</tt><tt class="descname">MatchLines</tt><big>(</big><em>xpeaks</em>, <em>ref_list</em>, <em>cdelt</em>, <em>bins_step=12</em>, <em>min_votes=10</em><big>)</big><a class="headerlink" href="#wavecal.MatchLines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pattern matching schema where the input data is the list of arc pixel
+positions (peaks) and a corresponding list of reference wavelengths (user).</p>
+<p>1) As the algorithm is of the order 6; (number_of_lines**6) we
+divide the list in pieces containing no more than 12 elements. Otherwise
+the number of possible combinations makes the algorithm too slow (from
+tenths of seconds to minutes).</p>
+<p>2) Form a list of triples as a combination of the indices with
+no more than 12 elements. These are indices pointing to the
+different elements in the peaks and user&#8217;s list.</p>
+<p>3) Form a list a tuples where the first element is the difference of the
+last and first element in the triple and the second element in the tuple is
+the ratio of the difference between second and first element and the last
+and first element of the triple.</p>
+<p>4) Loop:  Subtract each ratio from the peak triple to all the
+ratios in the user&#8217;s triple. If the difference is less than a given
+tolerance proceed to add all the peaks between the triple indices
+that meet the criteria where a line in the triple neighborhood
+is in the user&#8217;s list. We put a weight on this position
+and add it to a voting matrix[peak_positions,user&#8217;s_location].</p>
+<p>5) Extract from the voting matrix the locations containing more than -for
+example, 10 votes giving a list of (peak_positions, reference_wavelength)
+pairs.</p>
+<p>6) If we have at least 5 pairs we attempt to fit a polynomial and then 
+proceed to add more lines from the reference line list. To verify that a
+good solution has been found we calculate a figure of merit based on the 
+IRAF task autoidentify (please see &#8216;help aidpar&#8217; on the IRAF cl)</p>
+<p>7) The the value of the figure of merit is larger than a minimum value
+we go back to 2) using a different section of the peaks list and we compute
+values to add to the voting matrix, which give a larger sample and
+a better probability to improve the figure of merit.</p>
+<dl class="docutils">
+<dt>Ref: This work is based on: FOCAS Automatic Catalog Matching Algorithms,</dt>
+<dd>Valdes, F. G., Campusano, L. E., Velasquez, J. D., &amp; Stetson, P. B.
+Publications of the Astronomical Society of the Pacific, v.107, p.1119
+and on private communications with Mischa Schirmer.</dd>
+</dl>
+<dl class="method">
+<dt id="wavecal.MatchLines.get_nchecks">
+<tt class="descname">get_nchecks</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.MatchLines.get_nchecks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a list of lines to check for matching
+criteria.</p>
+<p><em>Output</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>nlines: </dt>
+<dd>Number of lines</dd>
+<dt>linesCheck:</dt>
+<dd>List of peak indices that are within the
+peaks triples peak&#8217;s position.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.MatchLines.pairsByVote">
+<tt class="descname">pairsByVote</tt><big>(</big><big>)</big><a class="headerlink" href="#wavecal.MatchLines.pairsByVote" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the largest votes for each pair of (peak,reference)
+The votes matrix migth have duplicates for a peak or a
+reference index. From these find the largest.</p>
+<p><em>Output</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>self.pairsByVote: </dt>
+<dd>List of tuples (peak,reference) candidates for the
+final list.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.MatchLines.peak_ref_ratios">
+<tt class="descname">peak_ref_ratios</tt><big>(</big><em>p1</em>, <em>p2</em>, <em>r1</em>, <em>r2</em><big>)</big><a class="headerlink" href="#wavecal.MatchLines.peak_ref_ratios" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate pixel and reference lines (wavelength) ratios.
+From any 3-points (a,b,c) in increasing order form tuples:</p>
+<p>[c-a, (b-a)/(c-a)]</p>
+<p>If n=(p2-p1+1) there are a n: n*(n-1)*(n-2)/6 posible tuples.</p>
+<p><em>Input</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>p1,p2:</dt>
+<dd>Indices to the peak coordinates list.</dd>
+<dt>r1,r2:</dt>
+<dd>Indices to the reference lines list</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.MatchLines.subrange_coords">
+<tt class="descname">subrange_coords</tt><big>(</big><em>wa</em>, <em>wb</em><big>)</big><a class="headerlink" href="#wavecal.MatchLines.subrange_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Divide the input wavelength range (wb-wa) in difference pieces
+such that each one of them has no more that 800 different triples.</p>
+<dl class="docutils">
+<dt>wa,wb: </dt>
+<dd>Starting and ending wavelength of the current subrange.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="wavecal.MatchLines.voting">
+<tt class="descname">voting</tt><big>(</big><em>ip1</em>, <em>ip2</em>, <em>iwa</em>, <em>iwb</em><big>)</big><a class="headerlink" href="#wavecal.MatchLines.voting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subtract each ratio from the peak triple to all the
+ratios in the reference&#8217;s triple. If the difference is less than a given
+tolerance proceed to add all the peaks between the triple indices
+that meet the criteria where a line in the triple neighborhood
+is in the reference&#8217;s list. We put a weight on this position
+and add it to a voting matrix[peak_positions,ref&#8217;s_location].</p>
+<p><em>Input</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>ip1,ip2: </dt>
+<dd>Indices to peaks list</dd>
+<dt>iwa,iwb: </dt>
+<dd>Indices to the reference list</dd>
+</dl>
+</div></blockquote>
+<p><em>Output</em></p>
+<blockquote>
+<div><dl class="docutils">
+<dt>List: </dt>
+<dd>List of tuples (peak,reference) with the
+largest votes greater than MIN_VOTES.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="functionality.html"
+                        title="previous chapter">&lt;no title&gt;</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="winter.html"
+                        title="next chapter">Winter: Manual line identification program.</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/wavecal.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="winter.html" title="Winter: Manual line identification program."
+             >next</a> |</li>
+        <li class="right" >
+          <a href="functionality.html" title="&lt;no title&gt;"
+             >previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Gemini Observatory.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

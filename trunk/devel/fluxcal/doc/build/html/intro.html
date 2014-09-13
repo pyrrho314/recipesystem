@@ -1,0 +1,163 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Introduction &mdash; fluxcal v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="fluxcal v0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">fluxcal v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>The FLUXCAL program calculates the Zero Point correction from a set
+of reference stars found in the field of the input image. The results are
+appended to &#8216;ZPcorr.log&#8217; file in the current working directory.</p>
+<p>Fluxcal appends to the input FITS file a BINTABLE extension with EXTNAME
+OBJCAT with:</p>
+<ul class="simple">
+<li>source ID number (simple serial number unique within this table)</li>
+<li>Centroid X pixel co-ordinate</li>
+<li>Centroid Y pixel co-ordinate</li>
+<li>(Why do we need this? nz) Source flux (in ADUs / whatever units the data are in at this point)</li>
+<li>error on flux measurement</li>
+<li>If the cataloger measures flux using object and sky appertures, then these values should probably be listed too</li>
+<li>RA (assume WCS in image is correct)</li>
+<li>Dec (ditto)</li>
+<li>RefID (Reference ID of source in the field)</li>
+<li>smag (magnitude for the reference source)</li>
+</ul>
+<p>And another BINTABLE REFCAT with:</p>
+<ul class="simple">
+<li>Reference ID from the reference catalog</li>
+<li>RA (from the Reference Catalog)</li>
+<li>Dec</li>
+<li>X pixel co-ordinate  from the image WCS</li>
+<li>Y pixel co-ordinate (ditto)</li>
+<li>smag (magnitude for the filter used)</li>
+</ul>
+<p>Algorithm</p>
+<ul>
+<li><p class="first">Read FITS table extension(S) with extname &#8216;OBJCAT&#8217;
+containing columns &#8216;refid&#8217; and &#8216;smag&#8217; with at least
+one data point. These have the reference standard object name
+and magnitudes for the filter used in the exposure.</p>
+</li>
+<li><p class="first">Each x,y position  from OBJCAT containing a non-empty standard
+in &#8216;refid&#8217; are used to create a text file &#8216;ZPcoo&#8217; in the working
+directory.</p>
+</li>
+<li><p class="first">Call iraf.imexam to get FWHM</p>
+</li>
+<li><p class="first">Call iraf.apphot.phot to get Flux, and iMag (instrumental magnitude)</p>
+</li>
+<li><p class="first">Zero point correction: ( &#8216;k&#8217; is  the extinction coefficient)</p>
+<blockquote>
+<div><p>ZPCorr = Reference_Magnitude - [iMag - k*(airmass-1)]</p>
+</div></blockquote>
+</li>
+<li><p class="first">Image Quality (IQ) is calculated as:</p>
+<blockquote>
+<div><p>Seeing = FWHM*pixel_scale</p>
+<p>IQ = [mean(Seeing) / (airmass**0.6)]</p>
+</div></blockquote>
+</li>
+<li><p class="first">Append keywords ZP_CORR, ZP_ERROR, IMAGE_IQ</p>
+</li>
+</ul>
+<p>ERROR Propagation:</p>
+<ul class="simple">
+<li>ZP_ERROR: At this time only the GS &#8216;smith.cat&#8217; has error values
+for each magnitude. In the meantime we only calculate the standard
+deviation of the ZPcorr array and assign it to ZP_ERROR.</li>
+</ul>
+<p>OUTPUT FILE:</p>
+<ul class="simple">
+<li>ZPcorr.log is the filename to append the new ZP values:
+&#8220;ZPCorr  ZPerror IQ     Sample Filter  Date_time&#8221;.</li>
+</ul>
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/intro.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">fluxcal v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,105 @@
+#K IRAF       = NOAO/IRAFV2.14EXPORT    version    %-23s     
+#K USER       = nzarate                 name       %-23s     
+#K HOST       = isanic.cl.gemini.edu    computer   %-23s     
+#K DATE       = 2011-01-13              yyy-mm-dd  %-23s     
+#K TIME       = 08:40:43                hh:mm:ss   %-23s     
+#K PACKAGE    = apphot                  name       %-23s     
+#K TASK       = phot                    name       %-23s     
+#
+#K SCALE      = 1.                      units      %-23.7g   
+#K FWHMPSF    = 2.5                     scaleunit  %-23.7g   
+#K EMISSION   = yes                     switch     %-23b     
+#K DATAMIN    = INDEF                   counts     %-23.7g   
+#K DATAMAX    = INDEF                   counts     %-23.7g   
+#K EXPOSURE   = ""                      keyword    %-23s     
+#K AIRMASS    = ""                      keyword    %-23s     
+#K FILTER     = ""                      keyword    %-23s     
+#K OBSTIME    = ""                      keyword    %-23s     
+#
+#K NOISE      = poisson                 model      %-23s     
+#K SIGMA      = INDEF                   counts     %-23.7g   
+#K GAIN       = ""                      keyword    %-23s     
+#K EPADU      = 1.                      e-/adu     %-23.7g   
+#K CCDREAD    = ""                      keyword    %-23s     
+#K READNOISE  = 0.                      e-         %-23.7g   
+#
+#K CALGORITHM = centroid                algorithm  %-23s     
+#K CBOXWIDTH  = 5.                      scaleunit  %-23.7g   
+#K CTHRESHOLD = 0.                      sigma      %-23.7g   
+#K MINSNRATIO = 1.                      number     %-23.7g   
+#K CMAXITER   = 10                      number     %-23d     
+#K MAXSHIFT   = 1.                      scaleunit  %-23.7g   
+#K CLEAN      = no                      scaleunit  %-23b     
+#K RCLEAN     = 1.                      scaleunit  %-23.7g   
+#K RCLIP      = 2.                      scaleunit  %-23.7g   
+#K KCLEAN     = 3.                      sigma      %-23.7g   
+#
+#K SALGORITHM = gauss                   algorithm  %-23s     
+#K ANNULUS    = 69.12                   scaleunit  %-23.7g   
+#K DANNULUS   = 23.04                   scaleunit  %-23.7g   
+#K SKYVALUE   = 0.                      counts     %-23.7g   
+#K KHIST      = 7.                      sigma      %-23.7g   
+#K BINSIZE    = 0.1                     sigma      %-23.7g   
+#K SMOOTH     = no                      switch     %-23b     
+#K SMAXITER   = 10                      number     %-23d     
+#K SLOCLIP    = 0.                      percent    %-23.7g   
+#K SHICLIP    = 0.                      percent    %-23.7g   
+#K SNREJECT   = 50                      number     %-23d     
+#K SLOREJECT  = 3.                      sigma      %-23.7g   
+#K SHIREJECT  = 3.                      sigma      %-23.7g   
+#K RGROW      = 0.                      scaleunit  %-23.7g   
+#
+#K WEIGHTING  = constant                model      %-23s     
+#K APERTURES  = 23.04                   scaleunit  %-23s     
+#K ZMAG       = 0.                      zeropoint  %-23.7g   
+#
+#N IMAGE               XINIT     YINIT     ID    COORDS                 LID    \
+#U imagename           pixels    pixels    ##    filename               ##     \
+#F %-23s               %-10.3f   %-10.3f   %-6d  %-23s                  %-6d    
+#
+#N XCENTER    YCENTER    XSHIFT  YSHIFT  XERR    YERR            CIER CERROR   \
+#U pixels     pixels     pixels  pixels  pixels  pixels          ##   cerrors  \
+#F %-14.3f    %-11.3f    %-8.3f  %-8.3f  %-8.3f  %-15.3f         %-5d %-9s      
+#
+#N MSKY           STDEV          SSKEW          NSKY   NSREJ     SIER SERROR   \
+#U counts         counts         counts         npix   npix      ##   serrors  \
+#F %-18.7g        %-15.7g        %-15.7g        %-7d   %-9d      %-5d %-9s      
+#
+#N ITIME          XAIRMASS       IFILTER                OTIME                  \
+#U timeunit       number         name                   timeunit               \
+#F %-18.7g        %-15.7g        %-23s                  %-23s                   
+#
+#N RAPERT   SUM           AREA       FLUX          MAG    MERR   PIER PERROR   \
+#U scale    counts        pixels     counts        mag    mag    ##   perrors  \
+#F %-12.2f  %-14.7g       %-11.7g    %-14.7g       %-7.3f %-6.3f %-5d %-9s      
+#
+gS20101214S0041.fits[3]48.626    454.089   1     ZPcoo                  1      \
+   48.656     454.007    0.030   -0.082  0.010   0.011          0    NoError   \
+   812.0759       9.144823       1.271549       6555   1664     0    NoError   \
+   1.             INDEF          INDEF                  INDEF                  \
+   23.04    1421567.      1668.016   67010.74      -12.0650.008 0    NoError    
+gS20101214S0041.fits[3]140.785   1690.474  2     ZPcoo                  2      \
+   140.642    1690.486   -0.143  0.012   0.005   0.004          0    NoError   \
+   819.851        9.486257       6.950577       11597  84       0    NoError   \
+   1.             INDEF          INDEF                  INDEF                  \
+   23.04    1647211.      1667.868   279807.8      -13.6170.003 0    NoError    
+gS20101214S0041.fits[3]279.694   1854.452  3     ZPcoo                  3      \
+   283.809    1855.402   4.115   0.950   0.007   0.006          107  BigShift  \
+   821.3826       9.870431       5.458679       11509  163      0    NoError   \
+   1.             INDEF          INDEF                  INDEF                  \
+   23.04    1721642.      1668.103   351491.4      -13.8650.002 0    NoError    
+gS20101214S0041.fits[3]314.838   1910.625  4     ZPcoo                  4      \
+   314.832    1910.568   -0.006  -0.057  0.010   0.008          0    NoError   \
+   819.9112       10.05083       8.653627       11363  302      0    NoError   \
+   1.             INDEF          INDEF                  INDEF                  \
+   23.04    1485040.      1668.145   117309.1      -12.6730.005 0    NoError    
+gS20101214S0041.fits[3]351.768   940.330   5     ZPcoo                  5      \
+   351.632    940.359    -0.136  0.029   0.004   0.004          0    NoError   \
+   814.7947       9.602406       7.245628       11139  543      0    NoError   \
+   1.             INDEF          INDEF                  INDEF                  \
+   23.04    1843746.      1667.761   484863.2      -14.2140.002 0    NoError    
+gS20101214S0041.fits[3]353.050   855.165   6     ZPcoo                  6      \
+   352.902    855.296    -0.148  0.131   0.006   0.005          0    NoError   \
+   814.6661       9.655982       7.342555       11092  581      0    NoError   \
+   1.             INDEF          INDEF                  INDEF                  \
+   23.04    1700577.      1667.983   341727.8      -13.8340.002 0    NoError    

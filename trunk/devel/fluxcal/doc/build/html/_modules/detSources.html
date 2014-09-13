@@ -1,0 +1,804 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>detSources &mdash; fluxcal v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fluxcal v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for detSources</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">convolve</span> <span class="kn">import</span> <span class="n">convolve2d</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="c">#from numpy import *</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="nb">sum</span><span class="p">,</span><span class="n">array</span><span class="p">,</span><span class="n">shape</span><span class="p">,</span> <span class="n">maximum</span><span class="p">,</span> <span class="n">arange</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">where</span><span class="p">,</span> <span class="n">ravel</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">int8</span><span class="p">,</span> <span class="n">float32</span><span class="p">,</span> <span class="n">int32</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">minimum</span><span class="p">,</span> <span class="n">transpose</span><span class="p">,</span><span class="n">mean</span><span class="p">,</span> <span class="n">delete</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pyfits</span> <span class="kn">as</span> <span class="nn">pf</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="c">#------------------------------------------------------------------------------ </span>
+<span class="kn">from</span> <span class="nn">astrodata.adutils</span> <span class="kn">import</span> <span class="n">paramutil</span>
+<span class="c">#------------------------------------------------------------------------------ </span>
+<span class="c">#def detSources( image, outfile=&quot;&quot;, verbose=False, sigma=0.0, threshold=2.5, fwhm=5.5, </span>
+<div class="viewcode-block" id="detSources"><a class="viewcode-back" href="../scripts.html#detSources.detSources">[docs]</a><span class="k">def</span> <span class="nf">detSources</span><span class="p">(</span> <span class="n">image</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">hdu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mf">5.5</span><span class="p">,</span> 
+                <span class="n">sharplim</span><span class="o">=</span><span class="p">[</span><span class="mf">0.2</span><span class="p">,</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">roundlim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exts</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> 
+                <span class="n">timing</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">rejection</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">drawWindows</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                <span class="n">dispFrame</span><span class="o">=</span><span class="mi">1</span> <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs similar to the source detecting algorithm </span>
+<span class="sd">    &#39;http://idlastro.gsfc.nasa.gov/ftp/pro/idlphot/find.pro&#39;.</span>
+<span class="sd">    </span>
+<span class="sd">    References:</span>
+<span class="sd">        This code is heavily influenced by &#39;http://idlastro.gsfc.nasa.gov/ftp/pro/idlphot/find.pro&#39;.</span>
+<span class="sd">        &#39;find.pro&#39; was written by W. Landsman, STX  February, 1987.</span>
+<span class="sd">        </span>
+<span class="sd">        This code was converted to Python with areas re-written for optimization by:</span>
+<span class="sd">        River Allen, Gemini Observatory, December 2009. riverallen@gmail.com</span>
+<span class="sd">        </span>
+<span class="sd">    Revisions:</span>
+<span class="sd">        NZ - Feb 2011. Taken out of iqtools. Added hdu and listed the numpy functions instead.</span>
+<span class="sd">                       - added peakIntensity (flux) as output.</span>
+<span class="sd">    </span>
+<span class="sd">    :param image: The filename of the fits file. It must be in the format N2.fits[1] </span>
+<span class="sd">            for the specific extension. (i.e.) If you want to find objects only in </span>
+<span class="sd">            the image extension [1], than you would pass N2.fits[1].</span>
+<span class="sd">    :type filename: String</span>
+<span class="sd">    </span>
+<span class="sd">    :param outfile: The name of the file where the output will be written. By default </span>
+<span class="sd">           output will not be written (ie if outfile is left as &quot;&quot;, no output file is written).</span>
+<span class="sd">    :type outfile: String</span>
+<span class="sd">    </span>
+<span class="sd">    :param verbose: Print out non-critical and debug information.</span>
+<span class="sd">    :type verbose: Boolean [False]</span>
+<span class="sd">    </span>
+<span class="sd">    :param sigma: The mean of the background value. If nothing is passed, </span>
+<span class="sd">          detSources will run background() to determine it.</span>
+<span class="sd">    :type sigma: Number [0.0]</span>
+<span class="sd">    </span>
+<span class="sd">    :param threshold: &quot;Threshold intensity for a point source - should generally </span>
+<span class="sd">              be 3 or 4 sigma above background RMS&quot;[1]. It was found that 2.5 </span>
+<span class="sd">              works best for IQ source detection.</span>
+<span class="sd">    :type threshold: Number [2.5]</span>
+<span class="sd">    </span>
+<span class="sd">    :param fwhm: &quot;FWHM to be used in the convolve filter&quot;[1]. This ends up playing a factor in </span>
+<span class="sd">                 determining the size of the kernel put through the gaussian convolve.</span>
+<span class="sd">    :type fwhm: Number [5.5]</span>
+<span class="sd">    </span>
+<span class="sd">    :param sharplim: &quot;2 element vector giving low and high cutoff for the sharpness </span>
+<span class="sd">             statistic (Default: [0.2,1.0] ).  Change this default only if the stars </span>
+<span class="sd">             have significantly larger or smaller concentration than a Gaussian&quot;[1]</span>
+<span class="sd">    :type sharplim: 2-Element List of Numbers. [0.2,1.0]</span>
+<span class="sd">    </span>
+<span class="sd">    :param roundlim:</span>
+<span class="sd">             &quot;2 element vector giving low and high cutoff for the roundness </span>
+<span class="sd">             statistic (Default: [-1.0,1.0] ).  Change this default only if the stars </span>
+<span class="sd">             are significantly elongated.&quot;[1]</span>
+<span class="sd">    :type roundlim: 2-Element List of Numbers. [-1.0,1.0]</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: </span>
+<span class="sd">             Rectangle regions of the data to process. detSources will only </span>
+<span class="sd">             look at the data within windows passed, if a window is passed. If no</span>
+<span class="sd">             window is set, detSources will look at the entire image.</span>
+<span class="sd">             Beware: small objects on the edges of the windows may not be detected.</span>
+<span class="sd">    :type window: List of 4 dimensional tuples [None]  </span>
+<span class="sd">    </span>
+<span class="sd">      ::</span>
+
+<span class="sd">        General Coordinate Form:</span>
+<span class="sd">        ( x_offset, y_offset, width, height )</span>
+<span class="sd">        </span>
+<span class="sd">                         (x_offset + width, y_offset + height)</span>
+<span class="sd">             __________ /</span>
+<span class="sd">            |  Window  |</span>
+<span class="sd">            |__________|</span>
+<span class="sd">           /</span>
+<span class="sd">        (x_offset, y_offset)</span>
+<span class="sd">        </span>
+<span class="sd">        Example:</span>
+<span class="sd">        Window=[(0,0,200,200)]: Looks at a window of size 200, 200 in bottom left corner</span>
+<span class="sd">        Window=[(0,0,halfWidth,Height),(halfWidth,0,halfWidth,Height)]: Splits the image in 2,</span>
+<span class="sd">                                                divided vertically down the middle.</span>
+
+<span class="sd">    :param timing: If timing is set to true, the return type for detSources will be a tuple. </span>
+<span class="sd">           The tuple is of the form (xyArray, overalltime) where overalltime represents </span>
+<span class="sd">           the time it took detSources to run minus any displaying time. This feature is </span>
+<span class="sd">           for engineering purposes.</span>
+<span class="sd">    :type timing: Boolean [False]</span>
+<span class="sd">    </span>
+<span class="sd">    :param grid: If no window is set, detSources will run the image in a grid. </span>
+<span class="sd">           This is supposed to work in conjunction with rejection.</span>
+<span class="sd">    :type grid: Boolean [False]</span>
+<span class="sd">    </span>
+<span class="sd">    :param rejection: Rejection functions to be run on each grid point. See baseHeuristic() for an example.</span>
+<span class="sd">    :type rejection: A list of rejection functions  [None]</span>
+<span class="sd">    </span>
+<span class="sd">    :param ratio: What the ratio or grid size should be. Ratio of 5 means the image will </span>
+<span class="sd">           be split up into a 5x5 grid. Should be modified to take fixe grid size (50,50), for example.</span>
+<span class="sd">    :type ratio: int [None]</span>
+<span class="sd">    </span>
+<span class="sd">    :param drawWindows: If this is set to True, will attempt to draw the windows using </span>
+<span class="sd">           iraf.tvmark().  Beware: a ds9 must be running.</span>
+<span class="sd">    :type drawWindows: Boolean [False]</span>
+<span class="sd">    </span>
+<span class="sd">    :param dispFrame: This works in conjunction with drawWindows.</span>
+<span class="sd">                debug=False, grid=False, rejection=None, ratio=None, drawWindows=False,</span>
+<span class="sd">                dispFrame=1</span>
+<span class="sd">    </span>
+<span class="sd">    :returns: A list of centroids. For example:</span>
+<span class="sd">    :rtype: A 2-D list.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>   
+    
+    <span class="c">#===========================================================================</span>
+    <span class="c"># Parameter Checking</span>
+    <span class="c">#===========================================================================</span>
+<span class="c">#    image = paramutil.checkParam( image, str, &quot;&quot; )</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hdu</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">image</span> <span class="o">==</span> <span class="s">&quot;&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="s">&quot;daoFind requires an image file.&quot;</span>
+        
+        <span class="n">imageName</span><span class="p">,</span> <span class="n">exts</span> <span class="o">=</span> <span class="n">paramutil</span><span class="o">.</span><span class="n">checkFileFitExtension</span><span class="p">(</span> <span class="n">image</span> <span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Opening and Loading: </span><span class="si">%s</span><span class="s">[</span><span class="si">%d</span><span class="s">]&quot;</span><span class="o">%</span> <span class="p">(</span><span class="n">imageName</span><span class="p">,</span><span class="n">exts</span><span class="p">)</span>
+        
+        <span class="n">hdu</span> <span class="o">=</span> <span class="n">pf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span> <span class="n">imageName</span> <span class="p">)</span>
+        <span class="k">if</span> <span class="n">exts</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># May want to include astrodata here to deal with</span>
+            <span class="c"># all &#39;SCI&#39; extensions, etc.</span>
+            <span class="n">exts</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">sciData</span> <span class="o">=</span> <span class="n">hdu</span><span class="p">[</span><span class="n">exts</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sciData</span> <span class="o">=</span> <span class="n">hdu</span><span class="o">.</span><span class="n">data</span>
+        
+        
+    <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">window</span><span class="p">)</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">:</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="n">window</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">window</span><span class="p">)</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="s">&quot;&#39;window&#39; must be a tuple of length 4, or a list of tuples length 4.&quot;</span>
+            
+        <span class="k">for</span> <span class="n">wind</span> <span class="ow">in</span> <span class="n">window</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">wind</span><span class="p">)</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wind</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="s">&#39;A window tuple has incorrect information, </span><span class="si">%s</span><span class="s">, require x,y,width,height&#39;</span> <span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">wind</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="s">&#39;The window list contains a non-tuple. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">wind</span><span class="p">))</span>
+        
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span> <span class="n">exts</span> <span class="p">)</span> <span class="o">!=</span> <span class="nb">int</span> <span class="ow">and</span> <span class="n">exts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="s">&#39;exts must be int or None.&#39;</span> 
+    
+    
+    
+        
+<span class="c">#    outfile = paramutil.checkParam( outfile, str, &quot;&quot; )</span>
+    
+    <span class="n">writeOutFlag</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">if</span> <span class="n">outfile</span> <span class="o">!=</span> <span class="s">&quot;&quot;</span><span class="p">:</span>
+        <span class="n">writeOutFlag</span> <span class="o">=</span> <span class="bp">True</span>
+    
+<span class="c">#    fwhm = paramutil.checkParam( fwhm, type(0.0), 5.5, 0.0 )</span>
+<span class="c">#    verbose = paramutil.checkParam( verbose, bool, False )    </span>
+        
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sharplim</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="s">&quot;Sharplim parameter requires 2 num elements. (i.e. [0.2,1.0])&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">roundlim</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="s">&quot;Roundlim parameter requires 2 num elements. (i.e. [-1.0,1.0])&quot;</span>
+    
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;Opened and loaded.&quot;</span>
+    <span class="c">#------------------------------------------------------------------------------ </span>
+    <span class="c">#===========================================================================</span>
+    <span class="c"># Setup</span>
+    <span class="c">#===========================================================================</span>
+    <span class="n">ost</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">maxConvSize</span> <span class="o">=</span> <span class="mi">13</span>     <span class="c">#Maximum size of convolution box in pixels </span>
+        
+    <span class="n">radius</span> <span class="o">=</span> <span class="n">maximum</span><span class="p">(</span><span class="mf">0.637</span> <span class="o">*</span> <span class="n">fwhm</span><span class="p">,</span> <span class="mf">2.001</span><span class="p">)</span>             <span class="c">#Radius is 1.5 sigma</span>
+    <span class="n">radiusSQ</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">kernelHalfDimension</span> <span class="o">=</span> <span class="n">minimum</span><span class="p">(</span><span class="n">array</span><span class="p">(</span><span class="n">radius</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">int32</span><span class="p">),</span> <span class="p">(</span><span class="n">maxConvSize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">kernelDimension</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">kernelHalfDimension</span> <span class="o">+</span> <span class="mi">1</span>    <span class="c"># Dimension of the kernel or &quot;convolution box&quot;</span>
+    
+    <span class="n">sigSQ</span> <span class="o">=</span> <span class="p">(</span><span class="n">fwhm</span> <span class="o">/</span> <span class="mf">2.35482</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    
+    <span class="c"># Mask identifies valid pixels in convolution box </span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">([</span><span class="n">kernelDimension</span><span class="p">,</span> <span class="n">kernelDimension</span><span class="p">],</span> <span class="n">int8</span><span class="p">)</span>
+    <span class="c"># g will contain Gaussian convolution kernel</span>
+    <span class="n">gauss</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">([</span><span class="n">kernelDimension</span><span class="p">,</span> <span class="n">kernelDimension</span><span class="p">],</span> <span class="n">float32</span><span class="p">)</span>
+    
+    <span class="n">row2</span> <span class="o">=</span> <span class="p">(</span><span class="n">arange</span><span class="p">(</span><span class="n">kernelDimension</span><span class="p">)</span> <span class="o">-</span> <span class="n">kernelHalfDimension</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">kernelHalfDimension</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">row2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">gauss</span><span class="p">[</span><span class="n">kernelHalfDimension</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span>
+        <span class="n">gauss</span><span class="p">[</span><span class="n">kernelHalfDimension</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span>
+    
+    
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">gauss</span> <span class="o">&lt;=</span> <span class="n">radiusSQ</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">int32</span><span class="p">)</span>     <span class="c">#MASK is complementary to SKIP in Stetson&#39;s Fortran</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="n">where</span><span class="p">(</span><span class="n">ravel</span><span class="p">(</span><span class="n">mask</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>  <span class="c">#Value of c are now equal to distance to center</span>
+    <span class="n">pixels</span> <span class="o">=</span> <span class="n">good</span><span class="o">.</span><span class="n">size</span>
+    
+    <span class="c"># Compute quantities for centroid computations that can be used for all stars</span>
+    <span class="n">gauss</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">gauss</span> <span class="o">/</span> <span class="n">sigSQ</span><span class="p">)</span>
+    
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     In fitting Gaussians to the marginal sums, pixels will arbitrarily be</span>
+<span class="sd">     assigned weights ranging from unity at the corners of the box to</span>
+<span class="sd">     kernelHalfDimension^2 at the center (e.g. if kernelDimension = 5 or 7, the weights will be</span>
+<span class="sd">    </span>
+<span class="sd">                                     1   2   3   4   3   2   1</span>
+<span class="sd">          1   2   3   2   1          2   4   6   8   6   4   2</span>
+<span class="sd">          2   4   6   4   2          3   6   9  12   9   6   3</span>
+<span class="sd">          3   6   9   6   3          4   8  12  16  12   8   4</span>
+<span class="sd">          2   4   6   4   2          3   6   9  12   9   6   3</span>
+<span class="sd">          1   2   3   2   1          2   4   6   8   6   4   2</span>
+<span class="sd">                                     1   2   3   4   3   2   1</span>
+<span class="sd">    </span>
+<span class="sd">     respectively).  This is done to desensitize the derived parameters to</span>
+<span class="sd">     possible neighboring, brighter stars.[1]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">xwt</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">([</span><span class="n">kernelDimension</span><span class="p">,</span> <span class="n">kernelDimension</span><span class="p">],</span> <span class="n">float32</span><span class="p">)</span>
+    <span class="n">wt</span> <span class="o">=</span> <span class="n">kernelHalfDimension</span> <span class="o">-</span> <span class="nb">abs</span><span class="p">(</span><span class="n">arange</span><span class="p">(</span><span class="n">kernelDimension</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">float32</span><span class="p">)</span> <span class="o">-</span> <span class="n">kernelHalfDimension</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">kernelDimension</span><span class="p">):</span>
+        <span class="n">xwt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">wt</span>
+    
+    <span class="n">ywt</span> <span class="o">=</span> <span class="n">transpose</span><span class="p">(</span><span class="n">xwt</span><span class="p">)</span>
+    <span class="n">sgx</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">gauss</span> <span class="o">*</span> <span class="n">xwt</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">sumOfWt</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span><span class="p">)</span>
+    
+    <span class="n">sgy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">gauss</span> <span class="o">*</span> <span class="n">ywt</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">sumgx</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sgy</span><span class="p">)</span>
+    <span class="n">sumgy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sgx</span><span class="p">)</span>
+    <span class="n">sumgsqy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sgy</span> <span class="o">*</span> <span class="n">sgy</span><span class="p">)</span>
+    <span class="n">sumgsqx</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sgx</span> <span class="o">*</span> <span class="n">sgx</span><span class="p">)</span>
+    <span class="n">vec</span> <span class="o">=</span> <span class="n">kernelHalfDimension</span> <span class="o">-</span> <span class="n">arange</span><span class="p">(</span><span class="n">kernelDimension</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">float32</span><span class="p">)</span>
+    
+    <span class="n">dgdx</span> <span class="o">=</span> <span class="n">sgy</span> <span class="o">*</span> <span class="n">vec</span>
+    <span class="n">dgdy</span> <span class="o">=</span> <span class="n">sgx</span> <span class="o">*</span> <span class="n">vec</span>
+    <span class="n">sdgdxs</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">dgdx</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">sdgdx</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">dgdx</span><span class="p">)</span>
+    <span class="n">sdgdys</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">dgdy</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">sdgdy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">dgdy</span><span class="p">)</span>
+    <span class="n">sgdgdx</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sgy</span> <span class="o">*</span> <span class="n">dgdx</span><span class="p">)</span>
+    <span class="n">sgdgdy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sgx</span> <span class="o">*</span> <span class="n">dgdy</span><span class="p">)</span>
+    
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">gauss</span> <span class="o">*</span> <span class="n">mask</span>          <span class="c">#Convolution kernel now in c      </span>
+    <span class="n">sumc</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span>
+    <span class="n">sumcsq</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">kernel</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">sumc</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">pixels</span><span class="p">)</span>
+    <span class="n">sumc</span> <span class="o">=</span> <span class="n">sumc</span> <span class="o">/</span> <span class="n">pixels</span>
+    
+    <span class="c"># The reason for the flatten is because IDL and numpy treat statements like arr[index], where index </span>
+    <span class="c"># is an array, differently. For example, arr.shape = (100,100), in IDL index=[400], arr[index]</span>
+    <span class="c"># would work. In numpy you need to flatten in order to get the arr[4][0] you want.</span>
+    <span class="n">kshape</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">kernel</span><span class="p">[</span><span class="n">good</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">kernel</span><span class="p">[</span><span class="n">good</span><span class="p">]</span> <span class="o">-</span> <span class="n">sumc</span><span class="p">)</span> <span class="o">/</span> <span class="n">sumcsq</span>
+    <span class="n">kernel</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">kshape</span>
+    
+    <span class="c"># Using row2 here is pretty confusing (From IDL code)</span>
+    <span class="c"># row2 will be something like: [1   2   3   2   1]</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-.</span><span class="mi">5</span> <span class="o">*</span> <span class="n">row2</span> <span class="o">/</span> <span class="n">sigSQ</span><span class="p">)</span>
+    <span class="n">sumc1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="p">)</span> <span class="o">/</span> <span class="n">kernelDimension</span>
+    <span class="n">sumc1sq</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">sumc1</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="p">(</span><span class="n">c1</span> <span class="o">-</span> <span class="n">sumc1</span><span class="p">)</span> <span class="o">/</span> <span class="n">sumc1sq</span>
+    
+    <span class="n">mask</span><span class="p">[</span><span class="n">kernelHalfDimension</span><span class="p">,</span><span class="n">kernelHalfDimension</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>    <span class="c"># From now on we exclude the central pixel</span>
+        
+    <span class="n">pixels</span> <span class="o">=</span> <span class="n">pixels</span> <span class="o">-</span> <span class="mi">1</span>      <span class="c"># so the number of valid pixels is reduced by 1</span>
+    <span class="c"># What this operation looks like:</span>
+    <span class="c"># ravel(mask) = [0 0 1 1 1 0 0 0 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 0 1 ...]</span>
+    <span class="c"># where(ravel(mask)) = (array([ 2,  3,  4,  8,  9, 10, 11, 12, 14, ...]),)</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="n">where</span><span class="p">(</span><span class="n">ravel</span><span class="p">(</span><span class="n">mask</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>      <span class="c"># &quot;good&quot; identifies position of valid pixels</span>
+    
+    <span class="c"># x and y coordinate of valid pixels </span>
+    <span class="n">xx</span> <span class="o">=</span> <span class="p">(</span><span class="n">good</span> <span class="o">%</span> <span class="n">kernelDimension</span><span class="p">)</span> <span class="o">-</span> <span class="n">kernelHalfDimension</span>
+    
+    <span class="c"># relative to the center</span>
+    <span class="n">yy</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">good</span> <span class="o">/</span> <span class="n">kernelDimension</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">int32</span><span class="p">)</span> <span class="o">-</span> <span class="n">kernelHalfDimension</span>
+    
+    
+    <span class="c">#------------------------------------------------------------------------------ </span>
+    <span class="c">#===========================================================================</span>
+    <span class="c"># Extension and Window / Grid</span>
+    <span class="c">#===========================================================================</span>
+    
+    <span class="n">xyArray</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">outputLines</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    
+    <span class="k">if</span> <span class="n">sigma</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">background</span><span class="p">(</span> <span class="n">sciData</span> <span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&#39;Estimated Background:&#39;</span><span class="p">,</span> <span class="n">sigma</span>
+    
+    <span class="n">hmin</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">threshold</span>
+    
+    <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="c"># Make the window the entire image</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">sciData</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sciData</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+    
+    <span class="k">if</span> <span class="n">grid</span><span class="p">:</span>
+        <span class="n">ySciDim</span><span class="p">,</span> <span class="n">xSciDim</span> <span class="o">=</span> <span class="n">sciData</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">xgridsize</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xSciDim</span> <span class="o">/</span> <span class="n">ratio</span><span class="p">)</span> 
+        <span class="n">ygridsize</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ySciDim</span> <span class="o">/</span> <span class="n">ratio</span><span class="p">)</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ypos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ratio</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">xpos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ratio</span><span class="p">):</span>
+                <span class="n">window</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="p">(</span><span class="n">xpos</span> <span class="o">*</span> <span class="n">xgridsize</span><span class="p">,</span> <span class="n">ypos</span> <span class="o">*</span> <span class="n">ygridsize</span><span class="p">,</span> <span class="n">xgridsize</span><span class="p">,</span> <span class="n">ygridsize</span><span class="p">)</span> <span class="p">)</span>
+    
+    
+    
+    <span class="n">drawtime</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">drawWindows</span><span class="p">:</span>
+        <span class="n">drawtime</span> <span class="o">=</span> <span class="n">draw_windows</span><span class="p">(</span> <span class="n">window</span><span class="p">,</span> <span class="n">dispFrame</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">rejection</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">rejection</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">elif</span> <span class="n">rejection</span> <span class="ow">is</span> <span class="s">&#39;default&#39;</span><span class="p">:</span>
+        <span class="n">rejection</span> <span class="o">=</span> <span class="p">[</span><span class="n">baseHeuristic</span><span class="p">]</span>
+        
+    <span class="n">windName</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">wind</span> <span class="ow">in</span> <span class="n">window</span><span class="p">:</span>
+        <span class="n">windName</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">subXYArray</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c">##@@TODO check for negative values, check that dimensions don&#39;t violate overall dimensions.</span>
+        <span class="n">yoffset</span><span class="p">,</span> <span class="n">xoffset</span><span class="p">,</span> <span class="n">yDimension</span><span class="p">,</span> <span class="n">xDimension</span> <span class="o">=</span> <span class="n">wind</span>
+        
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&#39;x,y,w,h&#39;</span><span class="p">,</span> <span class="n">xoffset</span><span class="p">,</span> <span class="n">yoffset</span><span class="p">,</span> <span class="n">xDimension</span><span class="p">,</span> <span class="n">yDimension</span>
+            <span class="k">print</span> <span class="s">&#39;=&#39;</span><span class="o">*</span><span class="mi">50</span>
+            <span class="k">print</span> <span class="s">&#39;W&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">windName</span><span class="p">)</span>
+            <span class="k">print</span> <span class="s">&#39;=&#39;</span><span class="o">*</span><span class="mi">50</span>
+        
+        <span class="n">sciSection</span> <span class="o">=</span> <span class="n">sciData</span><span class="p">[</span><span class="n">xoffset</span><span class="p">:</span><span class="n">xoffset</span><span class="o">+</span><span class="n">xDimension</span><span class="p">,</span><span class="n">yoffset</span><span class="p">:</span><span class="n">yoffset</span><span class="o">+</span><span class="n">yDimension</span><span class="p">]</span>
+        
+        <span class="c">#=======================================================================</span>
+        <span class="c"># Quickly determine if a window is worth processing</span>
+        <span class="c">#=======================================================================</span>
+        <span class="n">rejFlag</span> <span class="o">=</span> <span class="bp">False</span>
+        
+        <span class="k">for</span> <span class="n">rejFunc</span> <span class="ow">in</span> <span class="n">rejection</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">rejFunc</span><span class="p">(</span><span class="n">sciSection</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">threshold</span><span class="p">):</span>
+                <span class="n">rejFlag</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">break</span>
+        
+        <span class="k">if</span> <span class="n">rejFlag</span><span class="p">:</span>
+            <span class="c"># Reject</span>
+            <span class="k">continue</span>
+        
+        <span class="c">#------------------------------------------------------------------------------</span>
+        <span class="c">#===========================================================================</span>
+        <span class="c"># Convolve</span>
+        <span class="c">#===========================================================================</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Beginning convolution of image&quot;</span>
+        
+        <span class="n">st</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        
+        <span class="n">h</span> <span class="o">=</span> <span class="n">convolve2d</span><span class="p">(</span> <span class="n">sciSection</span><span class="p">,</span> <span class="n">kernel</span> <span class="p">)</span>    <span class="c"># Convolve image with kernel</span>
+        
+        <span class="n">et</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&#39;Convole Time:&#39;</span><span class="p">,</span> <span class="p">(</span> <span class="n">et</span><span class="o">-</span><span class="n">st</span> <span class="p">)</span>
+    
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">grid</span><span class="p">:</span>
+            <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">kernelHalfDimension</span><span class="p">,:]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">h</span><span class="p">[</span><span class="n">xDimension</span> <span class="o">-</span> <span class="n">kernelHalfDimension</span><span class="p">:</span><span class="n">xDimension</span><span class="p">,:]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">h</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="n">kernelHalfDimension</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">h</span><span class="p">[:,</span><span class="n">yDimension</span> <span class="o">-</span> <span class="n">kernelHalfDimension</span><span class="p">:</span><span class="n">yDimension</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Finished convolution of image&quot;</span>
+        
+        <span class="c">#------------------------------------------------------------------------------ </span>
+        <span class="c">#===========================================================================</span>
+        <span class="c"># Filter</span>
+        <span class="c">#===========================================================================</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">yy</span> <span class="o">*</span> <span class="n">xDimension</span> <span class="o">+</span> <span class="n">xx</span>
+        
+        <span class="n">index</span> <span class="o">=</span> <span class="n">where</span><span class="p">(</span><span class="n">ravel</span><span class="p">(</span><span class="n">h</span> <span class="o">&gt;=</span> <span class="n">hmin</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>  <span class="c"># Valid image pixels are greater than hmin</span>
+        <span class="n">nfound</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="k">if</span> <span class="n">nfound</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>             <span class="c"># Any maxima found?      </span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="n">pixels</span><span class="p">):</span>
+                <span class="c"># Needs to be changed</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">stars</span> <span class="o">=</span> <span class="n">where</span><span class="p">(</span><span class="n">ravel</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">h</span><span class="p">[</span><span class="n">index</span><span class="o">+</span> <span class="n">offset</span><span class="p">[</span><span class="n">i</span><span class="p">]]))[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="n">nfound</span> <span class="o">=</span> <span class="n">stars</span><span class="o">.</span><span class="n">size</span>
+                <span class="k">if</span> <span class="n">nfound</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>     <span class="c"># Do valid local maxima exist?</span>
+                    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                        <span class="k">print</span> <span class="s">&quot;No objects found.&quot;</span>
+                    <span class="k">break</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="n">stars</span><span class="p">]</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">xDimension</span><span class="p">,</span> <span class="n">yDimension</span><span class="p">)</span>
+            
+            <span class="n">ix</span> <span class="o">=</span> <span class="n">index</span> <span class="o">%</span> <span class="n">yDimension</span>               <span class="c"># X index of local maxima</span>
+            <span class="n">iy</span> <span class="o">=</span> <span class="n">index</span> <span class="o">/</span> <span class="n">yDimension</span>               <span class="c"># Y index of local maxima</span>
+            <span class="n">ngood</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&quot;No objects above hmin (</span><span class="si">%s</span><span class="s">) were found.&quot;</span> <span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">hmin</span><span class="p">))</span>
+            <span class="k">continue</span>
+                
+        <span class="c">#  Loop over star positions; compute statistics</span>
+        
+        <span class="n">st</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="n">ngood</span><span class="p">):</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">sciSection</span><span class="p">[</span><span class="n">iy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">kernelHalfDimension</span><span class="p">:(</span><span class="n">iy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">kernelHalfDimension</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+                                 <span class="n">ix</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">kernelHalfDimension</span><span class="p">:(</span><span class="n">ix</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">kernelHalfDimension</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+            
+            <span class="n">pixIntensity</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="n">iy</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ix</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>   <span class="c"># pixel intensity        </span>
+            
+            <span class="c">#  Compute Sharpness statistic</span>
+            <span class="c">#@@FIXME: This should do proper checking...the issue is an out of range index with kernelhalf and temp</span>
+            <span class="c"># IndexError: index (3) out of range (0&lt;=index&lt;=0) in dimension 0</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">sharp1</span> <span class="o">=</span> <span class="p">(</span><span class="n">temp</span><span class="p">[</span><span class="n">kernelHalfDimension</span><span class="p">,</span><span class="n">kernelHalfDimension</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">mask</span> <span class="o">*</span> <span class="n">temp</span><span class="p">))</span> <span class="o">/</span> <span class="n">pixels</span><span class="p">)</span> <span class="o">/</span> <span class="n">pixIntensity</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">continue</span>
+            
+            <span class="k">if</span> <span class="p">(</span><span class="n">sharp1</span> <span class="o">&lt;</span> <span class="n">sharplim</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="n">sharp1</span> <span class="o">&gt;</span> <span class="n">sharplim</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>   
+                <span class="c"># Reject</span>
+                <span class="c"># not sharp enough?</span>
+                <span class="k">continue</span>
+            
+            <span class="n">dx</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">c1</span><span class="p">)</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">c1</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="p">(</span><span class="n">dx</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">dy</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>   
+                <span class="c"># Reject</span>
+                <span class="k">continue</span>
+            
+            <span class="n">around</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">dx</span> <span class="o">-</span> <span class="n">dy</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">dx</span> <span class="o">+</span> <span class="n">dy</span><span class="p">)</span>    <span class="c"># Roundness statistic</span>
+            
+            <span class="c"># Reject if not within specified roundness boundaries.</span>
+            
+            <span class="k">if</span> <span class="p">(</span><span class="n">around</span> <span class="o">&lt;</span> <span class="n">roundlim</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="n">around</span> <span class="o">&gt;</span> <span class="n">roundlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>   
+                <span class="c"># Reject</span>
+                <span class="k">continue</span>
+            
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">             Centroid computation:   The centroid computation was modified in Mar 2008 and</span>
+<span class="sd">             now differs from DAOPHOT which multiplies the correction dx by 1/(1+abs(dx)).</span>
+<span class="sd">             The DAOPHOT method is more robust (e.g. two different sources will not merge)</span>
+<span class="sd">             especially in a package where the centroid will be subsequently be</span>
+<span class="sd">             redetermined using PSF fitting.   However, it is less accurate, and introduces</span>
+<span class="sd">             biases in the centroid histogram.   The change here is the same made in the</span>
+<span class="sd">             IRAF DAOFIND routine (see</span>
+<span class="sd">             http://iraf.net/article.php?story=7211&amp;query=daofind ) [1]</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            
+            <span class="n">sd</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">temp</span> <span class="o">*</span> <span class="n">ywt</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            
+            <span class="n">sumgd</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sgy</span> <span class="o">*</span> <span class="n">sd</span><span class="p">)</span>
+            <span class="n">sumd</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sd</span><span class="p">)</span>
+            <span class="n">sddgdx</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sd</span> <span class="o">*</span> <span class="n">dgdx</span><span class="p">)</span>
+            
+            <span class="n">hx</span> <span class="o">=</span> <span class="p">(</span><span class="n">sumgd</span> <span class="o">-</span> <span class="n">sumgx</span> <span class="o">*</span> <span class="n">sumd</span> <span class="o">/</span> <span class="n">sumOfWt</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">sumgsqy</span> <span class="o">-</span> <span class="n">sumgx</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">sumOfWt</span><span class="p">)</span>
+            
+            <span class="c"># HX is the height of the best-fitting marginal Gaussian.   If this is not</span>
+            <span class="c"># positive then the centroid does not make sense. [1]</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">hx</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="c"># Reject</span>
+                <span class="k">continue</span>
+            
+            <span class="n">skylvl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sumd</span> <span class="o">-</span> <span class="n">hx</span> <span class="o">*</span> <span class="n">sumgx</span><span class="p">)</span> <span class="o">/</span> <span class="n">sumOfWt</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="p">(</span><span class="n">sgdgdx</span> <span class="o">-</span> <span class="p">(</span><span class="n">sddgdx</span> <span class="o">-</span> <span class="n">sdgdx</span> <span class="o">*</span> <span class="p">(</span><span class="n">hx</span> <span class="o">*</span> <span class="n">sumgx</span> <span class="o">+</span> <span class="n">skylvl</span> <span class="o">*</span> <span class="n">sumOfWt</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="n">hx</span> <span class="o">*</span> <span class="n">sdgdxs</span> <span class="o">/</span> <span class="n">sigSQ</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">kernelHalfDimension</span><span class="p">:</span>   
+                <span class="c"># Reject</span>
+                <span class="k">continue</span>
+            
+            <span class="n">xcen</span> <span class="o">=</span> <span class="n">ix</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx</span>    <span class="c">#X centroid in original array</span>
+            
+            <span class="c"># Find Y centroid</span>
+            <span class="n">sd</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">temp</span> <span class="o">*</span> <span class="n">xwt</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            
+            <span class="n">sumgd</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sgx</span> <span class="o">*</span> <span class="n">sd</span><span class="p">)</span>
+            <span class="n">sumd</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sd</span><span class="p">)</span>
+            
+            <span class="n">sddgdy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wt</span> <span class="o">*</span> <span class="n">sd</span> <span class="o">*</span> <span class="n">dgdy</span><span class="p">)</span>
+            
+            <span class="n">hy</span> <span class="o">=</span> <span class="p">(</span><span class="n">sumgd</span> <span class="o">-</span> <span class="n">sumgy</span> <span class="o">*</span> <span class="n">sumd</span> <span class="o">/</span> <span class="n">sumOfWt</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">sumgsqx</span> <span class="o">-</span> <span class="n">sumgy</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">sumOfWt</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="p">(</span><span class="n">hy</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="c"># Reject</span>
+                <span class="k">continue</span>
+            
+            <span class="n">skylvl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sumd</span> <span class="o">-</span> <span class="n">hy</span> <span class="o">*</span> <span class="n">sumgy</span><span class="p">)</span> <span class="o">/</span> <span class="n">sumOfWt</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="p">(</span><span class="n">sgdgdy</span> <span class="o">-</span> <span class="p">(</span><span class="n">sddgdy</span> <span class="o">-</span> <span class="n">sdgdy</span> <span class="o">*</span> <span class="p">(</span><span class="n">hy</span> <span class="o">*</span> <span class="n">sumgy</span> <span class="o">+</span> <span class="n">skylvl</span> <span class="o">*</span> <span class="n">sumOfWt</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="n">hy</span> <span class="o">*</span> <span class="n">sdgdys</span> <span class="o">/</span> <span class="n">sigSQ</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dy</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">kernelHalfDimension</span><span class="p">:</span>
+                <span class="c"># Reject </span>
+                <span class="k">continue</span>
+            
+            <span class="n">ycen</span> <span class="o">=</span> <span class="n">iy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">dy</span>    <span class="c">#Y centroid in original array</span>
+            
+            <span class="n">subXYArray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="p">[</span><span class="n">xcen</span><span class="p">,</span> <span class="n">ycen</span><span class="p">,</span> <span class="n">pixIntensity</span><span class="p">]</span> <span class="p">)</span>
+            
+        <span class="n">et</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&#39;Looping over Stars time:&#39;</span><span class="p">,</span> <span class="p">(</span> <span class="n">et</span> <span class="o">-</span> <span class="n">st</span> <span class="p">)</span>
+        
+        <span class="n">subXYArray</span> <span class="o">=</span> <span class="n">averageEachCluster</span><span class="p">(</span> <span class="n">subXYArray</span><span class="p">,</span> <span class="mi">10</span> <span class="p">)</span>
+        <span class="n">xySize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">subXYArray</span><span class="p">)</span>
+        
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="n">xySize</span> <span class="p">):</span>
+            <span class="n">subXYArray</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">subXYArray</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="c"># I have no idea why the positions are slightly modified. Was done originally in</span>
+            <span class="c"># iqTool, perhaps for minute correcting.</span>
+            <span class="n">subXYArray</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">subXYArray</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+            <span class="n">subXYArray</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">yoffset</span>
+            <span class="n">subXYArray</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">xoffset</span>
+                
+            
+            <span class="k">if</span> <span class="n">writeOutFlag</span><span class="p">:</span>
+                <span class="n">outputLines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">subXYArray</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">subXYArray</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])]</span> <span class="p">)</span><span class="o">+</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="p">)</span> 
+        
+        <span class="n">xyArray</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">subXYArray</span><span class="p">)</span>
+            
+    <span class="n">oet</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">overall_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">oet</span><span class="o">-</span><span class="n">ost</span><span class="o">-</span><span class="n">drawtime</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&#39;No. of objects detected:&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">xyArray</span><span class="p">)</span>
+        <span class="k">print</span> <span class="s">&#39;Overall time:&#39;</span><span class="p">,</span> <span class="n">overall_time</span><span class="p">,</span> <span class="s">&#39;seconds.&#39;</span>
+    
+    <span class="k">if</span> <span class="n">writeOutFlag</span><span class="p">:</span>
+        <span class="n">outputFile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span> <span class="n">outfile</span><span class="p">,</span> <span class="s">&quot;w&quot;</span> <span class="p">)</span>
+        <span class="n">outputFile</span><span class="o">.</span><span class="n">writelines</span><span class="p">(</span> <span class="n">outputLines</span> <span class="p">)</span>
+        <span class="n">outputFile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="n">timing</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">xyArray</span><span class="p">,</span> <span class="n">overall_time</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">xyArray</span>
+
+<span class="c">#------------------------------------------------------------------------------ </span></div>
+<span class="k">def</span> <span class="nf">averageEachCluster</span><span class="p">(</span> <span class="n">xyArray</span><span class="p">,</span> <span class="n">pixApart</span><span class="o">=</span><span class="mf">10.0</span> <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    detSources can produce multiple centers for an object. This algorithm corrects that </span>
+<span class="sd">    For Example: </span>
+<span class="sd">    626.645599527 179.495974369</span>
+<span class="sd">    626.652254706 179.012831637</span>
+<span class="sd">    626.664059364 178.930738423</span>
+<span class="sd">    626.676504143 178.804093054</span>
+<span class="sd">    626.694643376 178.242374891</span>
+<span class="sd">    </span>
+<span class="sd">    This function will try to cluster these close points together, and produce a single center by</span>
+<span class="sd">    taking the mean of the cluster. This function is based off the removeNeighbors function in iqUtil.py</span>
+<span class="sd">    </span>
+<span class="sd">    :param xyArray: The list of centers of found stars.</span>
+<span class="sd">    :type xyArray: List</span>
+<span class="sd">    </span>
+<span class="sd">    :param pixApart: The max pixels apart for a star to be considered part of a cluster. </span>
+<span class="sd">    :type pixApart: Number</span>
+<span class="sd">    </span>
+<span class="sd">    :return: The centroids of the stars sorted by the X dimension.</span>
+<span class="sd">    :rtype: List</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">newXYArray</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">xyArray</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="n">xyArray</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span> <span class="n">xyArray</span> <span class="p">)</span>
+    <span class="n">xyArrayForMean</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">xyClusterFlag</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">xyArray</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">xyArray</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">diffx</span> <span class="o">=</span> <span class="n">xyArray</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">xyArray</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diffx</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">pixApart</span><span class="p">:</span>
+                <span class="n">diffy</span> <span class="o">=</span> <span class="n">xyArray</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xyArray</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diffy</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">pixApart</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">xyClusterFlag</span><span class="p">:</span>
+                        <span class="n">xyClusterFlag</span> <span class="o">=</span> <span class="bp">True</span>
+                        <span class="n">xyArrayForMean</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+                    <span class="n">xyArrayForMean</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                    
+                <span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+        
+        <span class="k">if</span> <span class="n">xyClusterFlag</span><span class="p">:</span>
+            <span class="n">xyMean</span> <span class="o">=</span> <span class="p">[</span><span class="n">mean</span><span class="p">(</span> <span class="n">xyArray</span><span class="p">[</span><span class="n">xyArrayForMean</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span> <span class="p">),</span> <span class="n">mean</span><span class="p">(</span> <span class="n">xyArray</span><span class="p">[</span><span class="n">xyArrayForMean</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span> <span class="p">)]</span>
+            <span class="n">newXYArray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">xyMean</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>
+            <span class="n">xyArrayForMean</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span> <span class="c"># Almost equivalent to reverse, except for numpy</span>
+            <span class="k">for</span> <span class="n">removeIndex</span> <span class="ow">in</span> <span class="n">xyArrayForMean</span><span class="p">:</span>
+                <span class="n">xyArray</span> <span class="o">=</span> <span class="n">delete</span><span class="p">(</span> <span class="n">xyArray</span><span class="p">,</span> <span class="n">removeIndex</span><span class="p">,</span> <span class="mi">0</span> <span class="p">)</span>
+            <span class="n">xyArrayForMean</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">xyClusterFlag</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">newXYArray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">xyArray</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="p">)</span>
+        
+        
+        <span class="n">j</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">newXYArray</span>
+
+<span class="c">#------------------------------------------------------------------------------ </span>
+<span class="k">def</span> <span class="nf">baseHeuristic</span><span class="p">(</span> <span class="n">scidata</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">threshold</span> <span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A simple heuristic for rejecting empty grids or grids with only cosmic rays.</span>
+<span class="sd">    </span>
+<span class="sd">    :param scidata: The gridpoint data.</span>
+<span class="sd">    :type scidata: numpy.array</span>
+<span class="sd">    </span>
+<span class="sd">    :param sigma: The background value for the image.</span>
+<span class="sd">    :type sigma: float</span>
+<span class="sd">    </span>
+<span class="sd">    :param threshold: The threshold used by detSources.</span>
+<span class="sd">    :type threshold: int or float</span>
+<span class="sd">    </span>
+<span class="sd">    :return: True if the grid is worth rejection.</span>
+<span class="sd">    :rtype: Boolean </span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">starCandidates</span><span class="p">(</span><span class="n">scidata</span><span class="p">,</span> <span class="n">background</span><span class="o">*</span><span class="n">sigma</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">stars</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    
+    <span class="k">return</span> <span class="bp">False</span>
+
+<span class="c">#---------------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">starCandidates</span><span class="p">(</span><span class="n">scidata</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find all pixels greater than mean.</span>
+<span class="sd">    </span>
+<span class="sd">    :param scidata: Science data for checking.</span>
+<span class="sd">    :type scidata: numpy.array</span>
+<span class="sd">    </span>
+<span class="sd">    :return: A list of all points greater than mean.</span>
+<span class="sd">    :rtype: numpy.array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">if</span> <span class="n">mean</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+       <span class="n">sci_copy</span> <span class="o">=</span> <span class="n">scidata</span><span class="p">[:,:]</span>
+       <span class="n">stars</span> <span class="o">=</span> <span class="n">where</span><span class="p">(</span><span class="n">sci_copy</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">scidata</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">+</span> <span class="n">scidata</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+    <span class="k">else</span><span class="p">:</span>
+       <span class="n">stars</span> <span class="o">=</span> <span class="n">where</span><span class="p">(</span><span class="n">scidata</span> <span class="o">&gt;</span> <span class="n">mean</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">stars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="c">#------------------------------------------------------------------------------ </span>
+<span class="k">def</span> <span class="nf">background</span><span class="p">(</span><span class="n">scidata</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;mask out all pixels greater than 2.5 sigma</span>
+<span class="sd">    </span>
+<span class="sd">    :param scidata: science data array, containing only the object to be fit</span>
+<span class="sd">    :type scidata: numpy.array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fim</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="n">fim</span> <span class="o">=</span> <span class="n">scidata</span> <span class="o">*</span> <span class="mf">1.</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">where</span><span class="p">(</span><span class="n">fim</span> <span class="o">&gt;</span> <span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="n">scidata</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">+</span> <span class="n">scidata</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+    <span class="n">fim</span><span class="p">[</span><span class="n">stars</span><span class="p">]</span> <span class="o">=</span> <span class="n">scidata</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="c">#nd.display(fim, frame=3)</span>
+    
+    <span class="n">outside</span> <span class="o">=</span> <span class="n">where</span><span class="p">(</span><span class="n">fim</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="n">scidata</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">-</span> <span class="n">scidata</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+    <span class="n">fim</span><span class="p">[</span><span class="n">outside</span><span class="p">]</span> <span class="o">=</span> <span class="n">scidata</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="c">#nd.display(scidata, frame=2)</span>
+    <span class="c">#nd.display(fim, frame=4)</span>
+    <span class="k">return</span> <span class="n">fim</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+
+<span class="c">#------------------------------------------------------------------------------ </span>
+<span class="k">def</span> <span class="nf">draw_windows</span><span class="p">(</span> <span class="n">window</span><span class="p">,</span> <span class="n">dispFrame</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">True</span> <span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">import</span> <span class="nn">pyraf</span>
+    <span class="kn">from</span> <span class="nn">pyraf</span> <span class="kn">import</span> <span class="n">iraf</span>
+    
+    <span class="n">drawst</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    
+    <span class="n">tmpFilename</span> <span class="o">=</span> <span class="s">&#39;tmpfile.tmp&#39;</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">win</span> <span class="ow">in</span> <span class="n">window</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c"># The following is annoying IRAF file nonsense.</span>
+        
+        <span class="n">tmpFile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span> <span class="n">tmpFilename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span> <span class="p">)</span>
+        <span class="n">toWrite</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> W</span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">)),</span><span class="nb">str</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">)),</span> <span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+        <span class="n">tmpFile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">toWrite</span> <span class="p">)</span>
+        <span class="n">tmpFile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+        <span class="n">iraf</span><span class="o">.</span><span class="n">tvmark</span><span class="p">(</span> <span class="n">frame</span><span class="o">=</span><span class="n">dispFrame</span><span class="p">,</span><span class="n">coords</span><span class="o">=</span><span class="n">tmpFilename</span><span class="p">,</span> <span class="n">mark</span><span class="o">=</span><span class="s">&#39;rectangle&#39;</span><span class="p">,</span>
+            <span class="n">pointsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="mi">204</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">lengths</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="o">+</span><span class="s">&#39; &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span> <span class="p">)</span>
+    
+    <span class="n">drawet</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">drawet</span> <span class="o">-</span> <span class="n">drawst</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+include ReleaseNote
+include INSTALL
+include Copyright
+#
+include astrodata/ReleaseNote
+include astrodata/INSTALL
+include astrodata/README
+include astrodata/Copyright
+recursive-include astrodata/doc *
+recursive-include astrodata/scripts/adcc_faceplate *
+#
+include gempy/ReleaseNote
+include gempy/INSTALL
+include gempy/Copyright
+include gempy/README
+#recursive-include gempy/doc *
+recursive-include gempy/doc-local *
+#
+include astrodata_Gemini/ReleaseNote
+include astrodata_Gemini/INSTALL
+include astrodata_Gemini/README
+include astrodata_Gemini/Copyright
+recursive-include astrodata_Gemini/ADCONFIG_Gemini *
+recursive-include astrodata_Gemini/RECIPES_Gemini recipe.*
+recursive-include astrodata_Gemini/RECIPES_Gemini/doc *
+prune astrodata_Gemini/RECIPES_Gemini/Engineering
+#
+include astrodata_FITS/ReleaseNote
+include astrodata_FITS/INSTALL
+include astrodata_FITS/README
+include astrodata_FITS/Copyright
+recursive-include astrodata_FITS/ADCONFIG_FITS *

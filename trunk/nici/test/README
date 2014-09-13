@@ -1,0 +1,9 @@
+
+This directory contains 
+
+flats.lis   -- List of files to produce calibration files 
+index.html  -- Index of the html documentation. You should use the Open File 
+               option and point to:
+               ../nici/doc/build/html/index.html
+               
+object.lis  -- List of object files. Input to ncprepare

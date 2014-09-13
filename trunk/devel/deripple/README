@@ -1,0 +1,9 @@
+
+deripple.py         # deripple python script
+deripple.cl         # Needed to run under Pyraf
+deripple.hlp        # Pyraf help file
+deripple.par        # Parameter file needed to run under Pyraf
+deripple_pyraf.py   # Python script to drive deripple.py under Pyraf
+pyexecute.cl        # Internal Pyraf file
+README              # This file
+test                # Test directory

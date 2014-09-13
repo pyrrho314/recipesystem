@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ncqlook. Quick look and data quality assesment. &mdash; ndoc v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="ndoc v0.1 documentation" href="../index.html" />
+    <link rel="up" title="NICI Commands" href="index.html" />
+    <link rel="next" title="ncmark. Manually marks mask centers" href="ncmark.html" />
+    <link rel="prev" title="NICI Commands" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ncmark.html" title="ncmark. Manually marks mask centers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="NICI Commands"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">ndoc v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">NICI Commands</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ncqlook-quick-look-and-data-quality-assesment">
+<h1>ncqlook. Quick look and data quality assesment.<a class="headerlink" href="#ncqlook-quick-look-and-data-quality-assesment" title="Permalink to this headline">¶</a></h1>
+<p><strong>ncqlook(inputs idir=&#8217;&#8217; odir=&#8217;&#8217; log=True lists=True saturate=5000 nodisplay=False full=False port=5137)</strong></p>
+<p>The ncqlook script produces a quick look analysis of the nici raw files specified in the &#8216;inputs&#8217; parameter. It will produce as output a cube of FITS files (512x256xnumber_of_files) in the working directory plus several output files if the &#8216;lists&#8217; parameter is kept True. See Parameters for more detail. While is running, each pair of frames are displayed on a ds9 panel.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><dl class="first docutils">
+<dt><strong>inputs</strong></dt>
+<dd><p class="first last">If left blank then last night NICI raw files resident in the Gemini South repository /net/petrohue/dataflow will be processed. If you want to display data from the repository from a different date, then the format is of the form YYYYMMDD. You can also give a list of files or a unix wild card. See examples.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>idir</strong></dt>
+<dd><p class="first last">The input directory where the input fits files are located. If left blank, inputs should included directory pathname.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>odir</strong></dt>
+<dd><p class="first last">The output directory where all the listing and fits files cube will be written. If left blank, they will written in the working directory.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>log</strong></dt>
+<dd><p class="first last">The default value is True. Will create a log with filename, min-max rms, median value for extension 1 and 2 and values for keywords OBJECT, OBSCLASS, OBSTYPE, MODE, ITIME, NCOADD and optionally 2 numbers representing the core2halo ratio; if one or both of these numbers are missing it means that the algorithm failed to get a meaningful value</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>lists</strong></dt>
+<dd><p class="first last">The default value is True. Will create several output files useful</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>saturate</strong></dt>
+<dd><p class="first last">Saturation limit. Default value is 5000. To change give a value.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>nodisplay</strong></dt>
+<dd><p class="first last">Default value True for not displaying current frames.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>full</strong></dt>
+<dd><p class="first last">Default value False. If True it will rebin the frame to 256x256.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Output files</strong></p>
+<ul>
+<li><dl class="first docutils">
+<dt><em>root_cube.fits</em></dt>
+<dd><p class="first last">FITS file cube.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>root.log</em></dt>
+<dd><p class="first last">For each frame it contains min-max, and median listing. The values ADI,SDI and
+ASDI are computed from keywords CRMODE and DICHROIC. The last 4 fields in the
+log are Exposure time, Ncoads, Core2Halo ratio for red and blue frames.</p>
+</dd>
+</dl>
+<ul class="simple">
+<li><strong>ADI</strong>
+The frame has this mode if CRMODE is FIXED and DICHROIC has &#8216;Mirror&#8217; in the value
+field.</li>
+<li><strong>SDI</strong>
+The frame has this mode if CRMODE is FOLLOW and DICHROIC has &#8216;50/50&#8217; in the value
+field.</li>
+<li><strong>ASDI</strong>
+The frame has this mode if CRMODE is FIXED and DICHROIC has &#8216;50/50&#8217; in the value
+field.</li>
+</ul>
+</li>
+<li><dl class="first docutils">
+<dt><em>root.1_flats</em></dt>
+<dd><p class="first last">Contains calibration files for the ADI mode</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>root.2_flats</em></dt>
+<dd><p class="first last">Contains calibration files for the ASDI and SDI mode.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>root.(adi,sdi,asdi)</em></dt>
+<dd><p class="first last">Contains science object listings. NOTE that these files can have listings of more than one object. You will need to edit these files and create one list per object if you want to use them in ncprepare and ncscience the log file has the necessary information for this.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Examples</strong></p>
+<ol class="arabic">
+<li><p class="first">ncqlook</p>
+<blockquote>
+<p>Will do a quick analysis of all the NICI FITS files residing in /net/petrohue/dataflow for the date of last night, displaying each pair of frames on a ds9 frame while a listing of the log file runs on your screen.</p>
+</blockquote>
+</li>
+<li><p class="first">ncqlook 20090313 &#8211;odir=&#8217;/tmp&#8217; &#8211;saturate=3500 &#8211;nodisplay</p>
+<blockquote>
+<p>(Unix command mode)</p>
+<p>List all the NICI fits files from /net/petrohue/dataflow/S20090313S*.fits The output listing will be written in the &#8216;/tmp&#8217; directory. No display is produced, so ds9 need not be running.</p>
+<p>The output files are:</p>
+<blockquote>
+<ul class="simple">
+<li>200903013_cube.fits</li>
+<li>200903013.log</li>
+<li>200903013.1_flats</li>
+<li>200903013.2_flats</li>
+<li>200903013.adi</li>
+<li>200903013.sdi</li>
+<li>200903013.asdi</li>
+</ul>
+</blockquote>
+</blockquote>
+</li>
+<li><p class="first">ncqlook(20090313,odir=&#8217;/tmp&#8217;,nodisplay=True)</p>
+<blockquote>
+<p>This is the syntax for the command in the PYTHON shell.</p>
+</blockquote>
+</li>
+<li><p class="first">ncqlook &#8220;/data/nici/200903/S2009*.fits&#8221; &#8211;odir=&#8217;/tmp&#8217; full=True</p>
+<blockquote>
+<p>Check all the fits files in the given directory writing the listing
+and cube in the &#8216;/tmp&#8217; directory. &#8216;&#8211;full&#8217; is the flag to tell
+ncqlook to rebin the frames to 256x256.</p>
+</blockquote>
+</li>
+</ol>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="index.html"
+                                  title="previous chapter">NICI Commands</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="ncmark.html"
+                                  title="next chapter">ncmark. Manually marks mask centers</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/commands/ncqlook.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ncmark.html" title="ncmark. Manually marks mask centers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="NICI Commands"
+             >previous</a> |</li>
+        <li><a href="../index.html">ndoc v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >NICI Commands</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

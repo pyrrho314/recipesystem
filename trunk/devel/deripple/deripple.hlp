@@ -1,0 +1,66 @@
+.help deripple November2012 gemini.gnirs
+.ih
+NAME
+deripple -- Removes an instrumental periodic signal from a GNIRS spectrum
+.ih
+USAGE
+deripple infile outfile start end period
+.ih
+PARAMETERS
+.ls infile
+Fits file containing a 1-Dimensional spectrum with a periodic signal to
+removae. At this time this file is a MEF and  the spectrum is located
+in the image extension 'SCI'.
+.le
+.ls outfile
+Output Fits file to contain the deripple spectrum. The MEF file will have the
+PHU from the input MEF and a new 'SCI' extension with the deripple data,
+the header is from the input 'SCI' extension.
+.le
+.ls start
+Start of the window location in pixels.
+.le
+.ls "end"
+End of the window location in pixels.
+.le
+.ls period
+The ripple period in pixels. For GNIRS is typically 2.
+.le
+.ih
+DESCRIPTION
+Some GNIRS spectrums show a ripple signal of small amplitude with a period
+of 2 pixels. This task removes this signal by choosing a small window (about
+50 pixels) unaffected by spectral features and shows the ripples. The algorithm
+creates an average ripple features which is extended to the whole length of the
+input spectrum. Then we divide the spectrum by this extended period and normalize
+to the level of the average of the input spectrum.
+
+.ih
+PYRAF
+Here is the setup to run deriple under Pyraf:
+.nf
+
+    1) start pyraf
+    2) # Set deripplepath to where the deripple.py module is
+       # where the module is located
+       set deripplepath=<some_path>/deripple/
+    3) # Define the pyraf task
+       task deripple = deripplepath$deripple.cl
+
+    4) # Load the task into the pyraf environment
+      deripple
+
+    5) # Run the task
+      deripple(infile='data/xobj_comb.fits',outfile='out.fits',
+               start=550 ,end=610 ,period=2)
+.fi
+
+
+.ih
+EXAMPLES
+1. To deripple gnirs.fits and create gnirs_clean.fits as output MEF file.
+.sp
+.nf
+   gnris > deripple "data/xobj_comb.fits" "outt.fits" 550 610 2
+.fi
+.endhelp

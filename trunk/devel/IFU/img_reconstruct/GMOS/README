@@ -1,0 +1,13 @@
+The gmos_ifu_data.py currently (2013-05-23) only contains information for GMOS-N
+EEV CCDs. A slight offset for the e2vDD CCDs is required (iirc - see GACQ for
+details). I'm not sure if it works for e2vDDs out of the box - there may be some
+image processing required. For example, overscan correction, trimming and
+tiling (into CCDs or into the entire detector?).
+
+Information for GMOS-S EEV is required.
+
+Eventually we'll need information for the Hamamatsu CCDs. Assuming and image
+processing that is required for the e2vDD CCDs is done using the recipe system
+then the image processing required for the Hamamatsu CCDs will be handled there
+and should only require an update of the gmos_ifu_data.py (or similar) to
+define the location of the fibers.

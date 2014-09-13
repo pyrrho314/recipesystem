@@ -1,0 +1,477 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>calculateZeropoint &mdash; fluxcal v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fluxcal v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for calculateZeropoint</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">import</span> <span class="nn">pyfits</span> <span class="kn">as</span> <span class="nn">pf</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pyraf</span> <span class="kn">import</span> <span class="n">iraf</span>
+<span class="kn">from</span> <span class="nn">pyraf.iraf</span> <span class="kn">import</span> <span class="n">images</span><span class="p">,</span><span class="n">noao</span><span class="p">,</span><span class="n">digiphot</span><span class="p">,</span><span class="n">apphot</span><span class="p">,</span><span class="n">daofind</span><span class="p">,</span><span class="n">tables</span>
+<span class="kn">from</span> <span class="nn">astrodata</span> <span class="kn">import</span> <span class="n">AstroData</span>
+<span class="kn">from</span> <span class="nn">astrodata.adutils</span> <span class="kn">import</span> <span class="n">gemLog</span>
+
+<div class="viewcode-block" id="CalculateZeropoint"><a class="viewcode-back" href="../scripts.html#calculateZeropoint.CalculateZeropoint">[docs]</a><span class="k">class</span> <span class="nc">CalculateZeropoint</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      **Syntax**</span>
+<span class="sd">        zp = calculateZeropoint.CalculateZeropoint(</span>
+<span class="sd">             ad, logLevel=6, logfile=&#39;&#39;, zplogfile=&#39;ZPcorr.log&#39;, extinction=None)</span>
+
+<span class="sd">      :param ad:  AstroData object containing a FITS hdulist with at least one</span>
+<span class="sd">                    image extension with EXTNAME=&#39;SCI&#39; in the extension header.</span>
+<span class="sd">      :type ad: AstroData object</span>
+<span class="sd">      :param logLevel: Verbose level</span>
+<span class="sd">      :type logLevel: integer,default is 6.</span>
+<span class="sd">      :param logfile: log file name to replace the default value</span>
+<span class="sd">      :type logfile: String. Default value is &#39;calculateZeropoint.log&#39;</span>
+<span class="sd">      :param zplogfile: log file containing Zero Point correction information</span>
+<span class="sd">      :type zplogfile: Filename with default value &#39;ZPcorr.log&#39;</span>
+<span class="sd">      :param extinction: extinction correction coefficient if the image is not Gemini.</span>
+<span class="sd">      :type extinction: Float [None].    </span>
+<span class="sd">  </span>
+<span class="sd">      **Description.**</span>
+<span class="sd">      Zero Point correction Calculation.</span>
+
+<span class="sd">      - Input Image FITS file with one or more SCI extensions</span>
+<span class="sd">        having table extensions created with detectSources and </span>
+<span class="sd">        addReferenceCatalogs script.</span>
+<span class="sd">      - Read FITS table extension(S) with extname &#39;OBJCAT&#39;</span>
+<span class="sd">        containing columns &#39;refid&#39; and &#39;refmag&#39; with at least</span>
+<span class="sd">        one data point. These have the reference standard object name</span>
+<span class="sd">        and magnitudes for the filter used in the exposure.</span>
+<span class="sd">      - Each x,y position  from OBJCAT containing a non-empty standard</span>
+<span class="sd">        in &#39;refid&#39; are used to create a text file &#39;ZPcoo&#39; in the working</span>
+<span class="sd">        directory.</span>
+<span class="sd">      - Call iraf.imexam to get FWHM</span>
+<span class="sd">      - Call iraf.apphot.phot to get Flux, and iMag (instrumental magnitude)</span>
+<span class="sd">      - Zero point correction: ( &#39;k&#39; is  the extinction coefficient)</span>
+
+<span class="sd">            ZPCorr = Reference_Magnitude - [iMag - k*(airmass-1)]</span>
+<span class="sd">      - Image Quality (IQ) is calculated as:</span>
+
+<span class="sd">            Seeing = FWHM*pixel_scale</span>
+
+<span class="sd">            IQ = [mean(Seeing) / (airmass**0.6)]</span>
+<span class="sd">      - Append keywords ZP_CORR, ZP_ERROR, IMAGE_IQ</span>
+
+<span class="sd">      ERROR Propagation:</span>
+
+<span class="sd">      - ZP_ERROR: At this time only the GS &#39;smith.cat&#39; has error values</span>
+<span class="sd">        for each magnitude. In the meantime we only calculate the standard</span>
+<span class="sd">        deviation of the ZPcorr array and assign it to ZP_ERROR.</span>
+
+<span class="sd">      Output file:</span>
+
+<span class="sd">      - ZPcorr.log is the filename to append the new ZP values:</span>
+<span class="sd">        &quot;ZPCorr  ZPerror IQ     Sample Filter  Date_time&quot;. </span>
+
+<span class="sd">      **Example**</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; ad = Astrodata(&#39;corr_mrgN20100402S0047.fits&#39;)</span>
+<span class="sd">      &gt;&gt;&gt; ad.info()    # It should show tables OBJCAT and REFCAT</span>
+<span class="sd">      &gt;&gt;&gt; czp = calculateZeropoint.CalculateZeropoint(ad)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ad</span><span class="p">,</span> <span class="n">logLevel</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">zplogfile</span><span class="o">=</span><span class="s">&#39;ZPcorr.log&#39;</span><span class="p">,</span> <span class="n">extinction</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">logfile</span><span class="p">:</span>
+            <span class="n">logfile</span> <span class="o">=</span> <span class="s">&#39;calculateZeropoint.log&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">gemLog</span><span class="o">.</span><span class="n">getGeminiLog</span><span class="p">(</span><span class="n">logName</span><span class="o">=</span><span class="n">logfile</span><span class="p">,</span> <span class="n">logLevel</span><span class="o">=</span><span class="n">logLevel</span><span class="p">)</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">defaultCategory</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s">&#39;ALL&#39;</span><span class="p">,</span><span class="n">category</span><span class="o">=</span><span class="s">&#39;calczp&#39;</span><span class="p">)</span>
+
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">outad</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+        <span class="n">outad</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;zpcalc_&#39;</span><span class="o">+</span><span class="n">basename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outad</span> <span class="o">=</span> <span class="n">outad</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">zplogfile</span> <span class="o">=</span> <span class="n">zplogfile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extinction</span> <span class="o">=</span> <span class="n">extinction</span>
+
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s"> ******  CALCULATE ZERO POINT CORRECTION for: </span><span class="si">%s</span><span class="s">.  *********&quot;</span><span class="o">%</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">runZP</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="n">extname</span> <span class="o">=</span> <span class="s">&#39;OBJCAT&#39;</span>
+
+        <span class="n">outad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outad</span>
+  
+        <span class="c"># Check if OBJCAT extension is in the file:</span>
+
+        <span class="n">ztime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+
+        <span class="c"># Open text file to append results: ZPCorr,ZPerror,IQ,Sample,Filter,Date_time</span>
+        <span class="n">zplogfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zplogfile</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">zplogfile</span><span class="p">:</span>
+            <span class="n">zplogfile</span> <span class="o">=</span> <span class="s">&#39;ZPcorr.log&#39;</span>
+        <span class="n">zplog</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">zplogfile</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+       
+        <span class="k">if</span> <span class="n">zplog</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">zplog</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;# ZPCorr  ZPerror IQ     Sample Filter  Date_time</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+            
+
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">outad</span><span class="p">[</span><span class="s">&#39;OBJCAT&#39;</span><span class="p">]:</span>
+
+            <span class="n">xtver</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">extver</span><span class="p">()</span>
+      
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">objx</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+            <span class="n">objy</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+            <span class="n">stdn</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refid&#39;</span><span class="p">)</span> 
+            <span class="n">refmag</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refmag&#39;</span><span class="p">)</span>  
+            <span class="n">flux</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;flux&#39;</span><span class="p">)</span>  
+
+            <span class="n">stdn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">stdn</span><span class="p">)</span>
+
+            <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">refmag</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">999</span><span class="p">)</span>         <span class="c"># The empty value is -999</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span> <span class="s">&quot;ERROR: Calculate Zero point: No reference data found in&quot;</span> <span class="o">+</span>\
+                        <span class="s">&quot; table columns &#39;refid&#39;,&#39;refmag&#39; for extension: </span><span class="si">%d</span><span class="s">.&quot;</span> <span class="o">%</span> <span class="n">xtver</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c"># look for stdn != &#39; &#39;*stlen and write text file </span>
+            <span class="c"># ZPcoo with x,y.</span>
+
+            <span class="n">ss</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">objx</span><span class="p">[</span><span class="n">g</span><span class="p">],</span><span class="n">objy</span><span class="p">[</span><span class="n">g</span><span class="p">])</span>   <span class="c"># For ZPcoo</span>
+            <span class="n">refmag</span> <span class="o">=</span> <span class="n">refmag</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+            <span class="n">flux</span> <span class="o">=</span> <span class="n">flux</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s">&#39;ZPcoo&#39;</span><span class="p">,</span><span class="n">ss</span><span class="p">,</span><span class="n">fmt</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%.3f</span><span class="s">&#39;</span><span class="p">,</span><span class="n">delimiter</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+            
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Found </span><span class="si">%d</span><span class="s"> objects with reference magnitudes. File: </span><span class="si">%s</span><span class="s">[</span><span class="si">%d</span><span class="s">]&quot;</span><span class="o">%</span>\
+                       <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">outad</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span><span class="n">xtver</span><span class="p">))</span>
+            
+            <span class="c"># DO ZP</span>
+            
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ZPCorr</span><span class="p">,</span> <span class="n">ZPerr</span><span class="p">,</span> <span class="n">IQ</span><span class="p">,</span> <span class="n">sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_phot</span><span class="p">(</span><span class="n">outad</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="n">xtver</span><span class="p">],</span>
+                                                         <span class="n">refmag</span><span class="p">,</span> <span class="n">flux</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;***************** Error found in do_phot()&quot;</span><span class="p">)</span> 
+                <span class="k">return</span> <span class="bp">None</span>
+
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;SCI,</span><span class="si">%d</span><span class="s">: ZPCorr: </span><span class="si">%.2f</span><span class="s"> error: </span><span class="si">%.2f</span><span class="s"> IQ: </span><span class="si">%.2f</span><span class="s"> sample:</span><span class="si">%d</span><span class="s">&quot;</span><span class="o">%</span>
+                <span class="p">(</span><span class="n">xtver</span><span class="p">,</span> <span class="n">ZPCorr</span><span class="p">,</span> <span class="n">ZPerr</span><span class="p">,</span> <span class="n">IQ</span><span class="p">,</span> <span class="n">sample</span><span class="p">))</span>
+ 
+            <span class="c"># Write keyword in SCI extension</span>
+            <span class="n">outad</span><span class="o">.</span><span class="n">extSetKeyValue</span><span class="p">((</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="n">xtver</span><span class="p">),</span><span class="s">&#39;ZP_CORR&#39;</span><span class="p">,</span><span class="n">ZPCorr</span><span class="p">,</span> <span class="s">&#39;Zero Point correction&#39;</span><span class="p">)</span>
+            <span class="n">outad</span><span class="o">.</span><span class="n">extSetKeyValue</span><span class="p">((</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="n">xtver</span><span class="p">),</span><span class="s">&#39;ZP_ERROR&#39;</span><span class="p">,</span><span class="n">ZPerr</span><span class="p">,</span> <span class="s">&#39;Zero Point standard deviation&#39;</span><span class="p">)</span>
+            <span class="n">outad</span><span class="o">.</span><span class="n">extSetKeyValue</span><span class="p">((</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="n">xtver</span><span class="p">),</span><span class="s">&#39;IMAGE_IQ&#39;</span><span class="p">,</span><span class="n">IQ</span><span class="p">,</span> <span class="s">&#39;Image quality measurement&#39;</span><span class="p">)</span>
+            <span class="n">outad</span><span class="o">.</span><span class="n">extSetKeyValue</span><span class="p">((</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="n">xtver</span><span class="p">),</span><span class="s">&#39;ZPSAMPLE&#39;</span><span class="p">,</span><span class="n">sample</span><span class="p">,</span> <span class="s">&#39;ZP sample&#39;</span><span class="p">)</span>
+            
+
+            <span class="n">line</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%8.2f</span><span class="s"> </span><span class="si">%5.2f</span><span class="s"> </span><span class="si">%7.2f</span><span class="s"> </span><span class="si">%4d</span><span class="s">     </span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">) </span><span class="si">%s</span><span class="s">[SCI,</span><span class="si">%d</span><span class="s">]</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">%</span>\
+                 <span class="p">(</span><span class="n">ZPCorr</span><span class="p">,</span> <span class="n">ZPerr</span><span class="p">,</span> <span class="n">IQ</span><span class="p">,</span> <span class="n">sample</span><span class="p">,</span> <span class="n">outad</span><span class="o">.</span><span class="n">filter_name</span><span class="p">(),</span>
+                  <span class="n">ztime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">ctime</span><span class="p">(),</span> <span class="n">outad</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span><span class="n">xtver</span><span class="p">)</span>
+            <span class="n">zplog</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+            <span class="c">#pp = gp.GmosPhot()</span>
+            <span class="c">#pp.gmosPhotometry(file)</span>
+
+        <span class="k">return</span> <span class="n">outad</span>
+
+<div class="viewcode-block" id="CalculateZeropoint.do_phot"><a class="viewcode-back" href="../scripts.html#calculateZeropoint.CalculateZeropoint.do_phot">[docs]</a>    <span class="k">def</span> <span class="nf">do_phot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hdu</span><span class="p">,</span> <span class="n">refmag</span><span class="p">,</span> <span class="n">flux</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">          Run iraf.imexamine and iraf.photpars.phot.</span>
+
+<span class="sd">          INPUT:</span>
+<span class="sd">           - hdu:      ad[&#39;SCI&#39;,extver]. Astrodata Object.</span>
+<span class="sd">           - </span>
+<span class="sd">          OUTPUT:</span>
+<span class="sd">           - ZPCorr:   Median of ZP correction array</span>
+<span class="sd">           - ZPerror:  Standard deviation of ZParray values</span>
+<span class="sd">           - IQ:       Image quality. </span>
+<span class="sd">        &quot;&quot;&quot;</span>  
+
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+
+        <span class="n">filtername</span> <span class="o">=</span> <span class="n">hdu</span><span class="o">.</span><span class="n">filter_name</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">hdu</span><span class="o">.</span><span class="n">isType</span><span class="p">(</span><span class="s">&#39;GMOS_N&#39;</span><span class="p">):</span>
+            <span class="n">ExtinctionDict</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#39;g_G0301&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">14</span><span class="p">,</span> <span class="s">&#39;i_G0302&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">10</span><span class="p">,</span> <span class="s">&#39;r_G0303&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">11</span><span class="p">,</span>
+                               <span class="s">&#39;z_G0304&#39;</span><span class="p">:</span><span class="o">.</span><span class="mo">05</span><span class="p">,</span> <span class="s">&#39;u_G0308&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">42</span><span class="p">}</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">ExtinctionDict</span><span class="p">[</span><span class="n">hdu</span><span class="o">.</span><span class="n">filter_name</span><span class="p">()]</span>
+        <span class="k">elif</span> <span class="n">hdu</span><span class="o">.</span><span class="n">isType</span><span class="p">(</span><span class="s">&#39;GMOS_S&#39;</span><span class="p">):</span> 
+            <span class="n">ExtinctionDict</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#39;g_G0325&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">18</span><span class="p">,</span> <span class="s">&#39;i_G0327&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">08</span><span class="p">,</span> <span class="s">&#39;r_G0326&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">10</span><span class="p">,</span>
+                               <span class="s">&#39;z_G0328&#39;</span><span class="p">:</span><span class="o">.</span><span class="mo">05</span><span class="p">,</span> <span class="s">&#39;u_G0332&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">38</span><span class="p">}</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">ExtinctionDict</span><span class="p">[</span><span class="n">hdu</span><span class="o">.</span><span class="n">filter_name</span><span class="p">()]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extinction</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="p">:</span>
+               <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;***** IMAGE is not GEMINI image and an extinction value was not supplied.&quot;</span><span class="p">)</span>
+               <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;***** k value set to 0.0&quot;</span><span class="p">)</span>
+
+        <span class="n">exposure_time</span> <span class="o">=</span> <span class="n">hdu</span><span class="o">.</span><span class="n">exposure_time</span><span class="p">()</span>
+        <span class="n">airmass</span> <span class="o">=</span> <span class="n">hdu</span><span class="o">.</span><span class="n">airmass</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s">&#39;ZPcoo&#39;</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Cannot find file ZPcoo in &quot;</span><span class="o">+</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+            <span class="k">return</span>
+
+        <span class="c"># ZPcoo is input to imexam. Output is ZPimexam </span>
+        <span class="c">#  </span>
+        <span class="c"># Create a FITS file from the current SCI extension</span>
+        
+        <span class="n">tfile</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mktemp</span><span class="p">(</span><span class="s">&#39;.fits&#39;</span><span class="p">)</span>   
+        <span class="n">hdu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">tfile</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;ZPimexam&#39;</span><span class="p">)</span>
+            <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">images</span><span class="o">.</span><span class="n">imexam</span><span class="p">)</span>
+            <span class="n">images</span><span class="o">.</span><span class="n">imexam</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">tfile</span><span class="o">+</span><span class="s">&#39;[1]&#39;</span><span class="p">,</span> <span class="n">frame</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;ZPimexam&#39;</span><span class="p">,</span> 
+                    <span class="n">keeplog</span><span class="o">=</span><span class="s">&#39;yes&#39;</span><span class="p">,</span> <span class="n">defkey</span><span class="o">=</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="n">imagecur</span><span class="o">=</span><span class="s">&#39;ZPcoo&#39;</span><span class="p">,</span> 
+                    <span class="n">graphics</span> <span class="o">=</span><span class="s">&#39;stdgraph&#39;</span><span class="p">,</span> <span class="n">use_display</span><span class="o">=</span><span class="s">&#39;no&#39;</span><span class="p">,</span><span class="n">Stdout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;ZPinfo&#39;</span><span class="p">)</span>
+            <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">tables</span><span class="o">.</span><span class="n">tdump</span><span class="p">)</span>
+            <span class="n">tables</span><span class="o">.</span><span class="n">tdump</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="s">&#39;ZPimexam&#39;</span><span class="p">,</span> <span class="n">datafile</span><span class="o">=</span><span class="s">&#39;ZPinfo&#39;</span><span class="p">,</span> <span class="n">cdfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+                    <span class="n">pfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s">&#39;c15,c9,c10&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;do_phot:: In iraf.imexam or iraf.tdump&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c"># if object is outside GMOS FOV, the imexam will not generate a file</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s">&#39;ZPinfo&#39;</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;File ZPinfo is not in &quot;</span><span class="o">+</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+            <span class="k">return</span>
+           
+        <span class="c"># Read file and turn to floats. INDEF are turned to Nans </span>
+        <span class="n">iFWHM</span><span class="p">,</span> <span class="n">iMax</span><span class="p">,</span> <span class="n">iEllip</span> <span class="o">=</span> <span class="n">readcols2fl</span><span class="p">(</span><span class="s">&#39;ZPinfo&#39;</span><span class="p">,</span><span class="n">unpack</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+       
+        <span class="c"># After centering objects using phot, using imexam to  </span>
+        <span class="c"># determine fwhm and peak, performs additional calculations </span>
+        <span class="c"># to determine seeing and peak/coadd.</span>
+
+        <span class="c"># No ellipiticty correction needed since the images are </span>
+        <span class="c"># taken unguided and will be elliptical, aperture should be big enough.</span>
+        
+        <span class="n">aperture</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">iFWHM</span><span class="p">)</span> 
+
+        <span class="c"># setting parameters to do photometry on the object </span>
+        <span class="c"># (parameters from Inger&#39;s script)</span>
+
+        <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">datapars</span><span class="p">)</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">datapars</span><span class="o">.</span><span class="n">itime</span>     <span class="o">=</span> <span class="n">exposure_time</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">datapars</span><span class="o">.</span><span class="n">xairmass</span>  <span class="o">=</span> <span class="n">airmass</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">datapars</span><span class="o">.</span><span class="n">otime</span>     <span class="o">=</span> <span class="n">hdu</span><span class="o">.</span><span class="n">ut_time</span><span class="p">()</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">datapars</span><span class="o">.</span><span class="n">ifilter</span>   <span class="o">=</span> <span class="n">filtername</span>
+
+        <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">photpars</span><span class="p">)</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">photpars</span><span class="o">.</span><span class="n">weighting</span> <span class="o">=</span> <span class="s">&#39;constant&#39;</span>
+
+        <span class="c"># using 0 instead of 25 for final zero point calculation</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">photpars</span><span class="o">.</span><span class="n">zmag</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">fitskypars</span><span class="p">)</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">centerpars</span><span class="p">)</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">fitskypars</span><span class="o">.</span><span class="n">salgorithm</span> <span class="o">=</span> <span class="s">&#39;gauss&#39;</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">fitskypars</span><span class="o">.</span><span class="n">khist</span>      <span class="o">=</span> <span class="mi">7</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">centerpars</span><span class="o">.</span><span class="n">calgorithm</span> <span class="o">=</span> <span class="s">&#39;centroid&#39;</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">centerpars</span><span class="o">.</span><span class="n">cbox</span>       <span class="o">=</span> <span class="n">aperture</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">centerpars</span><span class="o">.</span><span class="n">maxshift</span>   <span class="o">=</span> <span class="n">aperture</span><span class="o">*.</span><span class="mi">5</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">photpars</span><span class="o">.</span><span class="n">apertures</span>    <span class="o">=</span> <span class="n">aperture</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">fitskypars</span><span class="o">.</span><span class="n">annulus</span>    <span class="o">=</span> <span class="n">aperture</span><span class="o">*</span><span class="mi">3</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">fitskypars</span><span class="o">.</span><span class="n">dannulus</span>   <span class="o">=</span> <span class="n">aperture</span>
+
+        <span class="c"># measuring photometry</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&#39;*** iraf.apphot.phot: file:&#39;</span><span class="o">+</span><span class="n">tfile</span><span class="o">+</span><span class="s">&#39;[1]&#39;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;photZP&#39;</span><span class="p">)</span>
+            <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">phot</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">tfile</span><span class="o">+</span><span class="s">&#39;[1]&#39;</span><span class="p">,</span><span class="n">coords</span><span class="o">=</span><span class="s">&#39;ZPcoo&#39;</span><span class="p">,</span><span class="n">output</span><span class="o">=</span><span class="s">&#39;photZP&#39;</span><span class="p">,</span> 
+                 <span class="n">interactive</span><span class="o">=</span><span class="s">&#39;no&#39;</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="s">&#39;no&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span> <span class="s">&quot;ERROR in iraf.apphot.phot&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;outPhotZP.tab&#39;</span><span class="p">)</span>
+        <span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">pconvert</span><span class="p">(</span><span class="n">textfile</span><span class="o">=</span><span class="s">&#39;photZP&#39;</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="s">&#39;outPhotZP.tab&#39;</span><span class="p">,</span>
+              <span class="n">fields</span><span class="o">=</span> <span class="s">&#39;FLUX,MSKY,MAG,MERR&#39;</span><span class="p">)</span>
+
+        <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;fluxZP&#39;</span><span class="p">)</span>
+        <span class="n">tables</span><span class="o">.</span><span class="n">tdump</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="s">&#39;outPhotZP.tab&#39;</span><span class="p">,</span> <span class="n">datafile</span><span class="o">=</span><span class="s">&#39;fluxZP&#39;</span><span class="p">,</span>\
+            <span class="n">cdfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span><span class="n">pfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="c"># Delete the temp file</span>
+        <span class="n">delete_file</span><span class="p">(</span><span class="n">tfile</span><span class="p">)</span>
+
+        <span class="n">iFlux</span><span class="p">,</span> <span class="n">iBG</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">merr</span> <span class="o">=</span> <span class="n">readcols2fl</span><span class="p">(</span><span class="s">&#39;fluxZP&#39;</span><span class="p">,</span><span class="n">unpack</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ 
+        <span class="c">#iMag = -2.5*np.log10(iFlux/exposure_time) - k*(airmass-1)</span>
+
+        <span class="c">#print &#39;mag::&#39;,mag</span>
+
+        <span class="n">g</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">mag</span><span class="p">)</span>
+        <span class="n">Mag</span> <span class="o">=</span> <span class="n">mag</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">-</span>  <span class="n">k</span><span class="o">*</span><span class="p">(</span><span class="n">airmass</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c">#print &#39;Mag::&#39;,Mag</span>
+        <span class="c">#print &#39;self.mag[g]::&#39;,self.refmag[g]</span>
+
+        <span class="n">nrefmag</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">refmag</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nrefmag</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">refmag</span> <span class="o">=</span> <span class="n">refmag</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">refmag</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ZP</span> <span class="o">=</span> <span class="n">refmag</span> <span class="o">-</span> <span class="n">Mag</span>
+
+            <span class="c">#print &#39;dMag::&#39;,ZPcorr</span>
+            <span class="c">#print &#39;merr::&#39;,merr</span>
+
+            <span class="n">ZPCorr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">ZP</span><span class="p">)</span>
+            <span class="n">ZPerror</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ZP</span><span class="p">)</span>
+
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;do_phot. ZP,error,filter:</span><span class="si">%.2f</span><span class="s"> </span><span class="si">%.2f</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ZPCorr</span><span class="p">,</span><span class="n">ZPerror</span><span class="p">,</span><span class="n">filtername</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ZPCorr</span> <span class="o">=</span> <span class="o">-</span><span class="mi">999</span>
+            <span class="n">ZPerror</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;do_phot. No good magnitudes to get ZP corr&#39;</span><span class="p">)</span>
+
+        <span class="n">iSeeing</span> <span class="o">=</span> <span class="n">iFWHM</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">iFWHM</span><span class="p">)]</span><span class="o">*</span><span class="n">hdu</span><span class="o">.</span><span class="n">pixel_scale</span><span class="p">()</span>
+
+        <span class="n">avgS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">iSeeing</span><span class="p">)</span>
+        <span class="n">IQ</span> <span class="o">=</span> <span class="n">avgS</span><span class="o">/</span><span class="p">(</span><span class="n">airmass</span><span class="o">**</span><span class="mf">0.6</span><span class="p">)</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">iSeeing</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Seeing Ave= </span><span class="si">%s</span><span class="s"> IQ= </span><span class="si">%s</span><span class="s"> sample=</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">avgS</span><span class="p">,</span><span class="n">IQ</span><span class="p">,</span><span class="n">sample</span><span class="p">))</span>
+
+        <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;ZPcoo&#39;</span><span class="p">)</span>
+        <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;ZPimexam&#39;</span><span class="p">)</span>
+        <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;ZPinfo&#39;</span><span class="p">)</span>
+        <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;photZP&#39;</span><span class="p">)</span>
+        <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;fluxZP&#39;</span><span class="p">)</span>
+        <span class="n">delete_file</span><span class="p">(</span><span class="s">&#39;outPhotZP.tab&#39;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">ZPCorr</span><span class="p">,</span> <span class="n">ZPerror</span> <span class="p">,</span><span class="n">IQ</span><span class="p">,</span> <span class="n">sample</span>
+</div></div>
+<div class="viewcode-block" id="delete_file"><a class="viewcode-back" href="../scripts.html#calculateZeropoint.delete_file">[docs]</a><span class="k">def</span> <span class="nf">delete_file</span><span class="p">(</span><span class="n">dfile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; deletes a list of files&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+       <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">dfile</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span> 
+       <span class="k">pass</span>
+</div>
+<span class="k">def</span> <span class="nf">unlearn_czp</span><span class="p">():</span>
+    <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">digiphot</span><span class="o">.</span><span class="n">apphot</span><span class="p">)</span>
+    <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">digiphot</span><span class="o">.</span><span class="n">daophot</span><span class="p">)</span>
+    <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">digiphot</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">phot</span><span class="p">)</span>
+    <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">digiphot</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">photpars</span><span class="p">)</span>
+    <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">digiphot</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">fitskypars</span><span class="p">)</span>
+    <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">noao</span><span class="o">.</span><span class="n">imred</span><span class="o">.</span><span class="n">irred</span><span class="o">.</span><span class="n">centerpars</span><span class="p">)</span>
+    <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">noao</span><span class="o">.</span><span class="n">imred</span><span class="o">.</span><span class="n">irred</span><span class="o">.</span><span class="n">datapars</span><span class="p">)</span>
+    <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">datapars</span><span class="p">)</span>
+    <span class="n">iraf</span><span class="o">.</span><span class="n">unlearn</span><span class="p">(</span><span class="n">iraf</span><span class="o">.</span><span class="n">apphot</span><span class="o">.</span><span class="n">centerpars</span><span class="p">)</span>
+
+<div class="viewcode-block" id="readcols2fl"><a class="viewcode-back" href="../scripts.html#calculateZeropoint.readcols2fl">[docs]</a><span class="k">def</span> <span class="nf">readcols2fl</span><span class="p">(</span><span class="nb">file</span><span class="p">,</span><span class="n">unpack</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span><span class="n">dval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Read columns to a float.</span>
+<span class="sd">        if INDEF replace for dval.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ss</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ll</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="nb">file</span><span class="p">):</span>
+        <span class="n">ss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ll</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">unpack</span><span class="p">:</span>
+        <span class="n">ncols</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ss</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">aa</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">ss</span><span class="p">:</span>
+            <span class="n">bb</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncols</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;INDEF&#39;</span><span class="p">:</span>
+                    <span class="n">bb</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">bb</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dval</span><span class="p">)</span>
+            <span class="n">aa</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bb</span><span class="p">)</span>
+        <span class="n">aa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">aa</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">aa</span><span class="p">[:,</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncols</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ss</span><span class="p">)</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ncprepare. Find masks center &mdash; ndoc v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="ndoc v0.1 documentation" href="../index.html" />
+    <link rel="up" title="NICI Commands" href="index.html" />
+    <link rel="next" title="ncmkflats. Create calibration files" href="ncmkflats.html" />
+    <link rel="prev" title="ncmark. Manually marks mask centers" href="ncmark.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ncmkflats.html" title="ncmkflats. Create calibration files"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ncmark.html" title="ncmark. Manually marks mask centers"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">ndoc v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">NICI Commands</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ncprepare-find-masks-center">
+<h1>ncprepare. Find masks center<a class="headerlink" href="#ncprepare-find-masks-center" title="Permalink to this headline">¶</a></h1>
+<p><strong>ncprepare(inputs oprefix=&#8217;n&#8217; idir=&#8217;&#8217; odir=&#8217;&#8217; fdir=&#8217;&#8217; fsuffix=&#8217;&#8217; dobadpix=True clobber=False logfile=&#8217;&#8217; verbose=False)</strong></p>
+<blockquote>
+Ncprepare is a Python script that takes raw NICI data with 2 FITS extensions
+and calculates the center of each mask -interactively if necessary, adding
+these values to the header. It will do this after the frames are flat fielded
+and the blue frame is registered to the red frame coordinate system. The frames
+are also shifted so that the mask centers are at (512,512). This
+is a require step before running <strong>ncscience</strong>.</blockquote>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><dl class="first docutils">
+<dt><em>inputs</em></dt>
+<dd><p class="first">A input list of FITS files to process. This list can a Unix wildcard pathname, e.g. * .fits, root23[2-9].fits, root??.fits or a &#64; list, e.g. &#64;file.lis, where &#8216;file.lis&#8217; is a text file with a list of FITS files, one file per line or a plain list of FITS filenames separated by commas.</p>
+<p class="last"><strong>NOTE</strong> If you ran the task <strong>ncmark</strong> with these input files then you should input the output files as input in this script. The script will read the <strong>x and y centers</strong> from the headers.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>oprefix</em></dt>
+<dd><p class="first last">Default value is &#8216; n&#8217;. Is the prefix used for the output filenames.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>idir</em></dt>
+<dd><p class="first last">Default is current directory. Directory pathname where the input files reside.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>odir</em></dt>
+<dd><p class="first last">Default is current directory. Directory pathname to put the output FITS files.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>fdir</em></dt>
+<dd><p class="first last">Directory name where the flats are. The files are: flats_red_&lt;fsuffix&gt;.fits, flats_blue_&lt;fsuffix&gt;.fits, dark_red_&lt;fsuffix&gt;.fits and dark_blue_&lt;fsuffix&gt;.fits.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>fsuffix</em></dt>
+<dd><p class="first last">Suffix used by the Calibration files (ncmkflats). If default it will used the
+<em>suffix</em> value.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>dobadpix</em></dt>
+<dd><p class="first last">Default value is True. Correct badpixels the best we can.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>clobber</em></dt>
+<dd><p class="first last">Default value is False. Set to True to overwrite.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>logfile</em></dt>
+<dd><p class="first last">Log filename to hold the script messages. The default name is <em>gemini.log</em></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>verbose</em></dt>
+<dd><p class="first last">Default value is False. If True the information goes to the terminal as well.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Mask Centroid notes</strong></p>
+<blockquote>
+Mask centroid is done automatically and the 2 FITS header of the output FITS file will have XCEN and YCEN keyword with its coordinates. If the finding algorithm fails then ncprepare will go into &#8220;interactive&#8221; mode using DS9 to display the frame.</blockquote>
+<ol class="arabic simple">
+<li>Mark the center with left button, then hit &#8216;q&#8217; to continue or &#8216;s&#8217; to skip this frame.</li>
+<li>The frame is displayed again but at higher resolution. Mark again and press &#8216;q&#8217; to continue.</li>
+</ol>
+<p><strong>Examples</strong></p>
+<ol class="arabic">
+<li><p class="first">ncprepare &#8216;<a href="#id1"><span class="problematic" id="id2">*</span></a>.fits&#8217; &#8211;odir=&#8217;/data&#8217; &#8211;fdir=/data/flats &#8211;fsuffix=S20100111</p>
+<p>Prepare all the FITS files in the current directory, find the mask center
+and update the headers. Write the output files in &#8216;/data&#8217;. The &#8216;Flats&#8217; files
+are in &#8216;/data/flats&#8217; and their suffix is &#8216;S20100111&#8217;.</p>
+</li>
+<li><p class="first">ncprepare &#64;niciFiles.lis idir=&#8217;/data/20090312/&#8217; odir=&#8217;/data/reduced&#8217; fdir=/data/flats fsuffix=S20100111 clobber=yes (Pyraf mode)</p>
+</li>
+<li><p class="first">ncprepare &#64;niciFiles.lis &#8211;idir=&#8217;/data/20090312/&#8217; &#8211;odir=&#8217;/data/reduced&#8217; &#8211;fdir=/data/flats &#8211;fsuffix=S20100111  &#8211;clobber (Unix mode)</p>
+<p>The input FITS files are in the list file &#8216;niciFiles.lis&#8217; as one
+filename per line. You can put the full pathname of each file in
+which case do not specified &#8216;idir&#8217;. If only filenames are given,
+then the script will open the FITS files in &#8216;idir&#8217;. The <em>flats</em> calibration
+directory is in &#8216;/data/flats&#8217; and the suffix that thos flats have is
+&#8216;S20100111&#8217;. The output
+files are written to &#8216;odir&#8217; pathname. Remember that in Unix mode
+you can get the list of this script by typing &#8216;ncprepare -h&#8217;.</p>
+</li>
+</ol>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="ncmark.html"
+                                  title="previous chapter">ncmark. Manually marks mask centers</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="ncmkflats.html"
+                                  title="next chapter">ncmkflats. Create calibration files</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/commands/ncprepare.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ncmkflats.html" title="ncmkflats. Create calibration files"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ncmark.html" title="ncmark. Manually marks mask centers"
+             >previous</a> |</li>
+        <li><a href="../index.html">ndoc v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >NICI Commands</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

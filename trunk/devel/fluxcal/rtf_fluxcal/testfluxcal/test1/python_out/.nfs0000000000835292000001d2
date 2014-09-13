@@ -1,0 +1,9 @@
+2011-01-13 08:23:57,319 INFO     20- selectReferences-
+2011-01-13 08:23:57,319 INFO     20- selectReferences-  SELECT REFERENCES *******
+2011-01-13 08:23:57,445 INFO     20- selectReferences-Catalog name/home/nzarate/fluxcal/gmosn.cat
+2011-01-13 08:23:57,536 INFO     20- selectReferences-Found 1 standards for field in  gN20100930S0366.fits['SCI',1]
+2011-01-13 08:23:57,661 INFO     20- selectReferences-Table (REFCAT,1) already exits, flushing to disk.
+2011-01-13 08:23:57,850 INFO     20- selectReferences-Found 3 standards for field in  gN20100930S0366.fits['SCI',2]
+2011-01-13 08:23:57,977 INFO     20- selectReferences-Table (REFCAT,2) already exits, flushing to disk.
+2011-01-13 08:23:58,165 INFO     20- selectReferences-Found 0 standards for field in  gN20100930S0366.fits['SCI',3]
+2011-01-13 08:23:58,218 WARNING  30- selectReferences-select_reference.py  - __init__            -104 - No standard stars were found for this field.

@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>correlateWithReferenceCatalogs &mdash; fluxcal v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fluxcal v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for correlateWithReferenceCatalogs</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">import</span> <span class="nn">pyfits</span> <span class="kn">as</span> <span class="nn">pf</span>
+<span class="kn">from</span> <span class="nn">pyraf</span> <span class="kn">import</span> <span class="n">iraf</span>
+<span class="kn">from</span> <span class="nn">astrodata</span> <span class="kn">import</span> <span class="n">AstroData</span>
+<span class="kn">from</span> <span class="nn">astrodata.adutils</span> <span class="kn">import</span> <span class="n">gemLog</span>
+
+<div class="viewcode-block" id="CorrelateWithReferenceCatalogs"><a class="viewcode-back" href="../scripts.html#correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs">[docs]</a><span class="k">class</span> <span class="nc">CorrelateWithReferenceCatalogs</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      **Description**</span>
+<span class="sd">          Read Table extensions OBJCAT and REFCAT from FITS file</span>
+<span class="sd">          and writes into the columns &#39;refid&#39; and &#39;refmag&#39;.</span>
+
+<span class="sd">          Correlate the x,y positions from the field objects (OBJCATs)</span>
+<span class="sd">          with the Reference positions (REFCATs). If any common positions</span>
+<span class="sd">          are found, write their reference id and magnitudes in the </span>
+<span class="sd">          (&#39;OBJCAT&#39;,extv) table extension.</span>
+
+<span class="sd">      **Syntax**</span>
+<span class="sd">          corr = correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs </span>
+<span class="sd">               (ad, logLevel=6, delta=7, logfile=&#39;&#39;)</span>
+
+<span class="sd">      :param ad:  AstroData object containing a FITS hdulist with at least one</span>
+<span class="sd">                  image extension with EXTNAME=&#39;SCI&#39; in the extension header.</span>
+<span class="sd">      :type ad: AstroData object</span>
+<span class="sd">      :param delta: Maximum difference allow between object and reference coordinates</span>
+<span class="sd">                    positions</span>
+<span class="sd">      :type delta: Pixels, float. Default value is 6 pixels.</span>
+<span class="sd">      :param logLevel: Verbose level</span>
+<span class="sd">      :type logLevel: integer. [6]</span>
+<span class="sd">      :param logfile: log file name to replace the default value</span>
+<span class="sd">      :type logfile: String. [&#39;detectSources.log&#39;]</span>
+
+<span class="sd">      **Example**</span>
+
+<span class="sd">      &gt;&gt;&gt; ad = Astrodata(&#39;ds_rc_mrgN20100402S0047.fits&#39;)</span>
+<span class="sd">      &gt;&gt;&gt; ad.info()        # Should show OBJCAT and REFCAT extension</span>
+<span class="sd">      &gt;&gt;&gt; corr = correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs(ad)</span>
+<span class="sd">      &gt;&gt;&gt; adout = corr.runCorr()    # Will update the REFCAT extension</span>
+<span class="sd">      &gt;&gt;&gt; adout.write(&#39;corr_mrgN20100402S0047.fits&#39;)    # Save the modified file.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ad</span><span class="p">,</span> <span class="n">logLevel</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">logfile</span><span class="p">:</span>
+            <span class="n">logfile</span> <span class="o">=</span> <span class="s">&#39;selectreferences.log&#39;</span>
+
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">outad</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+        <span class="n">outad</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;corr_&#39;</span><span class="o">+</span><span class="n">basename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outad</span> <span class="o">=</span> <span class="n">outad</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">gemLog</span><span class="o">.</span><span class="n">getGeminiLog</span><span class="p">(</span><span class="n">logName</span><span class="o">=</span><span class="n">logfile</span><span class="p">,</span> <span class="n">logLevel</span><span class="o">=</span><span class="n">logLevel</span><span class="p">)</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">defaultCategory</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s">&#39;ALL&#39;</span><span class="p">,</span><span class="n">category</span><span class="o">=</span><span class="s">&#39;corrObjRef&#39;</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  ******  CORRELATE OBJECT AND REFERENCE POSITIONS for: </span><span class="si">%s</span><span class="s">.   *********&quot;</span><span class="o">%</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="n">delta</span>
+
+<div class="viewcode-block" id="CorrelateWithReferenceCatalogs.runCorr"><a class="viewcode-back" href="../scripts.html#correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs.runCorr">[docs]</a>    <span class="k">def</span> <span class="nf">runCorr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>        
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">          Match the reference position in table REFCAT with the</span>
+<span class="sd">          position in table OBJCAT. </span>
+
+<span class="sd">          This is a 2 pass algorithm.</span>
+<span class="sd">            - First it look for object positions within a radious of 50 pixels</span>
+<span class="sd">              around a reference one.</span>
+
+<span class="sd">            - Takes the median of the difference between the 2 positions and</span>
+<span class="sd">              shift the reference positions by that amount.</span>
+
+<span class="sd">            - Select the object positions within a radious of 6 pixels</span>
+<span class="sd">              around a reference one.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+
+        <span class="n">outad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outad</span>
+
+        <span class="k">for</span> <span class="n">scix</span> <span class="ow">in</span> <span class="n">outad</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">]:</span>
+            
+            <span class="n">xtver</span> <span class="o">=</span> <span class="n">scix</span><span class="o">.</span><span class="n">extver</span><span class="p">()</span>
+
+            <span class="c"># At this time there should be one (&#39;OBJCAT&#39;,extver)</span>
+            <span class="c"># and one (&#39;REFCAT&#39;,exter) table extensions to continue.</span>
+
+            <span class="n">objhdu</span> <span class="o">=</span> <span class="n">outad</span><span class="p">[</span><span class="s">&#39;OBJCAT&#39;</span><span class="p">,</span><span class="n">xtver</span><span class="p">]</span>
+            <span class="n">refhdu</span> <span class="o">=</span> <span class="n">outad</span><span class="p">[</span><span class="s">&#39;REFCAT&#39;</span><span class="p">,</span><span class="n">xtver</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">objhdu</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span> <span class="s">&#39;No OBJCAT positions found for SCI extension: </span><span class="si">%d</span><span class="s">&#39;</span><span class="o">%</span><span class="n">xtver</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">tbobj</span> <span class="o">=</span> <span class="n">objhdu</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">objx</span> <span class="o">=</span> <span class="n">tbobj</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+            <span class="n">objy</span> <span class="o">=</span> <span class="n">tbobj</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+            <span class="n">stdn</span> <span class="o">=</span> <span class="n">tbobj</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refid&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span>  <span class="ow">not</span> <span class="n">refhdu</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;No REFCAT positions found for SCI extension </span><span class="si">%d</span><span class="s">.&#39;</span><span class="o">%</span><span class="n">xtver</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">tbref</span> <span class="o">=</span> <span class="n">refhdu</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">refid</span> <span class="o">=</span> <span class="n">tbref</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refid&#39;</span><span class="p">)</span>
+            <span class="n">refx</span> <span class="o">=</span> <span class="n">tbref</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+            <span class="n">refy</span> <span class="o">=</span> <span class="n">tbref</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+            <span class="n">refmag</span> <span class="o">=</span> <span class="n">tbref</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refmag&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objx</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">refx</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">):</span>
+
+                <span class="c"># Clear these fields before writing</span>
+                <span class="n">tbobj</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refid&#39;</span><span class="p">)[:]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>      <span class="c"># clear the entries</span>
+                <span class="n">tbobj</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refmag&#39;</span><span class="p">)[:]</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">999</span><span class="p">]</span>             
+
+                <span class="n">oindx</span><span class="p">,</span><span class="n">rindx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_cxy</span><span class="p">(</span><span class="n">objx</span><span class="p">,</span><span class="n">refx</span><span class="p">,</span><span class="n">objy</span><span class="p">,</span><span class="n">refy</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span>
+                
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rindx</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span> <span class="s">&quot;INFO: no common positions found within </span><span class="se">\</span>
+<span class="s">                          </span><span class="si">%d</span><span class="s"> pixels in extension: </span><span class="si">%d</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span><span class="n">xtver</span><span class="p">))</span>
+                    <span class="k">continue</span>         <span class="c"># No good reference positions found</span>
+
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&quot;Found </span><span class="si">%d</span><span class="s"> correlated positions. &quot;</span><span class="o">%</span><span class="nb">len</span><span class="p">(</span><span class="n">oindx</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">oindx</span><span class="p">,</span><span class="n">rindx</span><span class="p">):</span>
+                     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;obj:: </span><span class="si">%7.2f</span><span class="s"> </span><span class="si">%7.2f</span><span class="s"> ref:: </span><span class="si">%7.2f</span><span class="s"> </span><span class="si">%7.2f</span><span class="s">&#39;</span><span class="o">%</span>\
+                                <span class="p">(</span><span class="n">objx</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">objy</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">refx</span><span class="p">[</span><span class="n">j</span><span class="p">],</span><span class="n">refy</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span>
+
+                <span class="n">tbobj</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refid&#39;</span><span class="p">)[</span><span class="n">oindx</span><span class="p">]</span> <span class="o">=</span> <span class="n">refid</span><span class="p">[</span><span class="n">rindx</span><span class="p">]</span>
+                <span class="n">tbobj</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refmag&#39;</span><span class="p">)[</span><span class="n">oindx</span><span class="p">]</span> <span class="o">=</span> <span class="n">refmag</span><span class="p">[</span><span class="n">rindx</span><span class="p">]</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&quot;Fields &#39;refid&#39; and &#39;refmag&#39; in table&quot;</span><span class="o">+</span>\
+                 <span class="s">&quot; </span><span class="si">%s</span><span class="s">[&#39;OBJCAT&#39;,</span><span class="si">%d</span><span class="s">] updated.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">outad</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span><span class="n">xtver</span><span class="p">))</span>
+    
+        <span class="k">return</span> <span class="n">outad</span>     <span class="c"># Return the modified ad.</span>
+</div>
+<div class="viewcode-block" id="CorrelateWithReferenceCatalogs.match_cxy"><a class="viewcode-back" href="../scripts.html#correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs.match_cxy">[docs]</a>    <span class="k">def</span> <span class="nf">match_cxy</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xx</span><span class="p">,</span> <span class="n">sx</span><span class="p">,</span> <span class="n">yy</span><span class="p">,</span><span class="n">sy</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">6.5</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Match reference positions (sx,sy) with those of the </span>
+<span class="sd">            object catalog (xx,xy). </span>
+<span class="sd">            Select those that are within delta pixels from</span>
+<span class="sd">            the object positions.</span>
+
+<span class="sd">            OUTPUT:</span>
+<span class="sd">                 - obj_index: Index array of the objects matched.</span>
+
+<span class="sd">                 - ref_index: Index array of the referecences matched.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+
+        <span class="k">def</span> <span class="nf">getg</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">sx</span><span class="p">,</span> <span class="n">yy</span><span class="p">,</span> <span class="n">sy</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">6.5</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot; Return object(xx) and reference(sx) indices of</span>
+<span class="sd">                common positions.</span>
+<span class="sd">                OUTPUT</span>
+<span class="sd">                    g:    Indices of the object position common to</span>
+<span class="sd">                    r:    indices of the reference position</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">dax</span><span class="o">=</span><span class="p">[];</span> <span class="n">day</span><span class="o">=</span><span class="p">[];</span> <span class="n">r</span><span class="o">=</span><span class="p">[];</span> <span class="n">g</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sx</span><span class="p">)):</span>
+                <span class="n">gindx</span><span class="p">,</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="nb">abs</span><span class="p">(</span><span class="n">xx</span><span class="o">-</span><span class="n">sx</span><span class="p">[</span><span class="n">k</span><span class="p">])</span><span class="o">&lt;</span><span class="n">delta</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">yy</span><span class="o">-</span><span class="n">sy</span><span class="p">[</span><span class="n">k</span><span class="p">])</span><span class="o">&lt;</span><span class="n">delta</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">gindx</span><span class="p">:</span>
+                    <span class="n">dx</span> <span class="o">=</span> <span class="n">xx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">sx</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> 
+                    <span class="n">dy</span> <span class="o">=</span> <span class="n">yy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">sy</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> 
+                    <span class="n">dax</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dx</span><span class="p">);</span> <span class="n">day</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dy</span><span class="p">);</span> <span class="n">g</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="n">r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                    <span class="c">#print k,&#39;::&#39;,xx[i],yy[i],&#39; &#39;,&#39;(%.2f %.2f)&#39;%(dx,dy),i</span>
+
+            <span class="n">mx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dax</span><span class="p">))</span>
+            <span class="n">my</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">day</span><span class="p">))</span>
+            
+            <span class="c">#print &#39;\n&#39;</span>
+            
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">g</span><span class="p">),</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r</span><span class="p">),</span><span class="n">mx</span><span class="p">,</span><span class="n">my</span> 
+
+
+        <span class="c"># Select only those standards with less than 10 pixels from objects.</span>
+        <span class="c"># Get the median values (mx,my) of the differences and add these</span>
+        <span class="c"># to the standard positions.</span>
+
+        <span class="c">#NOTE: We are setting a large delta here, we would need to see</span>
+        <span class="c">#      median 1st...</span>
+
+        <span class="n">ig</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">mx</span><span class="p">,</span><span class="n">my</span> <span class="o">=</span> <span class="n">getg</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">sx</span><span class="p">,</span> <span class="n">yy</span><span class="p">,</span> <span class="n">sy</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&#39;Median differences (x,y):</span><span class="si">%.2f</span><span class="s"> </span><span class="si">%.2f</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">mx</span><span class="p">,</span><span class="n">my</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ig</span><span class="p">,</span><span class="n">r</span>
+
+        <span class="c"># Now shift reference position by adding the median of the</span>
+        <span class="c"># differences. The standards are now closer to the object positions.</span>
+        <span class="n">sx</span> <span class="o">=</span> <span class="n">sx</span> <span class="o">+</span> <span class="n">mx</span>   
+        <span class="n">sy</span> <span class="o">=</span> <span class="n">sy</span> <span class="o">+</span> <span class="n">my</span>
+
+        <span class="c"># Select only those that are closer than delta or default(6.5) pixels.</span>
+        <span class="n">xxx</span> <span class="o">=</span> <span class="n">xx</span><span class="p">[</span><span class="n">ig</span><span class="p">];</span> <span class="n">yyy</span> <span class="o">=</span> <span class="n">yy</span><span class="p">[</span><span class="n">ig</span><span class="p">]</span> 
+        <span class="n">g</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">mx</span><span class="p">,</span><span class="n">my</span> <span class="o">=</span> <span class="n">getg</span><span class="p">(</span><span class="n">xxx</span><span class="p">,</span> <span class="n">sx</span><span class="p">,</span> <span class="n">yyy</span><span class="p">,</span> <span class="n">sy</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ig</span><span class="p">[</span><span class="n">g</span><span class="p">],</span><span class="n">r</span>
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

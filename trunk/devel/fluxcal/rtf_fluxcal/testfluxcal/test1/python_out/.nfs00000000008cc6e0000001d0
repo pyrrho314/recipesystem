@@ -1,0 +1,60 @@
+2011-01-11 17:45:34,372 INFO     20- calczp    -
+2011-01-11 17:45:34,372 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-11 17:45:34,498 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-11 17:58:12,212 INFO     20- calczp    -
+2011-01-11 17:58:12,212 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-11 17:58:12,337 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-11 17:59:45,825 INFO     20- calczp    -
+2011-01-11 17:59:45,825 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-11 17:59:45,950 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 08:42:52,602 INFO     20- calczp    -
+2011-01-12 08:42:52,602 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 08:42:52,956 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 08:43:12,852 INFO     20- calczp    -
+2011-01-12 08:43:12,852 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 08:43:12,975 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 08:44:45,130 INFO     20- calczp    -
+2011-01-12 08:44:45,130 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 08:44:45,254 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 08:52:42,501 INFO     20- calczp    -
+2011-01-12 08:52:42,501 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 08:52:42,625 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 08:53:13,133 INFO     20- calczp    -
+2011-01-12 08:53:13,133 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 08:53:13,260 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 08:53:48,346 INFO     20- calczp    -
+2011-01-12 08:53:48,346 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 08:53:48,470 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 09:06:31,673 INFO     20- calczp    -
+2011-01-12 09:06:31,673 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 09:06:31,797 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 09:06:33,351 INFO     20- calczp    -*** iraf.apphot.phot: file:mgS20101214S0041.fits[1]
+2011-01-12 09:06:33,354 ERROR    40- calczp    -calczp.py            - do_phot             -253 - ERROR in iraf.apphot.phot
+2011-01-12 09:07:47,923 INFO     20- calczp    -
+2011-01-12 09:07:47,923 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 09:07:48,048 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 09:13:05,600 INFO     20- calczp    -
+2011-01-12 09:13:05,601 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 09:13:05,724 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 09:16:17,226 INFO     20- calczp    -
+2011-01-12 09:16:17,226 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 09:16:17,351 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 09:16:18,668 INFO     20- calczp    -*** iraf.apphot.phot: file:mgS20101214S0041.fits[1]
+2011-01-12 09:16:18,712 ERROR    40- calczp    -calczp.py            - do_phot             -255 - ERROR in iraf.apphot.phot
+2011-01-12 09:17:08,663 INFO     20- calczp    -
+2011-01-12 09:17:08,663 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 09:17:08,786 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 09:17:45,382 INFO     20- calczp    -
+2011-01-12 09:17:45,382 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 09:17:45,506 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 09:17:46,825 INFO     20- calczp    -*** iraf.apphot.phot: file:mgS20101214S0041.fits[1]
+2011-01-12 09:17:47,529 INFO     20- calczp    -do_phot. ZP,error,filter:27.67 0.16 z_G0328
+2011-01-12 09:17:47,529 INFO     20- calczp    -Seeing Ave= 0.8310904 IQ= 0.748721128631 sample=25
+2011-01-12 09:17:47,530 INFO     20- calczp    -SCI,1: ZPCorr: 27.67 error: 0.16 IQ: 0.75 sample:25
+2011-01-12 11:31:15,090 INFO     20- calczp    -
+2011-01-12 11:31:15,090 INFO     20- calczp    -    CALCULATE ZERO POINT CORRECTION   *********
+2011-01-12 11:31:15,214 INFO     20- calczp    -Found 25 objects with reference magnitudes. File: mgS20101214S0041.fits[1]
+2011-01-12 11:31:16,527 INFO     20- calczp    -*** iraf.apphot.phot: file:mgS20101214S0041.fits[1]
+2011-01-12 11:31:17,131 INFO     20- calczp    -do_phot. ZP,error,filter:27.67 0.16 z_G0328
+2011-01-12 11:31:17,132 INFO     20- calczp    -Seeing Ave= 0.8310904 IQ= 0.748721128631 sample=25
+2011-01-12 11:31:17,132 INFO     20- calczp    -SCI,1: ZPCorr: 27.67 error: 0.16 IQ: 0.75 sample:25

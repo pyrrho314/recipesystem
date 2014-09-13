@@ -1,0 +1,139 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>&lt;no title&gt; &mdash; Wavelength calibration user guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wavelength calibration user guide 0.1 documentation" href="index.html" />
+    <link rel="next" title="Wavecal class" href="wavecal.html" />
+    <link rel="prev" title="Examples" href="examples.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="wavecal.html" title="Wavecal class"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <p id="functionality">Basic Functionality</p>
+<ul class="simple">
+<li>When creating a Wavecal object the following happens:</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Copies the input parameters to a dictionary &#8216;params&#8217;.</li>
+<li>Gets the input file Astrodata type.</li>
+<li>Creates an F2, GMOS, GNIRS, NIRI or NIFS object according to the instrument type.</li>
+<li>The __init__ for the instrument reads the instrument specific parameters from a dictionary &#8216;INSTRUMENT&#8217; and checks each value againts the value of &#8216;params&#8217;, replacing any value into the former that the user has provided.</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>Perform the wavelength calibration using the instrument object method &#8216;wavecal()&#8217;:</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>set_wavecal_data() sets the middle line (self.lpix) from the input image and look for the peaks pixel coordinates (self.xpeaks) up to a maximum of self.ntmax peaks.</li>
+<li>find_wavesolution() sets and run the Matching ratios algorithm to find  the correct wavelength in the reference line list (self.cuar) to a peak in the arc peaks list (self.xpeaks)</li>
+<li>Votes. The matching algorithm does several passes to each triple of arc positions. For each match a vote is added to a matrix votes[peaks,references].</li>
+<li>Fit a function to the array in votes. When all the possible passes are done in the previous step, the pairs (pixel,ref) from the votes matrix containing more than 10 votes are fit using a Legendre function of order 4.</li>
+<li>Improve the fit. For each entry in the linelist that is within the wavelength range of the input arc spectrum find the pixel position. If an arc peak is found near this peak, get its wavelength via the computed fit function and if this value of closed to the reference, then add it to the list (pix_array, user_array). Fit again.</li>
+</ul>
+</div></blockquote>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="previous chapter">Examples</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="wavecal.html"
+                        title="next chapter">Wavecal class</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/functionality.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="wavecal.html" title="Wavecal class"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Gemini Observatory.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+inputs,s,a,"",,,"Input NICI files"
+oprefix,s,h,"n",,,"Prefix for output image(s)"
+idir,s,h,"",,,"Path for input directory"
+odir,s,h,"",,,"Path for output directory"
+fdir,s,h,"",,,"Pathname for the Flats directory"
+fsuffix,s,h,"",,,"Suffix use for the Flats files"
+dobadpix,b,h,yes,,,"Correct bad pixels the best we can?"
+clobber,b,h,no,,,"Clobber output file?"
+logfile,s,h,"",,,"Log filename"
+verbose,b,h,no,,,"Verbose"
+mode,s,h,"ql",,,

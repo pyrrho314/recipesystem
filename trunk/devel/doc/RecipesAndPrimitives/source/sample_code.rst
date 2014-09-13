@@ -1,0 +1,9 @@
+Sample Code
+-------------
+
+# ADU2Electron code
+
+.. _adu2e_code:
+
+.. literalinclude:: adu2e.py
+

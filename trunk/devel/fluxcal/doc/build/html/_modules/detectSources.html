@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>detectSources &mdash; fluxcal v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fluxcal v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for detectSources</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">imp</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">import</span> <span class="nn">pyfits</span> <span class="kn">as</span> <span class="nn">pf</span>
+<span class="kn">import</span> <span class="nn">pywcs</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">astrodata</span> <span class="kn">import</span> <span class="n">AstroData</span>
+<span class="kn">from</span> <span class="nn">astrodata.adutils</span> <span class="kn">import</span> <span class="n">gemLog</span>
+<span class="kn">from</span> <span class="nn">detSources</span> <span class="kn">import</span> <span class="n">detSources</span>
+
+
+<div class="viewcode-block" id="DetectSources"><a class="viewcode-back" href="../scripts.html#detectSources.DetectSources">[docs]</a><span class="k">class</span> <span class="nc">DetectSources</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find x,y positions of all the objects in the input</span>
+<span class="sd">        image. Append a FITS table extension with position</span>
+<span class="sd">        information plus columns for standard objects to be</span>
+<span class="sd">        updated when position from addReferenceCatalogs -if any are </span>
+<span class="sd">        found for this field.</span>
+
+<span class="sd">        **Syntax:**</span>
+<span class="sd">           ds = detectSources.DetectSources( ad, logLevel=6, logfile=&#39;&#39;)</span>
+
+<span class="sd">        :param ad:</span>
+<span class="sd">              AstroData object containing a FITS hdulist with at least one</span>
+<span class="sd">              image extension with EXTNAME=&#39;SCI&#39; in the extension header.</span>
+<span class="sd">        :type ad: AstroData object</span>
+<span class="sd">        :param sigma: The mean of the background value. If nothing is passed,</span>
+<span class="sd">              detSources will run background() to determine it.</span>
+<span class="sd">        :type sigma: Number [0.0]</span>
+
+<span class="sd">        :param threshold: Threshold intensity for a point source - should generally</span>
+<span class="sd">                  be 3 or 4 sigma above background RMS&quot;[1]. It was found that 2.5</span>
+<span class="sd">                  works best for IQ source detection.</span>
+<span class="sd">        :type threshold: Number [2.5]</span>
+
+<span class="sd">        :param fwhm: FWHM to be used in the convolve filter&quot;. This ends up playing</span>
+<span class="sd">                     a factor in determining the size of the kernel put through </span>
+<span class="sd">                     the gaussian convolve.</span>
+<span class="sd">        :type fwhm: Number [5.5]</span>
+
+<span class="sd">        :param logLevel:</span>
+<span class="sd">              Verbose level</span>
+<span class="sd">        :type logLevel: integer,[6]</span>
+<span class="sd">        :param logfile: </span>
+<span class="sd">               log file name to replace the default value</span>
+<span class="sd">        :type logfile: String. [&#39;detectSources.log&#39;]</span>
+
+<span class="sd">        **INPUTS:**</span>
+<span class="sd">           An AstroData object containing an IMAGE extension with</span>
+<span class="sd">           EXTNAME value of &#39;SCI&#39; and an integer EXTVER value.</span>
+
+<span class="sd">        **OBJCAT table:**</span>
+<span class="sd">          A FITS table (&#39;OBJCAT&#39;,extver) is appended to the input </span>
+<span class="sd">          Astrodata Object. This table contains the columns:</span>
+<span class="sd">     </span>
+<span class="sd">          - &#39;id&#39;:    Unique ID. Simple running number.</span>
+<span class="sd">          - &#39;x&#39;:     x coordinate of the detected object. 1-based</span>
+<span class="sd">          - &#39;y&#39;:     x coordinate of the detected object, both x and y are</span>
+<span class="sd">                     with respect to the lower left corner. They are 1-based</span>
+<span class="sd">                     values, i.e. as in ds9.</span>
+<span class="sd">          - &#39;ra&#39;:    ra values, in degrees. Calculated from the fits header WCS</span>
+<span class="sd">          - &#39;dec&#39;:   dec values in degrees. ditto</span>
+<span class="sd">          - &#39;flux&#39;:  Flux given by the gauss fit of the object</span>
+<span class="sd">          - &#39;refid&#39;: Reference ID for the reference star found in the field</span>
+<span class="sd">          - &#39;refmag&#39;: Reference magnitude. &#39;refid&#39; and &#39;refmag&#39; will be fill</span>
+<span class="sd">                      by the &#39;correlateWithReferenceCatalogs&#39; function.       </span>
+
+<span class="sd">        **Methods:**</span>
+<span class="sd">            runDS()    - Run the object detection returning the</span>
+<span class="sd">                         astrodata object with the table.</span>
+
+<span class="sd">        **EXAMPLE**</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; ad = Astrodata(&#39;mrgN20100402S0047.fits&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ds = detectSources.DetectSources(ad)</span>
+<span class="sd">        &gt;&gt;&gt; adout = ds.runDS()</span>
+<span class="sd">        &gt;&gt;&gt; ad.info()      # will have the BINTABLE extension</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+        
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ad</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mf">5.5</span><span class="p">,</span> <span class="n">logLevel</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="s">&#39;CAL&#39;</span> <span class="ow">in</span> <span class="n">ad</span><span class="o">.</span><span class="n">types</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">,</span> <span class="s">&quot; **** AD type &#39;CAL&#39; not supported  by DetectSources****&quot;</span>
+
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">=</span> <span class="n">fwhm</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">logfile</span><span class="p">:</span>
+            <span class="n">logfile</span> <span class="o">=</span> <span class="s">&#39;detectSources.log&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">gemLog</span><span class="o">.</span><span class="n">getGeminiLog</span><span class="p">(</span><span class="n">logName</span><span class="o">=</span><span class="n">logfile</span><span class="p">,</span><span class="n">logLevel</span><span class="o">=</span><span class="n">logLevel</span><span class="p">)</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">defaultCategory</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s">&#39;ALL&#39;</span><span class="p">,</span><span class="n">category</span><span class="o">=</span><span class="s">&#39;DetecSources&#39;</span><span class="p">)</span>
+ 
+        <span class="n">outad</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+        <span class="n">outad</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;ds_&#39;</span><span class="o">+</span><span class="n">basename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outad</span> <span class="o">=</span> <span class="n">outad</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s"> ******  DETECTING  SOURCES  for: </span><span class="si">%s</span><span class="s"> *************&quot;</span><span class="o">%</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DetectSources.runDS"><a class="viewcode-back" href="../scripts.html#detectSources.DetectSources.runDS">[docs]</a>    <span class="k">def</span> <span class="nf">runDS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>        
+        <span class="sd">&quot;&quot;&quot; Do the actual object detection.</span>
+<span class="sd">            - Create the table OBJCAT</span>
+<span class="sd">            - return the output Astrodata object</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="n">extname</span> <span class="o">=</span> <span class="s">&#39;OBJCAT&#39;</span>
+
+        <span class="n">outad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outad</span>
+
+        <span class="k">for</span> <span class="n">scix</span> <span class="ow">in</span> <span class="n">outad</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">]:</span>
+
+            <span class="n">xtver</span> <span class="o">=</span> <span class="n">scix</span><span class="o">.</span><span class="n">extver</span><span class="p">()</span>
+  
+            <span class="c"># Mask the non illuminated regions.</span>
+            <span class="k">if</span> <span class="n">outad</span><span class="p">[</span><span class="s">&#39;BPM&#39;</span><span class="p">,</span><span class="n">xtver</span><span class="p">]:</span>
+                <span class="n">sdata</span> <span class="o">=</span> <span class="n">scix</span><span class="o">.</span><span class="n">data</span>
+                <span class="n">bpmdata</span> <span class="o">=</span> <span class="n">outad</span><span class="p">[</span><span class="s">&#39;BPM&#39;</span><span class="p">,</span><span class="n">xtver</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+                <span class="k">if</span> <span class="n">bpmdata</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">sdata</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>       <span class="c"># bpmdata is already trimmed.</span>
+                    <span class="k">try</span> <span class="p">:</span>                            <span class="c"># See if DATASEC is in the header</span>
+                        <span class="n">dsec</span> <span class="o">=</span> <span class="n">scix</span><span class="o">.</span><span class="n">data_section</span><span class="p">()</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;*** ERROR: DATASEC not found in SCI header.&quot;</span><span class="p">)</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;*** Cannot masked SCI: size(BPM) != size(SCI).&quot;</span><span class="o">+</span>\
+                                   <span class="s">&quot; bpmsize: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">bpmdata</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot; *** SCI data not masked.&quot;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c"># bpmdata is already trimmed.</span>
+                        <span class="n">s</span><span class="p">,</span><span class="n">e</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">dsec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">))</span>
+                        <span class="c">#Trim number of columns to match the bpm data.</span>
+                        <span class="n">sdata</span> <span class="o">=</span> <span class="n">sdata</span><span class="p">[:,</span><span class="n">s</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">e</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">bpmdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">bpmdata</span><span class="o">==</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">scix</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">sdata</span><span class="o">*</span><span class="n">bpmdata</span>
+              
+            <span class="bp">self</span><span class="o">.</span><span class="n">findObjects</span><span class="p">(</span><span class="n">scix</span><span class="p">)</span>
+
+            <span class="n">sciHeader</span> <span class="o">=</span> <span class="n">scix</span><span class="o">.</span><span class="n">header</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span> <span class="s">&quot; **** WARNING: No objects were detected: Table OBJCAT, not created&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+       
+            <span class="n">wcs</span> <span class="o">=</span> <span class="n">pywcs</span><span class="o">.</span><span class="n">WCS</span><span class="p">(</span><span class="n">sciHeader</span><span class="p">)</span>
+
+            <span class="c"># Convert pixel coordinates to world coordinates</span>
+            <span class="c"># The second argument is &quot;origin&quot; -- in this case we&#39;re declaring we</span>
+            <span class="c"># have 1-based (Fortran-like) coordinates.</span>
+
+            <span class="n">xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">),</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">radec</span> <span class="o">=</span> <span class="n">wcs</span><span class="o">.</span><span class="n">wcs_pix2sky</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">ra</span><span class="p">,</span><span class="n">dec</span> <span class="o">=</span> <span class="n">radec</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">radec</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">nobjs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ra</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Found </span><span class="si">%d</span><span class="s"> sources for field in  </span><span class="si">%s</span><span class="s">[&#39;SCI&#39;,</span><span class="si">%d</span><span class="s">]&quot;</span><span class="o">%</span>\
+                <span class="p">(</span><span class="n">nobjs</span> <span class="p">,</span><span class="n">outad</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span><span class="n">xtver</span><span class="p">))</span>
+            
+            <span class="k">if</span> <span class="n">outad</span><span class="p">[</span><span class="n">extname</span><span class="p">,</span><span class="n">xtver</span><span class="p">]:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Table already exists,updating values.&#39;</span><span class="p">)</span>
+                <span class="n">tdata</span> <span class="o">=</span> <span class="n">outad</span><span class="p">[</span><span class="n">extname</span><span class="p">,</span> <span class="n">xtver</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+                <span class="n">theader</span> <span class="o">=</span> <span class="n">outad</span><span class="p">[</span><span class="n">extname</span><span class="p">,</span> <span class="n">xtver</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+                <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">)[:]</span>    <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ra</span><span class="p">))</span>
+                <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)[:]</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span>
+                <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)[:]</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span>
+                <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;ra&#39;</span><span class="p">)[:]</span>    <span class="o">=</span> <span class="n">ra</span>
+                <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;dec&#39;</span><span class="p">)[:]</span>   <span class="o">=</span> <span class="n">dec</span>
+                <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;flux&#39;</span><span class="p">)[:]</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c">#colsdef = self.define_Table_cols(ra, dec, flux, ellip, fwhm)</span>
+                <span class="n">colsdef</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">define_Table_cols</span><span class="p">(</span><span class="n">ra</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux</span><span class="p">)</span>
+                <span class="n">tbhdu</span> <span class="o">=</span> <span class="n">pf</span><span class="o">.</span><span class="n">new_table</span><span class="p">(</span><span class="n">colsdef</span><span class="p">)</span>         <span class="c"># Creates a BINTABLE</span>
+
+                <span class="n">th</span> <span class="o">=</span> <span class="n">tbhdu</span><span class="o">.</span><span class="n">header</span>
+                
+                <span class="n">tabad</span> <span class="o">=</span> <span class="n">AstroData</span><span class="p">(</span><span class="n">tbhdu</span><span class="p">)</span>
+                <span class="n">tabad</span><span class="o">.</span><span class="n">renameExt</span><span class="p">(</span><span class="s">&quot;OBJCAT&quot;</span><span class="p">,</span> <span class="n">xtver</span><span class="p">)</span>
+            
+                <span class="n">outad</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tabad</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">outad</span>
+</div>
+<div class="viewcode-block" id="DetectSources.getBPM"><a class="viewcode-back" href="../scripts.html#detectSources.DetectSources.getBPM">[docs]</a>    <span class="k">def</span> <span class="nf">getBPM</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">userbpm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">          Get the BPM file from the flixcal directory and </span>
+<span class="sd">          return its the AstroData object.</span>
+
+<span class="sd">          :param userbpm:  BPM file suplied by the user. Its size</span>
+<span class="sd">                           should match the SCI extension image size.</span>
+
+<span class="sd">          :rparam ad: The bpm file astrodata object.</span>
+<span class="sd">          If &#39;userbpm&#39; is not empty just return its AstroData object</span>
+
+<span class="sd">          NOTE: We still need to create: bpmgmoss11_123.fits.gz   # unbinned mef files</span>
+<span class="sd">                                         bpmgmosn11_123.fits.gz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+ 
+        <span class="k">if</span> <span class="n">userbpm</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">AstroData</span><span class="p">(</span><span class="n">userbpm</span><span class="p">)</span>
+
+        <span class="n">ad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ad</span>
+
+        <span class="n">ccdsum</span> <span class="o">=</span> <span class="n">ad</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;CCDSUM&#39;</span><span class="p">)</span>
+        <span class="n">ccdsum</span> <span class="o">=</span> <span class="n">ccdsum</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">)</span>     <span class="c"># makes the string &#39;11&#39; or &#39;22&#39;</span>
+        <span class="n">nextn</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">countExts</span><span class="p">(</span><span class="s">&#39;SCI&#39;</span><span class="p">)</span>
+        <span class="n">indx</span> <span class="o">=</span> <span class="n">ccdsum</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">nextn</span><span class="p">)</span>         <span class="c"># form {11,22}1 or {11,22}3</span>
+
+        <span class="k">if</span> <span class="n">ad</span><span class="o">.</span><span class="n">isType</span><span class="p">(</span><span class="s">&#39;GMOS_S&#39;</span><span class="p">):</span>
+            <span class="n">dqfiles</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;223&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmoss22_123.fits.gz&#39;</span><span class="p">,</span><span class="s">&#39;113&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmoss11_123.fits.gz&#39;</span><span class="p">,</span>
+                       <span class="s">&#39;221&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmoss22_mosaic.fits.gz&#39;</span><span class="p">,</span><span class="s">&#39;111&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmoss11_mosaic.fits.gz&#39;</span><span class="p">}</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">dq</span> <span class="o">=</span> <span class="n">dqfiles</span><span class="p">[</span><span class="n">indx</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;getBPM: CCDSUM value not supported with BPM: &#39;</span><span class="o">+</span><span class="n">indx</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">elif</span> <span class="n">ad</span><span class="o">.</span><span class="n">isType</span><span class="p">(</span><span class="s">&#39;GMOS_N&#39;</span><span class="p">):</span>
+            <span class="n">dqfiles</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;223&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmosn22_123.fits.gz&#39;</span><span class="p">,</span><span class="s">&#39;113&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmosn11_123.fits.gz&#39;</span><span class="p">,</span>
+                       <span class="s">&#39;221&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmosn22_mosaic.fits.gz&#39;</span><span class="p">,</span><span class="s">&#39;111&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmosn11_mosaic.fits.gz&#39;</span><span class="p">}</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">dq</span> <span class="o">=</span> <span class="n">dqfiles</span><span class="p">[</span><span class="n">indx</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;getBPM: CCDSUM value not supported with BPM: &#39;</span><span class="o">+</span><span class="n">indx</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+        <span class="c"># Find where are these BPM files</span>
+
+        <span class="n">fp</span><span class="p">,</span> <span class="n">pathname</span><span class="p">,</span> <span class="n">description</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">find_module</span><span class="p">(</span><span class="s">&#39;detectSources&#39;</span><span class="p">)</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pathname</span><span class="p">),</span><span class="n">dq</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">AstroData</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="DetectSources.findObjects"><a class="viewcode-back" href="../scripts.html#detectSources.DetectSources.findObjects">[docs]</a>    <span class="k">def</span> <span class="nf">findObjects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hdu</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Small layer to call detSources.</span>
+<span class="sd">            returns x,y,flux</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="n">objs</span> <span class="o">=</span> <span class="n">detSources</span><span class="p">(</span><span class="n">hdu</span><span class="o">=</span><span class="n">hdu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span>
+                          <span class="n">fwhm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">objs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">flux</span> <span class="o">=</span> <span class="p">[],[],[]</span>
+            <span class="k">return</span> 
+         
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">flux</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">objs</span><span class="p">)[:,</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]]</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;  ... found </span><span class="si">%d</span><span class="s"> objects.&quot;</span><span class="o">%</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="DetectSources.define_Table_cols"><a class="viewcode-back" href="../scripts.html#detectSources.DetectSources.define_Table_cols">[docs]</a>    <span class="k">def</span> <span class="nf">define_Table_cols</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ra</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">flux</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">          Define table columns for OBJCAT table</span>
+
+<span class="sd">          **INPUT:**</span>
+<span class="sd">             - ra,dec:    ra,dec array from x,y position in the image field.</span>
+
+<span class="sd">             - self.x, self.y and self.flux</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">pyfits</span> <span class="kn">import</span> <span class="n">Column</span>
+
+        <span class="c"># Define columns</span>
+
+
+        <span class="n">nlines</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ra</span><span class="p">)</span>
+
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;id&#39;</span><span class="p">,</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;J&#39;</span><span class="p">,</span><span class="n">array</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">nlines</span><span class="p">))</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span><span class="n">array</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">c3</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span><span class="n">array</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">c4</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;ra&#39;</span><span class="p">,</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span><span class="n">array</span><span class="o">=</span><span class="n">ra</span><span class="p">)</span>
+        <span class="n">c5</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;dec&#39;</span><span class="p">,</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span><span class="n">array</span><span class="o">=</span><span class="n">dec</span><span class="p">)</span>
+        <span class="n">c6</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;flux&#39;</span><span class="p">,</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span><span class="n">array</span><span class="o">=</span><span class="n">flux</span><span class="p">)</span>
+        <span class="c">#c7 = Column (name=&#39;ellip&#39;,format=&#39;E&#39;,array=ellip)</span>
+        <span class="c">#c8 = Column (name=&#39;fwhm&#39;,format=&#39;E&#39;,array=fwhm)</span>
+        <span class="n">c7</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;refid&#39;</span><span class="p">,</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;22A&#39;</span><span class="p">,</span><span class="n">array</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">nlines</span><span class="p">)</span> <span class="c"># Placeholders</span>
+        <span class="n">c8</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;refmag&#39;</span><span class="p">,</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span><span class="n">array</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">999</span><span class="p">]</span><span class="o">*</span><span class="n">nlines</span><span class="p">)</span>  <span class="c"># for corr</span>
+
+        <span class="c">#return pf.ColDefs([c1,c2,c3,c4,c5,c6,c7,c8,c9,c10])</span>
+        <span class="k">return</span> <span class="n">pf</span><span class="o">.</span><span class="n">ColDefs</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span><span class="n">c2</span><span class="p">,</span><span class="n">c3</span><span class="p">,</span><span class="n">c4</span><span class="p">,</span><span class="n">c5</span><span class="p">,</span><span class="n">c6</span><span class="p">,</span><span class="n">c7</span><span class="p">,</span><span class="n">c8</span><span class="p">])</span>
+</div></div>
+<span class="k">def</span> <span class="nf">delete_file</span><span class="p">(</span><span class="nb">file</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="nb">file</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">file</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

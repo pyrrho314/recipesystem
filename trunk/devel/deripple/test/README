@@ -1,0 +1,4 @@
+
+tests.csh            -- Run under the Unis shell
+tests_interactive.py -- Run under the python shell
+tests_pyraf.cl       -- Run under Pyraf

@@ -1,0 +1,172 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Fitting the ARC image &mdash; Wavelength calibration user guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wavelength calibration user guide 0.1 documentation" href="index.html" />
+    <link rel="next" title="Linearize an image" href="linearize.html" />
+    <link rel="prev" title="Quick Wavecal example" href="quickExample.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="linearize.html" title="Linearize an image"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="quickExample.html" title="Quick Wavecal example"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="fitting-the-arc-image">
+<span id="imagefit"></span><h1>Fitting the ARC image<a class="headerlink" href="#fitting-the-arc-image" title="Permalink to this headline">¶</a></h1>
+<p>We want to have a 2D function that allows us to get wavelengths in any area of the ARC image. The procedure to fit a function to the image is:</p>
+<ul class="simple">
+<li>Starting from the middle row find the arcs peaks and assign to each of these a wavelength that has already been found with the wavecal().</li>
+<li>Step a number of rows (nsum as input parameter), find the peaks and associate the same wavelengths to the same peaks given that a given arc has the same wavelength at any row. Do this all the rows in the image.</li>
+<li>Now fit a polynomial to each of the arc&#8217;s tuples (xpeaks_array, row_array).</li>
+<li>Using these arc functions evaluate the pixel positions for a number or rows across the image and evaluate the form a triple (x,y,wavelength) for each point.</li>
+<li>Fit a 3D function to these triples.</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><pre>Example
+-------
+
+Given an ARC image determine the wavelengths of a
+region in the image.
+
+from astrodata import AstroData
+
+from wavecal import Wavecal
+
+ad = AstroData('N20011112S064.fits')
+
+wc = Wavecal(ad)
+
+# Fit a 3D Chebyshev function of order 4.
+wc.fit_image()
+
+# Compute wavelengths from a set of points for row 500.
+# The eval function is of the form 'w = wc.zz(x_array, y_array)'
+
+print wc.zz([2000,2010,2030], 500)
+
+# Verify than the wavelength is the same along an ARC. The attribute to
+# calculate pixel positions for peaks is the list 'zpeaks'.
+
+ny,nx = wc.imdata.shape
+yy = range(10,ny,50)
+
+# Calculate the pixel coordinates for these rows for arc number 6
+xx = wc.zpeaks[5](yy)
+
+# Display the wavelengths.
+print wc.zz(xx,yy)
+
+# Plot the fitted arcs.
+wc.plot_arcs()</pre>
+</div>
+<div class="figure">
+<img alt="_images/plot_arcs.png" src="_images/plot_arcs.png" />
+</div>
+<div class="highlight-python"><pre>The plot above shows the fit function for each of the arcs in the image.
+Notice that not all arcs are shown since some of the fits have been rejected
+following a 3-sigma rejection schema for each of the function coefficients.</pre>
+</div>
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="quickExample.html"
+                        title="previous chapter">Quick Wavecal example</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="linearize.html"
+                        title="next chapter">Linearize an image</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/imagefit.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="linearize.html" title="Linearize an image"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="quickExample.html" title="Quick Wavecal example"
+             >previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Gemini Observatory.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

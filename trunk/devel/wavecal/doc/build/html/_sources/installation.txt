@@ -1,0 +1,10 @@
+.. _installation:
+
+Installation
+-------------
+
+The Wavecal class resides on SVN under *trunk/devel/wavecal*; so please
+update from the repository and add waveval to PYTHONPATH.
+
+- add (...)/trunk/devel/wavecal  to your PYTHONPATH.  Where (...) is the path to *trunk*.
+

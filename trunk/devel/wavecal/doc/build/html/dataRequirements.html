@@ -1,0 +1,129 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Requirements &mdash; Wavelength calibration user guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wavelength calibration user guide 0.1 documentation" href="index.html" />
+    <link rel="next" title="Quick Wavecal example" href="quickExample.html" />
+    <link rel="prev" title="Input data" href="inputData.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="quickExample.html" title="Quick Wavecal example"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="inputData.html" title="Input data"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="requirements">
+<span id="datarequirements"></span><h1>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h1>
+<p>All ARC spectra should be properly prepared with the SCI header containing a rough estimation of the WCS. The <strong>SCI</strong> header should contain (for j 1 and 2):</p>
+<ul class="simple">
+<li>CTYPEj</li>
+<li>CRPIXj</li>
+<li>CRVALj</li>
+<li>CDj_j</li>
+</ul>
+<p>Example</p>
+<div class="highlight-python"><pre>CTYPE1  = 'LINEAR  '           / R.A. in tangent plane projection
+CTYPE2  = 'LINEAR  '           / DEC. in tangent plane projection
+CRPIX1  =                1554. / Ref pix of axis 1
+CRPIX2  =                   1. / Ref pix of axis 2
+CRVAL1  =                6700. / RA at Ref pix in decimal degrees
+CRVAL2  =                   1. / DEC at Ref pix in decimal degrees
+CD1_1   =     -1.3743457180537 / WCS matrix element 1 1
+CD2_2   =                   1. / WCS matrix element 2 2</pre>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="inputData.html"
+                        title="previous chapter">Input data</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="quickExample.html"
+                        title="next chapter">Quick Wavecal example</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/dataRequirements.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="quickExample.html" title="Quick Wavecal example"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="inputData.html" title="Input data"
+             >previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Gemini Observatory.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

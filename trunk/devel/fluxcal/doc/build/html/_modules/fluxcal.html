@@ -1,0 +1,389 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fluxcal &mdash; fluxcal v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fluxcal v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fluxcal</h1><div class="highlight"><pre>
+<span class="c">#! /usr/local/bin/python</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">imp</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">from</span> <span class="nn">pyraf</span> <span class="kn">import</span> <span class="n">iraf</span>
+<span class="c">#from pyraf.iraf import display,tvmark</span>
+<span class="kn">from</span> <span class="nn">pyraf.iraf</span> <span class="kn">import</span> <span class="n">tvmark</span>
+<span class="kn">from</span> <span class="nn">astrodata</span> <span class="kn">import</span> <span class="n">AstroData</span>
+<span class="kn">from</span> <span class="nn">astrodata.adutils</span> <span class="kn">import</span> <span class="n">gemLog</span>
+<span class="kn">import</span> <span class="nn">gempy.science.geminiScience</span> <span class="kn">as</span> <span class="nn">gs</span>
+<span class="c">#import geminiScience as gs</span>
+
+<span class="kn">from</span> <span class="nn">detectSources</span> <span class="kn">import</span> <span class="n">DetectSources</span>
+<span class="kn">from</span> <span class="nn">addReferenceCatalogs</span> <span class="kn">import</span> <span class="n">AddReferenceCatalogs</span>
+<span class="kn">from</span> <span class="nn">correlateWithReferenceCatalogs</span>  <span class="kn">import</span> <span class="n">CorrelateWithReferenceCatalogs</span>
+<span class="kn">from</span> <span class="nn">calculateZeropoint</span> <span class="kn">import</span> <span class="n">CalculateZeropoint</span>
+
+
+<div class="viewcode-block" id="Fluxcal"><a class="viewcode-back" href="../scripts.html#fluxcal.Fluxcal">[docs]</a><span class="k">class</span> <span class="nc">Fluxcal</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">      Test Script to drive</span>
+<span class="sd">        - class DetectSources. Creates [OBJCAT,ext] table extension.</span>
+<span class="sd">        - class SelectReferences. Create [REFCAT,ext] table extension.</span>
+<span class="sd">        - class CorrelateObjRef. Look for common position in OBJCAT and REFCAT tables</span>
+<span class="sd">        - class CalculateZP. Calculate ZP correction from common position array.</span>
+
+<span class="sd">      ::</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">          import flux_cal as fc</span>
+<span class="sd">          from astrodata import AstroData</span>
+
+<span class="sd">          ad = AstroData(&#39;zzz.fits&#39;)</span>
+<span class="sd">          ff = Fluxcal(ad)    # Create object</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ad</span><span class="p">,</span> <span class="n">addBPM</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mf">5.5</span><span class="p">,</span>
+               <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;fluxcal.log&#39;</span><span class="p">):</span>
+       
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">           INPUTS:</span>
+<span class="sd">             ad             : Input AD object  </span>
+<span class="sd">             addBPM=True    : add BPM</span>
+<span class="sd">             sigma=0.0      : sigma value for detectSource</span>
+<span class="sd">             threshold=2.5, : value for DS</span>
+<span class="sd">             fwhm=5.5,      : value for DS</span>
+<span class="sd">             logfile=&#39;fluxcal.log&#39;</span>
+
+<span class="sd">           Run all the functions to calculate ZP</span>
+<span class="sd">           with the default parameters. </span>
+<span class="sd">           If you want to change some of then, you could</span>
+<span class="sd">           run the individual functions.</span>
+<span class="sd">        </span>
+<span class="sd">           -  DetectSources(ad)</span>
+<span class="sd">           -  AddReferenceCatalogs(ad)</span>
+<span class="sd">           -  CorrelateWithReferenceCatalogs (ad)</span>
+<span class="sd">           -  CalculateZeroPoint(ad)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">adout</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+        <span class="n">adout</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;fc_&#39;</span><span class="o">+</span><span class="n">basename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adout</span> <span class="o">=</span> <span class="n">adout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addBPM</span><span class="o">=</span><span class="n">addBPM</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logfile</span> <span class="o">=</span> <span class="n">logfile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">=</span><span class="n">gemLog</span><span class="o">.</span><span class="n">getGeminiLog</span><span class="p">(</span><span class="n">logName</span><span class="o">=</span><span class="n">logfile</span><span class="p">,</span><span class="n">logLevel</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  ==================== FLUXCAL for &quot;</span><span class="o">+</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="o">+</span><span class="s">&quot; ====================&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">runFC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="n">adout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adout</span>
+        <span class="n">logfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">logfile</span>
+
+        <span class="n">adout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detsources</span><span class="p">()</span>
+
+        <span class="n">cc</span>   <span class="o">=</span> <span class="n">AddReferenceCatalogs</span><span class="p">(</span><span class="n">adout</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="n">logfile</span><span class="p">)</span>
+        <span class="n">adout</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">getRefs</span><span class="p">()</span>
+
+        <span class="n">corr</span> <span class="o">=</span> <span class="n">CorrelateWithReferenceCatalogs</span> <span class="p">(</span><span class="n">adout</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="n">logfile</span><span class="p">)</span>
+        <span class="n">adout</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">runCorr</span><span class="p">()</span>
+
+        <span class="n">czp</span>  <span class="o">=</span> <span class="n">CalculateZeropoint</span><span class="p">(</span><span class="n">adout</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="n">logfile</span><span class="p">)</span>
+        <span class="n">adout</span> <span class="o">=</span> <span class="n">czp</span><span class="o">.</span><span class="n">runZP</span><span class="p">()</span>
+       
+        <span class="n">ofile</span> <span class="o">=</span> <span class="s">&#39;zp_&#39;</span><span class="o">+</span><span class="n">adout</span><span class="o">.</span><span class="n">filename</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;writing output fits file: &quot;</span><span class="o">+</span><span class="n">ofile</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">adout</span><span class="p">:</span> <span class="n">adout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ofile</span><span class="p">,</span> <span class="n">clobber</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>        
+
+
+    <span class="k">def</span> <span class="nf">detsources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">addBPM</span><span class="p">:</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">addbpm</span><span class="p">()</span>
+           <span class="c">#print &#39;AFTER addbpm:&#39;,self.adout.info()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s"> DS DS DS DS using: SIGMA THRESHOLD FWHM:: &quot;</span><span class="o">+</span>\
+                 <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span><span class="o">+</span><span class="s">&#39;,&#39;</span><span class="o">+</span>\
+                 <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">)</span><span class="o">+</span><span class="s">&#39;,&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="p">)</span><span class="o">+</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="n">dd</span> <span class="o">=</span> <span class="n">DetectSources</span>   <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adout</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span>
+                    <span class="n">threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span><span class="n">fwhm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="p">,</span>
+                    <span class="n">logfile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logfile</span><span class="p">)</span>
+        <span class="n">adout</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">runDS</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">adout</span>
+
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">detsources</span>        <span class="c"># an alias</span>
+
+<div class="viewcode-block" id="Fluxcal.addbpm"><a class="viewcode-back" href="../scripts.html#fluxcal.Fluxcal.addbpm">[docs]</a>    <span class="k">def</span> <span class="nf">addbpm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">bpm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getBPM</span><span class="p">(</span><span class="n">userbpm</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="c">#bpm = AstroData(&#39;bpmgmosn22_123.fits&#39;)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Adding BPM extension (&quot;</span><span class="o">+</span><span class="n">bpm</span><span class="o">.</span><span class="n">filename</span><span class="o">+</span><span class="s">&quot;) to &quot;</span><span class="o">+</span>\
+                      <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adout</span><span class="o">.</span><span class="n">filename</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">adout</span><span class="o">=</span><span class="n">gs</span><span class="o">.</span><span class="n">add_bpm</span><span class="p">(</span><span class="n">adIns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adout</span><span class="p">,</span> <span class="n">BPMs</span><span class="o">=</span><span class="n">bpm</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s">&#39;bbb&#39;</span><span class="p">,</span> <span class="n">logLevel</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addBPM</span> <span class="o">=</span> <span class="bp">False</span>    <span class="c"># In case we are running detsources now.</span>
+</div>
+<div class="viewcode-block" id="Fluxcal.getoxy"><a class="viewcode-back" href="../scripts.html#fluxcal.Fluxcal.getoxy">[docs]</a>    <span class="k">def</span> <span class="nf">getoxy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">extn</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get x,y,mag,err from the current file</span>
+<span class="sd">           in the table extension [&#39;OBJCAT&#39;,extn]; otherwise</span>
+<span class="sd">           give a filename</span>
+
+<span class="sd">           INPUT:</span>
+<span class="sd">              file: FITS filename, if not default</span>
+
+<span class="sd">              extn: Default 1. Extension number, needs</span>
+<span class="sd">                    to be less than the number of</span>
+<span class="sd">                    SCI extensions in the file.</span>
+<span class="sd">           OUTPUT:</span>
+<span class="sd">              x,ymag,err:   Arrays from the [&#39;OBJCAT&#39;,extn] data.</span>
+<span class="sd">                             </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">xtnad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ad</span><span class="p">[</span><span class="s">&#39;OBJCAT&#39;</span><span class="p">,</span><span class="n">extn</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">xtnad</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+            <span class="n">flux</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;flux&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">,</span>\
+            <span class="s">&quot; **ERROR: FITS extension does not exist: </span><span class="si">%s</span><span class="s">[&#39;OBJCAT&#39;,</span><span class="si">%d</span><span class="s">].&quot;</span><span class="o">%</span><span class="p">(</span><span class="nb">file</span><span class="p">,</span><span class="n">extn</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">flux</span>
+          </div>
+<div class="viewcode-block" id="Fluxcal.getrxy"><a class="viewcode-back" href="../scripts.html#fluxcal.Fluxcal.getrxy">[docs]</a>    <span class="k">def</span> <span class="nf">getrxy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">extn</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get x,y,mag, from the current file</span>
+<span class="sd">           in the table extension [&#39;REFCAT&#39;,extn]; otherwise</span>
+<span class="sd">           give a filename</span>
+
+<span class="sd">           INPUT:</span>
+<span class="sd">              file: FITS filename, if not default.</span>
+
+<span class="sd">              extn: Default 1. Extension number, needs</span>
+<span class="sd">                        to be less than the number of</span>
+<span class="sd">                        SCI extensions in the file.</span>
+<span class="sd">           OUTPUT:</span>
+<span class="sd">              x,y,mag:   Arrays from the [&#39;REFCAT&#39;,extn]</span>
+<span class="sd">                             </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">xtnad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ad</span><span class="p">[</span><span class="s">&#39;REFCAT&#39;</span><span class="p">,</span><span class="n">extn</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">xtnad</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+            <span class="n">refmag</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refmag&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">,</span>\
+            <span class="s">&quot; **ERROR: FITS extension does not exist: </span><span class="si">%s</span><span class="s">[&#39;REFCAT&#39;,</span><span class="si">%d</span><span class="s">].&quot;</span><span class="o">%</span><span class="p">(</span><span class="nb">file</span><span class="p">,</span><span class="n">extn</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">refmag</span>
+</div>
+<div class="viewcode-block" id="Fluxcal.display"><a class="viewcode-back" href="../scripts.html#fluxcal.Fluxcal.display">[docs]</a>    <span class="k">def</span> <span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">extn</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Display SCI extensions from the Astrodata object</span>
+<span class="sd">           and mark objects and reference stars found in the</span>
+<span class="sd">           input file tables OBJCAT and REFCAT.</span>
+
+<span class="sd">           DS9 must be running.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">numdisplay</span> <span class="kn">import</span> <span class="n">display</span> <span class="k">as</span> <span class="n">ndisplay</span>
+
+        <span class="c">#file = self.file</span>
+        <span class="c">#ad = AstroData(file)</span>
+
+        <span class="n">ad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ad</span>
+        <span class="n">nscext</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">countExts</span><span class="p">(</span><span class="s">&#39;SCI&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">extn</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">si</span><span class="p">,</span><span class="n">ei</span> <span class="o">=</span> <span class="n">extn</span><span class="p">,</span><span class="n">extn</span><span class="o">+</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">si</span><span class="p">,</span><span class="n">ei</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span><span class="n">nscext</span><span class="o">+</span><span class="mi">1</span>
+            
+        <span class="n">fr</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">xt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">si</span><span class="p">,</span><span class="n">ei</span><span class="p">):</span>
+            <span class="c">#ff = &#39;%s[%d]&#39; % (file,xt)</span>
+            <span class="n">ff</span> <span class="o">=</span> <span class="n">ad</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="n">xt</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+            
+            <span class="n">iraf</span><span class="o">.</span><span class="n">set</span> <span class="p">(</span><span class="n">stdimage</span><span class="o">=</span><span class="s">&#39;imt47&#39;</span><span class="p">)</span>
+            <span class="n">ndisplay</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">frame</span><span class="o">=</span><span class="n">fr</span><span class="p">)</span>
+    
+            <span class="n">xtnad</span> <span class="o">=</span> <span class="n">ad</span><span class="p">[</span><span class="s">&#39;OBJCAT&#39;</span><span class="p">,</span><span class="n">xt</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">xtnad</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+                <span class="k">print</span> <span class="s">&#39;Marking </span><span class="si">%d</span><span class="s"> objects with red.&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s">&#39;/tmp/xy.txt&#39;</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),</span> <span class="n">fmt</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%.2f</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+                <span class="n">tvmark</span><span class="p">(</span><span class="n">frame</span><span class="o">=</span><span class="n">fr</span><span class="p">,</span><span class="n">coords</span><span class="o">=</span><span class="s">&#39;/tmp/xy.txt&#39;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="mi">204</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&quot;No stars found in extension </span><span class="si">%d</span><span class="s">.&quot;</span><span class="o">%</span><span class="n">xt</span>
+        
+            <span class="n">xtnad</span> <span class="o">=</span> <span class="n">ad</span><span class="p">[</span><span class="s">&#39;REFCAT&#39;</span><span class="p">,</span><span class="n">xt</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">xtnad</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">xtnad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+                <span class="k">print</span> <span class="s">&#39;Marking </span><span class="si">%d</span><span class="s"> refstars with green.&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s">&#39;/tmp/xy.txt&#39;</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),</span> <span class="n">fmt</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%.2f</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+                <span class="n">tvmark</span><span class="p">(</span><span class="n">frame</span><span class="o">=</span><span class="n">fr</span><span class="p">,</span><span class="n">coords</span><span class="o">=</span><span class="s">&#39;/tmp/xy.txt&#39;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="mi">205</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&quot;No reference stars found in extension </span><span class="si">%d</span><span class="s">.&quot;</span><span class="o">%</span><span class="n">xt</span>
+
+            <span class="n">fr</span> <span class="o">+=</span> <span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="Fluxcal.getBPM"><a class="viewcode-back" href="../scripts.html#fluxcal.Fluxcal.getBPM">[docs]</a>    <span class="k">def</span> <span class="nf">getBPM</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">userbpm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">          Get the BPM file from the flixcal directory and </span>
+<span class="sd">          return its the AstroData object.</span>
+
+<span class="sd">          :param userbpm:  BPM file suplied by the user. Its size</span>
+<span class="sd">                           should match the SCI extension image size.</span>
+
+<span class="sd">          :rparam ad: The bpm file astrodata object.</span>
+<span class="sd">          If &#39;userbpm&#39; is not empty just return its AstroData object</span>
+
+<span class="sd">          NOTE: We still need to create: bpmgmoss11_123.fits.gz   # unbinned mef files</span>
+<span class="sd">                                         bpmgmosn11_123.fits.gz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+ 
+        <span class="k">if</span> <span class="n">userbpm</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">AstroData</span><span class="p">(</span><span class="n">userbpm</span><span class="p">)</span>
+
+        <span class="n">ad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adout</span>
+
+        <span class="n">ccdsum</span> <span class="o">=</span> <span class="n">ad</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;CCDSUM&#39;</span><span class="p">)</span>
+        <span class="n">ccdsum</span> <span class="o">=</span> <span class="n">ccdsum</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">)</span>     <span class="c"># makes the string &#39;11&#39; or &#39;22&#39;</span>
+        <span class="n">nextn</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">countExts</span><span class="p">(</span><span class="s">&#39;SCI&#39;</span><span class="p">)</span>
+        <span class="n">indx</span> <span class="o">=</span> <span class="n">ccdsum</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">nextn</span><span class="p">)</span>         <span class="c"># form {11,22}1 or {11,22}3</span>
+
+        <span class="k">if</span> <span class="n">ad</span><span class="o">.</span><span class="n">isType</span><span class="p">(</span><span class="s">&#39;GMOS_S&#39;</span><span class="p">):</span>
+            <span class="n">dqfiles</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;223&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmoss22_123.fits.gz&#39;</span><span class="p">,</span><span class="s">&#39;113&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmoss11_123.fits.gz&#39;</span><span class="p">,</span>
+                       <span class="s">&#39;221&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmoss22_mosaic.fits.gz&#39;</span><span class="p">,</span><span class="s">&#39;111&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmoss11_mosaic.fits.gz&#39;</span><span class="p">}</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">dq</span> <span class="o">=</span> <span class="n">dqfiles</span><span class="p">[</span><span class="n">indx</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;getBPM: CCDSUM value not supported with BPM: &#39;</span><span class="o">+</span><span class="n">indx</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">elif</span> <span class="n">ad</span><span class="o">.</span><span class="n">isType</span><span class="p">(</span><span class="s">&#39;GMOS_N&#39;</span><span class="p">):</span>
+            <span class="n">dqfiles</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;223&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmosn22_123.fits.gz&#39;</span><span class="p">,</span><span class="s">&#39;113&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmosn11_123.fits.gz&#39;</span><span class="p">,</span>
+                       <span class="s">&#39;221&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmosn22_mosaic.fits.gz&#39;</span><span class="p">,</span><span class="s">&#39;111&#39;</span><span class="p">:</span><span class="s">&#39;bpmgmosn11_mosaic.fits.gz&#39;</span><span class="p">}</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">dq</span> <span class="o">=</span> <span class="n">dqfiles</span><span class="p">[</span><span class="n">indx</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;getBPM: CCDSUM value not supported with BPM: &#39;</span><span class="o">+</span><span class="n">indx</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+        <span class="c"># Find where are these BPM files</span>
+
+        <span class="n">fp</span><span class="p">,</span> <span class="n">pathname</span><span class="p">,</span> <span class="n">description</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">find_module</span><span class="p">(</span><span class="s">&#39;detectSources&#39;</span><span class="p">)</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pathname</span><span class="p">),</span><span class="n">dq</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">AstroData</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+
+</div></div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span><span class="nn">glob</span>
+
+    <span class="c">#ad = AstroData(&#39;/home/nzarate/zp/zzz.fits&#39;)</span>
+    <span class="c">#ff = Fluxcal(ad)    # Create object</span>
+    <span class="c">#ff.runFC()       # run the scripts</span>
+    
+
+    <span class="k">for</span> <span class="n">ifile</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;[g,m]*.fits&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;rgS20110125S&#39;</span> <span class="ow">in</span> <span class="n">ifile</span><span class="p">:</span> <span class="k">continue</span>
+        <span class="k">if</span> <span class="s">&#39;zp_&#39;</span> <span class="ow">in</span> <span class="n">ifile</span><span class="p">:</span> <span class="k">continue</span>
+        <span class="n">ad</span> <span class="o">=</span> <span class="n">AstroData</span><span class="p">(</span><span class="n">ifile</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ad</span><span class="o">.</span><span class="n">isType</span><span class="p">(</span><span class="s">&#39;CAL&#39;</span><span class="p">):</span>
+            <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">WARNING: &#39;CAL&#39; type for file:&quot;</span><span class="p">,</span><span class="n">ifile</span><span class="p">,</span><span class="s">&quot; not supported.&quot;</span>
+            <span class="k">continue</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s"> &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;FluxCAL for:&quot;</span><span class="p">,</span><span class="n">ifile</span> 
+        <span class="n">ff</span> <span class="o">=</span> <span class="n">Fluxcal</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>    <span class="c"># Create object</span>
+        <span class="n">ff</span><span class="o">.</span><span class="n">runFC</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

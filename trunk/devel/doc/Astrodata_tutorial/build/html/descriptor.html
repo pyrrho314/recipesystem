@@ -1,0 +1,189 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Creating a new Instrument descriptor for Astrodata use &mdash; fluxcal 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="fluxcal 0.1 documentation" href="index.html" />
+    <link rel="next" title="AstroData Programmer’s Guide" href="prog.html" />
+    <link rel="prev" title="Gemini Astrodata" href="astrodata.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="prog.html" title="AstroData Programmer’s Guide"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="astrodata.html" title="Gemini Astrodata"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">fluxcal 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="creating-a-new-instrument-descriptor-for-astrodata-use">
+<span id="make-your-own-descriptor"></span><h1>Creating a new Instrument descriptor for Astrodata use<a class="headerlink" href="#creating-a-new-instrument-descriptor-for-astrodata-use" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>To add a new descriptor to AstroData here are the steps:</p>
+<div class="highlight-python"><pre>   cd $astrodata             # Go to were the astrodata directory is installed in your
+                             # machine. If it read-only, then make your own copy.
+
+   cd ../ADCONFIG_Gemini/descriptors    # Astrodata directory is at the same level as
+                                        # ADCONFIG_Gemini
+
+   mkdir f2                  # Create new directory for a new intrument
+
+   cp StandardDescriptorKeyDict.py f2/StandardF2KeyDict.py
+
+   cp nici/calculatorIndex.NICI.py f2/calculatorIndex.F2.py
+
+   cp NIRI_RAWDescriptor.py f2/F2_RAWDescriptor.py
+
+
+   cd f2                                 # cd to f2 and edit the files accordingly
+
+Edit the new files in f2
+------------------------
+
+1) Edit StandardF2KeyDict.py
+     This file contains the standard mapping between Astrodata names and F2
+     keyword names. This is a Python dictionary format 'key:value', where 'key'
+     is the Astrodata name (format: 'key_f2_&lt;name&gt;') and 'value' is the F2 header keyword name.
+
+2) Edit calculatorIndex.F2.py
+     This is dictionary entry with one pair:</pre>
+</div>
+<div class="highlight-python"><pre>     calculatorIndex = {"F2_IMAGE":"F2_RAWDescriptor.F2_RAWDescriptorCalc()"}
+
+
+3) Edit F2_RAWDescriptor.py
+
+   We are using the ICD document that describe the keyword mapping for
+   all Gemini instrument. From the instruction  we made the necessary changes to the
+   functions.
+
+4) Now add **types**
+
+   cd ../../types
+
+   We should be in a directory: ADCONFIG_Gemini/classifications/types
+
+   mkdir F2
+
+   # Copy the NICI files as an example on how to build new types.
+
+   cp ../nici/* F2</pre>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="acronyms">
+<span id="id1"></span><h1>Acronyms<a class="headerlink" href="#acronyms" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p class="first"><strong>Unit</strong>  Refer to both header and data portion of any
+extension -including primary unit, of a FITS file</p>
+</li>
+<li><p class="first"><strong>PHDU</strong>  The Primary (Extension 0) Header <tt class="docutils literal"><span class="pre">PHU</span></tt> and Data <tt class="docutils literal"><span class="pre">PDU</span></tt> Unit.</p>
+</li>
+<li><dl class="first docutils">
+<dt><strong>HDU</strong> Header Data Unit. FITS file reference to header and data</dt>
+<dd><p class="first last">portions of a <tt class="docutils literal"><span class="pre">Unit</span></tt></p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>HDUList</strong> Pyfits list of FITS descriptors. Each descriptor in the list
+refers to a FITS Unit; e.g. <tt class="docutils literal"><span class="pre">phdu</span> <span class="pre">=</span> <span class="pre">hdulist[0]</span></tt></p>
+</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Creating a new Instrument descriptor for Astrodata use</a></li>
+<li><a class="reference internal" href="#acronyms">Acronyms</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="astrodata.html"
+                        title="previous chapter">Gemini Astrodata</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="prog.html"
+                        title="next chapter">AstroData Programmer&#8217;s Guide</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/descriptor.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="prog.html" title="AstroData Programmer’s Guide"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="astrodata.html" title="Gemini Astrodata"
+             >previous</a> |</li>
+        <li><a href="index.html">fluxcal 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

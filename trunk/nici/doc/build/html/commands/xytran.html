@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>xytran &mdash; ndoc v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="ndoc v0.1 documentation" href="../index.html" />
+    <link rel="up" title="NICI Commands" href="index.html" />
+    <link rel="next" title="Running under Unix, Pyraf or Python" href="../ReductionExamples.html" />
+    <link rel="prev" title="ncscience. Analysis of science data" href="ncscience.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../ReductionExamples.html" title="Running under Unix, Pyraf or Python"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ncscience.html" title="ncscience. Analysis of science data"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">ndoc v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">NICI Commands</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="xytran">
+<h1>xytran<a class="headerlink" href="#xytran" title="Permalink to this headline">¶</a></h1>
+<p>The xytran class calculates a set of coefficients to transform the blue frame pixels into the red frame coordinates system. This transformation is of the form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">xr</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="o">*</span><span class="n">xb</span> <span class="o">+</span> <span class="n">c</span><span class="o">*</span><span class="n">yb</span>
+<span class="n">yr</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="n">e</span><span class="o">*</span><span class="n">xb</span> <span class="o">+</span> <span class="n">f</span><span class="o">*</span><span class="n">yb</span>
+</pre></div>
+</div>
+<p>To find the coefficients you need to display the Red and Blue frames from a pinhole NICI FITS file, click on control points which you can get by clicking on any point in the red and then the corresponding one in the blue frame. Here is the order of operations.</p>
+<ol class="arabic simple">
+<li>Python</li>
+</ol>
+<blockquote>
+Start Python, ipython or Pyraf</blockquote>
+<ol class="arabic" start="2">
+<li><p class="first">from nici import *</p>
+<p>Will load the set of nici scripts. Now create an xytran object: (NOTE: you need to have DS9 up first)</p>
+</li>
+</ol>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Creates xytran object</span>
+<span class="n">cp</span> <span class="o">=</span> <span class="n">XYtran</span><span class="p">(</span><span class="n">pfiles</span><span class="o">=</span><span class="s">&#39;S20080812S0052.fits&#39;</span><span class="p">)</span>
+
+<span class="c">#The ds9 frame1 is red and frame2 is blue.</span>
+
+<span class="c"># If you already loaded the images and want to repeat a fit or</span>
+<span class="c"># load only the control points and do the fit then:</span>
+
+<span class="n">cp</span> <span class="o">=</span> <span class="n">XYtran</span><span class="p">()</span>
+</pre></div>
+</div>
+</blockquote>
+<ol class="arabic simple" start="3">
+<li>If you already have control points. The files name need to be: &#8216;xyr&#8217; and &#8216;xyb&#8217;, 2 columns separated by blanks</li>
+</ol>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">cp</span><span class="o">.</span><span class="n">loadcp</span><span class="p">()</span>       <span class="c"># To load the control points</span>
+</pre></div>
+</div>
+</blockquote>
+<ol class="arabic" start="4">
+<li><p class="first">cp.getCpoints()     # mark control points</p>
+<p>Please position the cursor in one pinhole in the red frame and hit &#8216;r&#8217;, move to the corresponding pinhole in the blue frame and hit &#8216;b&#8217;, continue for at least 6 points. Hit &#8216;q&#8217; the finish.</p>
+</li>
+<li><p class="first">cp.doCfit() # Do the fit</p>
+<p>A listing of the residuals is giving together with a line number. To remove a point from the list that shows a large residual use:</p>
+</li>
+</ol>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">cp</span><span class="o">.</span><span class="n">delxy</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+
+<span class="c"># Where K is the number in the list you want to remove.</span>
+<span class="c"># Now repeat &#39;cp.doCfit()&#39;. A text file &#39;xycoeff&#39; is created</span>
+<span class="c"># in your working directory with the coefficients (a..f).</span>
+</pre></div>
+</div>
+</blockquote>
+<ol class="arabic" start="6">
+<li><p class="first">im_blue = cp.transform(im_blue)</p>
+<p>Transform a Blue frame into the coordinate system of the Red. im_blue is the variable containing the blue frame pixels.</p>
+</li>
+</ol>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="ncscience.html"
+                                  title="previous chapter">ncscience. Analysis of science data</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="../ReductionExamples.html"
+                                  title="next chapter">Running under Unix, Pyraf or Python</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/commands/xytran.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../ReductionExamples.html" title="Running under Unix, Pyraf or Python"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ncscience.html" title="ncscience. Analysis of science data"
+             >previous</a> |</li>
+        <li><a href="../index.html">ndoc v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >NICI Commands</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+
+wavecal/
+-------
+
+This directory contains the necessary modules to produce a list of tuples
+with [(peak_position, fit_function_evaluator(peak_position), reference_line)].
+
+For complete documentation please see:
+
+http://chara.hi.gemini.edu/svn/DRSoftware/gemini_python/trunk/devel/wavecal/doc/build/html/index.html
+
+or your own copy:
+
+../trunk/devel/wavecal/doc/build/html/index.html
+
+

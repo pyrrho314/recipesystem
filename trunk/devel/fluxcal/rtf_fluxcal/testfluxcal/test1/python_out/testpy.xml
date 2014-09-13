@@ -1,0 +1,82 @@
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE RegTest [
+<!ELEMENT RegTest    (title, taskname, pfile, level, output+,
+                      pre-exec?, post-exec?)>
+<!ELEMENT title      (#PCDATA)>
+<!ELEMENT taskname   (#PCDATA)>
+<!ELEMENT pfile      (#PCDATA)>
+<!ELEMENT level      (#PCDATA)>
+<!ELEMENT output     (val+)>
+<!ELEMENT val        (file, reference, comparator)>
+<!ELEMENT file       (#PCDATA)>
+<!ELEMENT reference  (#PCDATA)>
+<!ELEMENT comparator (#PCDATA)>
+<!ELEMENT pre-exec   (command*)>
+<!ELEMENT post-exec  (command*)>
+<!ELEMENT command    (#PCDATA)>
+]>
+
+<!--
+##
+## Gemini - testfluxcal test 1
+##      
+##      These are compared against reference files using FITSDIFF.
+-->
+
+<RegTest>
+
+<pre-exec>
+   <command>import flux_cal as fc</command>
+</pre-exec>
+
+<title>Gemini gmosim1 testfluxcal test 1 python_out vs. static</title>
+<taskname>../testfluxcal_test1.py</taskname>
+<pfile></pfile>
+<level>7</level>
+
+<post-exec>
+</post-exec>
+<output>
+  <val>
+    <file>mgS20101214S0041.fits</file>
+    <reference>../static/mgS20101214S0041.fits</reference>
+    <comparator>table</comparator>
+    <ignorekeys>iraf-tlm,date,gem-tlm,origin</ignorekeys>
+    <ignorecomm></ignorkeys>
+  </val>
+  <val>
+    <file>gS20101214S0041.fits</file>
+    <reference>../static/gS20101214S0041.fits</reference>
+    <comparator>table</comparator>
+    <ignorekeys>iraf-tlm,date,gem-tlm,origin</ignorekeys>
+  </val>
+  <val>
+    <file>mgS20101105S0128.fits</file>
+    <reference>../static/mgS20101105S0128.fits</reference>
+    <comparator>table</comparator>
+    <ignorekeys>iraf-tlm,date,gem-tlm,origin</ignorekeys>
+  </val>
+  <val>
+    <file>mgS20101214S0040.fits</file>
+    <reference>../static/mgS20101214S0040.fits</reference>
+    <comparator>table</comparator>
+    <ignorekeys>iraf-tlm,date,gem-tlm,origin</ignorekeys>
+  </val>
+  <val>
+    <file>mgN20100930S0366.fits</file>
+    <reference>../static/mgN20100930S0366.fits</reference>
+    <comparator>table</comparator>
+    <ignorekeys>iraf-tlm,date,gem-tlm,origin</ignorekeys>
+  </val>
+  <val>
+    <file>gN20100930S0366.fits</file>
+    <reference>../static/gN20100930S0366.fits</reference>
+    <comparator>table</comparator>
+    <ignorekeys>iraf-tlm,date,gem-tlm,origin</ignorekeys>
+  </val>
+
+
+</output>
+
+</RegTest>
+

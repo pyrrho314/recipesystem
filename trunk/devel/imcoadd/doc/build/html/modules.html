@@ -1,0 +1,233 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>registration_functions &mdash; imcoadd v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="imcoadd v0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">imcoadd v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-registration_functions">
+<span id="registration-functions"></span><h1>registration_functions<a class="headerlink" href="#module-registration_functions" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="registration_functions.align_to_reference_image">
+<tt class="descclassname">registration_functions.</tt><tt class="descname">align_to_reference_image</tt><big>(</big><em>adinput</em>, <em>interpolator='linear'</em>, <em>output_names=None</em>, <em>suffix='_align'</em><big>)</big><a class="reference internal" href="_modules/registration_functions.html#align_to_reference_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#registration_functions.align_to_reference_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function applies the transformation encoded in the input images
+WCSs to align them with a reference image, in reference image pixel
+coordinates.  The reference image is taken to be the first image in
+the input list.</p>
+<p>By default, the transformation into the reference frame is done via
+interpolation.  The interpolator parameter specifies the interpolation 
+method.  The options are nearest-neighbor, bilinear, or nth-order 
+spline, with n = 2, 3, 4, or 5.  If interpolator is None, 
+no interpolation is done: the input image is shifted by an integer
+number of pixels, such that the center of the frame matches up as
+well as possible.  The variance plane, if present, is transformed in
+the same way as the science data.</p>
+<p>The data quality plane, if present, must be handled a little
+differently.  DQ flags are set bit-wise, such that each pixel is the 
+sum of any of the following values: 0=good pixel,
+1=bad pixel (from bad pixel mask), 2=nonlinear, 4=saturated, etc.
+To transform the DQ plane without losing flag information, it is
+unpacked into separate masks, each of which is transformed in the same
+way as the science data.  A pixel is flagged if it had greater than
+1% influence from a bad pixel.  The transformed masks are then added
+back together to generate the transformed DQ plane.</p>
+<p>In order not to lose any data, the output image arrays (including the
+reference image&#8217;s) are expanded with respect to the input image arrays.
+The science and variance data arrays are padded with zeros; the DQ
+plane is padded with ones.</p>
+<p>The WCS keywords in the headers of the output images are updated
+to reflect the transformation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>adinput</strong> (<em>list of AstroData objects</em>) &#8211; list of images to align.  First image is taken to be
+the reference image.</li>
+<li><strong>interpolator</strong> (<em>string, possible values are None, &#8216;nearest&#8217;, &#8216;linear&#8217;,
+&#8216;spline2&#8217;, &#8216;spline3&#8217;, &#8216;spline4&#8217;, or &#8216;spline5&#8217;</em>) &#8211; type of interpolation desired</li>
+<li><strong>output_names</strong> (<em>string, either a single instance or a list of strings
+of the same length as adinput.</em>) &#8211; filenames of output images</li>
+<li><strong>suffix</strong> (<em>string</em>) &#8211; string to add on the end of the input filenames to 
+generate output filenames</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="registration_functions.correct_wcs_to_reference_image">
+<tt class="descclassname">registration_functions.</tt><tt class="descname">correct_wcs_to_reference_image</tt><big>(</big><em>adinput=None</em>, <em>method='sources'</em>, <em>fallback=None</em>, <em>cull_sources=False</em>, <em>rotate=False</em>, <em>scale=False</em>, <em>output_names=None</em>, <em>suffix='_reg'</em><big>)</big><a class="reference internal" href="_modules/registration_functions.html#correct_wcs_to_reference_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#registration_functions.correct_wcs_to_reference_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function registers images to a reference image by correcting
+the relative error in their world coordinate systems.  The function
+uses points of reference common to the reference image and the
+input images to fit the input WCS to the reference one.  The fit
+is done by a least-squares minimization of the difference between
+the reference points in the input image pixel coordinate system.
+This function is intended to be followed by the align_to_reference_image
+function, which applies the relative transformation encoded in the
+WCS to transform input images into the reference image pixel
+coordinate system.</p>
+<p>The primary registration method is intended to be by direct mapping
+of sources in the image frame to correlated sources in the reference
+frame. This method fails when there are no correlated sources in the
+field, or when the WCSs are very far off to begin with.  As a back-up
+method, the user can try correcting the WCS by the shifts indicated 
+in the POFFSET and QOFFSET header keywords (option fallback=&#8217;header&#8217;), 
+or by hand-selecting common points of reference in an IRAF display
+(option fallback=&#8217;user&#8217;).  By default, only the direct method is
+attempted, as it is expected that the relative WCS will generally be
+more correct than either indirect method.  If the user prefers not to
+attempt direct mapping at all, they may set method to either &#8216;user&#8217;
+or &#8216;header&#8217;.</p>
+<p>In order to use the direct mapping method, sources must have been
+detected in the frame and attached to the AstroData instance in an 
+OBJCAT extension.  This can be accomplished via the detectSources
+primitive.  Running time is optimal, and sometimes the solution is 
+more robust, when there are not too many sources in the OBJCAT.  Try
+running detectSources with threshold=20.  The solution may also be
+more robust if sub-optimal sources are rejected from the set of 
+correlated sources (use option cull_sources=True).  This option may
+substantially increase the running time if there are many sources in
+the OBJCAT.</p>
+<p>It is expected that the relative difference between the WCSs of 
+images to be combined should be quite small, so it may not be necessary
+to allow rotation and scaling degrees of freedom when fitting the image
+WCS to the reference WCS.  However, if it is desired, the options 
+rotate and scale can be used to allow these degrees of freedom.  Note
+that these options refer to rotation/scaling of the WCS itself, not the
+images.  Significant rotation and scaling of the images themselves 
+will generally already be encoded in the WCS, and will be corrected for
+when the images are aligned.</p>
+<p>The WCS keywords in the headers of the output images are updated
+to contain the optimal registration solution.</p>
+<p>Log messages will go to a &#8216;main&#8217; type logger object, if it exists.
+or a null logger (ie. no log file, no messages to screen) if it does 
+not.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>adinput</strong> (<em>AstroData objects, either a single instance or a list</em>) &#8211; images to register. Reference image is assumed to be
+the first one in the list.  All images must have
+only one SCI extension.</li>
+<li><strong>method</strong> (<em>string, either &#8216;sources&#8217;, &#8216;user&#8217;, or &#8216;header&#8217;</em>) &#8211; method to use to generate reference points. Options
+are &#8216;sources&#8217; to directly map sources from the input image
+to the reference image, &#8216;user&#8217; to select reference
+points by cursor from an IRAF display, or &#8216;header&#8217; to
+generate reference points from the POFFSET and QOFFSET
+keywords in the image headers.</li>
+<li><strong>fallback</strong> (<em>string, either &#8216;user&#8217; or &#8216;header&#8217;.</em>) &#8211; back-up method for generating reference points.
+if the primary method fails.  The &#8216;sources&#8217; option
+cannot be used as the fallback.</li>
+<li><strong>cull_sources</strong> (<em>bool</em>) &#8211; flag to indicate whether sub-optimal sources should
+be rejected before attempting a direct mapping. If True,
+sources that are saturated, not well-fit by a Gaussian,
+too broad, or too elliptical will be eliminated from
+the list of reference points.</li>
+<li><strong>rotate</strong> (<em>bool</em>) &#8211; flag to indicate whether the input image WCSs should
+be allowed to rotate with respect to the reference image
+WCS</li>
+<li><strong>scale</strong> (<em>bool</em>) &#8211; flag to indicate whether the input image WCSs should
+be allowed to scale with respect to the reference image
+WCS.  The same scale factor is applied to all dimensions.</li>
+<li><strong>output_names</strong> (<em>string, either a single instance or a list of strings
+of the same length as adinput.</em>) &#8211; filenames of output images</li>
+<li><strong>suffix</strong> (<em>string</em>) &#8211; string to add on the end of the input filenames to 
+generate output filenames</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/modules.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">imcoadd v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, mk.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

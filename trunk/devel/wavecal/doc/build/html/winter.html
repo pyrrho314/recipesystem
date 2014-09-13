@@ -1,0 +1,164 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Winter: Manual line identification program. &mdash; Wavelength calibration user guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wavelength calibration user guide 0.1 documentation" href="index.html" />
+    <link rel="prev" title="Wavecal class" href="wavecal.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="wavecal.html" title="Wavecal class"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="winter-manual-line-identification-program">
+<span id="winter"></span><h1>Winter: Manual line identification program.<a class="headerlink" href="#winter-manual-line-identification-program" title="Permalink to this headline">¶</a></h1>
+<p>If the automatic line identification Wavecal fails to reach a reasonable line matching set, the Winter program can easily find a set. The user clicks on associates peaks in a subplot with reference lines and in a subplot with the input arc peaks.</p>
+<ul class="simple">
+<li>The program displays a reference ARC spectrum in wavelength units
+with the same scale as the input ARC spectrum&#8217;s. This latter spectrum
+should have at least a rough aproximation of a WCS (crpix,crval and cdelt)
+and is displayed as a sesond subplot.</li>
+<li>Looking at the 2 plots the user can visually matched the arc lines, and
+easily make a selection of the correspoding lines in the reference and
+input spectrum. To associate, click a &#8216;u&#8217; at the reference line peak
+and &#8216;m&#8217; at the line peak in the input spectrum.</li>
+<li>The Winter available keystrokes are: (mouse pointer should be on the plot area)</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><pre>'h'  A list of the available keystrokes.
+'u'  Mark a reference line. Mouse pointer on top of the
+     peak in the top subplot. If an "ERROR: Reference line
+     not found. Try again." appears you should move the
+     pointer closer to the peak. If the error accurs again
+     then there is no reference line and you could choose
+     another line.
+'m'  Mark the 'u' associated arc peak in the input spectrum
+     on the bottom subplot.
+'l'  List the (pix, wavelength) accumulated so far.
+'f'  Fit the above list using a second order polynomial if
+     the number of points is 3 or a 4th order Chebyshev polynomial
+     if larger.
+'r'  Plot residuals in a new Figure. (Don't know how to delete yet)
+'d'  Delete poins in the residual plot (NOT yet working)
+'q'  To quit the loop.</pre>
+</div>
+</div></blockquote>
+<p>The fitting function with the mapping is available in the &#8216;z&#8217;
+fit class object member. Submembers are:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>z(pix):    Returns the wavelength for pixel coordinates 'pix'.
+z.coeff:   List of fit function coefficients.
+z.fitname: Name of the fitting function used.
+z.order:   Fitting function order.</pre>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="example">
+<h1>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">winter</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">reload</span><span class="p">(</span><span class="n">winter</span><span class="p">);</span><span class="n">wi</span><span class="o">=</span><span class="n">winter</span><span class="o">.</span><span class="n">Winter</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wi</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># A plot appears with 2 subplots and the user is in a loop</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># until a &#39;q&#39; is hit.</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Winter: Manual line identification program.</a></li>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="wavecal.html"
+                        title="previous chapter">Wavecal class</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/winter.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="wavecal.html" title="Wavecal class"
+             >previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Gemini Observatory.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

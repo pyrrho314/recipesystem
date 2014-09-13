@@ -1,0 +1,254 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>primitives_fluxcal_GMOS_IMAGE &mdash; fluxcal v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fluxcal v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for primitives_fluxcal_GMOS_IMAGE</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">StringIO</span><span class="o">,</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">astrodata.adutils</span> <span class="kn">import</span> <span class="n">gemLog</span>
+<span class="kn">from</span> <span class="nn">astrodata</span> <span class="kn">import</span> <span class="n">Descriptors</span>
+<span class="kn">from</span> <span class="nn">astrodata.data</span> <span class="kn">import</span> <span class="n">AstroData</span>
+<span class="kn">from</span> <span class="nn">gempy.instruments</span> <span class="kn">import</span> <span class="n">geminiTools</span> <span class="k">as</span> <span class="n">gemt</span>
+<span class="kn">from</span> <span class="nn">gempy.instruments</span> <span class="kn">import</span> <span class="n">gmosTools</span> <span class="k">as</span> <span class="n">gmost</span>
+<span class="kn">from</span> <span class="nn">primitives_GMOS</span> <span class="kn">import</span> <span class="n">GMOSPrimitives</span><span class="p">,</span> <span class="n">pyrafLoader</span>
+<span class="kn">import</span> <span class="nn">primitives_GEMINI</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pyfits</span> <span class="kn">as</span> <span class="nn">pf</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+<span class="c"># from devel.fluxcal import fluxcal</span>
+<span class="c"># import flux_cal as fc</span>
+<span class="kn">from</span> <span class="nn">detectSources</span> <span class="kn">import</span> <span class="n">DetectSources</span>
+<span class="kn">from</span> <span class="nn">addReferenceCatalogs</span> <span class="kn">import</span> <span class="n">AddReferenceCatalogs</span>
+<span class="kn">from</span> <span class="nn">correlateWithReferenceCatalogs</span>  <span class="kn">import</span> <span class="n">CorrelateWithReferenceCatalogs</span>
+<span class="kn">from</span> <span class="nn">calculateZeropoint</span> <span class="kn">import</span> <span class="n">CalculateZeropoint</span>
+
+
+<span class="n">log</span><span class="o">=</span><span class="n">gemLog</span><span class="o">.</span><span class="n">getGeminiLog</span><span class="p">()</span>
+
+<span class="c"># NOTE, the sys.stdout stuff is to shut up gemini and gmos startup... some primitives</span>
+<span class="c"># don&#39;t execute pyraf code and so do not need to print this interactive</span>
+<span class="c"># package init display (it shows something akin to the dir(gmos)</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">StringIO</span><span class="o">,</span> <span class="nn">os</span>
+<span class="n">SAVEOUT</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+<span class="n">capture</span> <span class="o">=</span> <span class="n">StringIO</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">capture</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">SAVEOUT</span>
+
+
+<span class="k">class</span> <span class="nc">FluxCalException</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; This is the general exception the classes and functions in the</span>
+<span class="sd">    Structures.py module raise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&quot;Exception Raised in Recipe System&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This constructor takes a message to print to the user.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">msg</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This str conversion member returns the message given by the user (or the default message)</span>
+<span class="sd">        when the exception is not caught.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
+
+<div class="viewcode-block" id="GMOS_IMAGE_fluxcal_Primitives"><a class="viewcode-back" href="../scripts.html#primitives_fluxcal_GMOS_IMAGE.GMOS_IMAGE_fluxcal_Primitives">[docs]</a><span class="k">class</span> <span class="nc">GMOS_IMAGE_fluxcal_Primitives</span><span class="p">(</span><span class="n">GMOSPrimitives</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    This is the class of all primitives for the GMOS level of the type </span>
+<span class="sd">    hierarchy tree.  It inherits all the primitives to the level above</span>
+<span class="sd">    , &#39;GEMINIPrimitives&#39;.</span>
+
+<span class="sd">    The list of primitives in this class is: </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">astrotype</span> <span class="o">=</span> <span class="s">&#39;GMOS_IMAGE&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+        <span class="n">GMOSPrimitives</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rc</span>
+     
+
+<div class="viewcode-block" id="GMOS_IMAGE_fluxcal_Primitives.detectSources"><a class="viewcode-back" href="../scripts.html#primitives_fluxcal_GMOS_IMAGE.GMOS_IMAGE_fluxcal_Primitives.detectSources">[docs]</a>    <span class="k">def</span> <span class="nf">detectSources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; detectsources primitive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">adOuts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&quot;Starting primitive detectSources&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">rc</span><span class="o">.</span><span class="n">getInputs</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s">&#39;AD&#39;</span><span class="p">):</span>
+                 <span class="n">ds</span>   <span class="o">=</span> <span class="n">DetectSources</span>   <span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                 <span class="n">adout</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">runDS</span><span class="p">()</span>
+                 <span class="n">adOuts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">adout</span><span class="p">)</span>
+            <span class="n">rc</span><span class="o">.</span><span class="n">reportOutput</span><span class="p">(</span><span class="n">adOuts</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FluxCalException</span><span class="p">(</span><span class="s">&quot;Problems with detectSources&quot;</span><span class="p">)</span>
+                 
+        <span class="k">yield</span> <span class="n">rc</span>
+
+</div>
+<div class="viewcode-block" id="GMOS_IMAGE_fluxcal_Primitives.addReferenceCatalogs"><a class="viewcode-back" href="../scripts.html#primitives_fluxcal_GMOS_IMAGE.GMOS_IMAGE_fluxcal_Primitives.addReferenceCatalogs">[docs]</a>    <span class="k">def</span> <span class="nf">addReferenceCatalogs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; addReferenceCatalogs primitive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">adOuts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot; primitive addReferenceCatalogs&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">rc</span><span class="o">.</span><span class="n">getInputs</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s">&#39;AD&#39;</span><span class="p">):</span>
+                 <span class="n">cc</span>   <span class="o">=</span> <span class="n">AddReferenceCatalogs</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                 <span class="n">adout</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">getRefs</span><span class="p">()</span>
+                 <span class="n">adOuts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">adout</span><span class="p">)</span>
+            <span class="n">rc</span><span class="o">.</span><span class="n">reportOutput</span><span class="p">(</span><span class="n">adOuts</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FluxCalException</span><span class="p">(</span><span class="s">&quot;Problems with addReferenceCatalogs&quot;</span><span class="p">)</span>
+                 
+        <span class="k">yield</span> <span class="n">rc</span>
+        </div>
+<div class="viewcode-block" id="GMOS_IMAGE_fluxcal_Primitives.correlateWithReferenceCatalogs"><a class="viewcode-back" href="../scripts.html#primitives_fluxcal_GMOS_IMAGE.GMOS_IMAGE_fluxcal_Primitives.correlateWithReferenceCatalogs">[docs]</a>    <span class="k">def</span> <span class="nf">correlateWithReferenceCatalogs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; correlateWithReferenceCatalogs primitive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">adOuts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot; primitive correlateWithReferenceCatalogs&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">rc</span><span class="o">.</span><span class="n">getInputs</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s">&#39;AD&#39;</span><span class="p">):</span>
+                 <span class="n">corr</span> <span class="o">=</span> <span class="n">CorrelateWithReferenceCatalogs</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                 <span class="n">adout</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">runCorr</span><span class="p">()</span>
+                 <span class="n">adOuts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">adout</span><span class="p">)</span>
+            <span class="n">rc</span><span class="o">.</span><span class="n">reportOutput</span><span class="p">(</span><span class="n">adOuts</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FluxCalException</span><span class="p">(</span><span class="s">&quot;Problems with correlateWithReferenceCatalogs&quot;</span><span class="p">)</span>
+                 
+        <span class="k">yield</span> <span class="n">rc</span>
+        </div>
+<div class="viewcode-block" id="GMOS_IMAGE_fluxcal_Primitives.calculateZeropoint"><a class="viewcode-back" href="../scripts.html#primitives_fluxcal_GMOS_IMAGE.GMOS_IMAGE_fluxcal_Primitives.calculateZeropoint">[docs]</a>    <span class="k">def</span> <span class="nf">calculateZeropoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; calculateZeropoint primitive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">adOuts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot; primitive calculateZeropoint&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">rc</span><span class="o">.</span><span class="n">getInputs</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s">&#39;AD&#39;</span><span class="p">):</span>
+                 <span class="n">czp</span>  <span class="o">=</span> <span class="n">CalculateZeropoint</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                 <span class="n">adout</span> <span class="o">=</span> <span class="n">czp</span><span class="o">.</span><span class="n">runZP</span><span class="p">()</span>
+                 <span class="n">adOuts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">adout</span><span class="p">)</span>
+            <span class="n">rc</span><span class="o">.</span><span class="n">reportOutput</span><span class="p">(</span><span class="n">adOuts</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FluxCalException</span><span class="p">(</span><span class="s">&quot;Problems with calculateZeropoint&quot;</span><span class="p">)</span>
+                 
+        <span class="k">yield</span> <span class="n">rc</span>
+</div>
+<div class="viewcode-block" id="GMOS_IMAGE_fluxcal_Primitives.fluxcal"><a class="viewcode-back" href="../scripts.html#primitives_fluxcal_GMOS_IMAGE.GMOS_IMAGE_fluxcal_Primitives.fluxcal">[docs]</a>    <span class="k">def</span> <span class="nf">fluxcal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">          Fluxcal drives:</span>
+<span class="sd">            - DetectSources</span>
+<span class="sd">            - AddReferenceCatalogs</span>
+<span class="sd">            - CorrelateWithReferenceCatalogs</span>
+<span class="sd">            - CalculateZeropoint</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">logfile</span> <span class="o">=</span> <span class="s">&#39;fluxcal.log&#39;</span>
+        <span class="n">adOuts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="s">&#39;*STARTING*  Running fluxcal functions&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">rc</span><span class="o">.</span><span class="n">getInputs</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s">&#39;AD&#39;</span><span class="p">):</span>
+
+                <span class="n">ds</span>   <span class="o">=</span> <span class="n">DetectSources</span>   <span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="n">logfile</span><span class="p">)</span>
+                <span class="n">adout</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">runDS</span><span class="p">()</span>
+
+                <span class="n">cc</span>   <span class="o">=</span> <span class="n">AddReferenceCatalogs</span><span class="p">(</span><span class="n">adout</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="n">logfile</span><span class="p">)</span>
+                <span class="n">adout</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">getRefs</span><span class="p">()</span>
+
+                <span class="n">corr</span> <span class="o">=</span> <span class="n">CorrelateWithReferenceCatalogs</span> <span class="p">(</span><span class="n">adout</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="n">logfile</span><span class="p">)</span>
+                <span class="n">adout</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">runCorr</span><span class="p">()</span>
+
+                <span class="n">czp</span>  <span class="o">=</span> <span class="n">CalculateZeropoint</span><span class="p">(</span><span class="n">adout</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="n">logfile</span><span class="p">)</span>
+                <span class="n">adout</span> <span class="o">=</span> <span class="n">czp</span><span class="o">.</span><span class="n">runZP</span><span class="p">()</span>
+
+                <span class="n">adOuts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">adout</span><span class="p">)</span>
+
+            <span class="n">rc</span><span class="o">.</span><span class="n">reportOutput</span><span class="p">(</span><span class="n">adOuts</span><span class="p">)</span>
+
+            <span class="n">log</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="s">&#39;FLuxcal completed successfully&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">GMOS_IMAGEException</span><span class="p">(</span><span class="s">&quot;Problems with fluxcal&quot;</span><span class="p">)</span>
+
+        <span class="k">yield</span> <span class="n">rc</span>
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,669 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>AstroData Programmer’s Guide &mdash; fluxcal 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="fluxcal 0.1 documentation" href="index.html" />
+    <link rel="prev" title="Creating a new Instrument descriptor for Astrodata use" href="descriptor.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="descriptor.html" title="Creating a new Instrument descriptor for Astrodata use"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">fluxcal 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="astrodata-programmer-s-guide">
+<span id="prog-guide"></span><h1>AstroData Programmer&#8217;s Guide<a class="headerlink" href="#astrodata-programmer-s-guide" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic">
+<li><p class="first">Opening a FITS file.</p>
+<p>ad = AstroData(file, mode)</p>
+<ul class="simple">
+<li>file: FITS file pathname</li>
+<li>mode: &#8216;readonly&#8217;, &#8216;update&#8217;, &#8216;append&#8217; or &#8216;new&#8217;. In &#8216;new&#8217; mode, if the
+file already exists, it will be silently clobbered.</li>
+</ul>
+<p>The &#8216;ad&#8217; instance has all the functions and metadata information pertaining
+to the opened FITS file. You can see this list by typing &#8216;dir(ad)&#8217;; any particular
+elements&#8217; help file can be obtained by typing for example &#8216;help ad.getHeader&#8217;</p>
+</li>
+<li><p class="first">Header information in Astrodata</p>
+</li>
+</ol>
+<p>The following methods are available to retrieve information from a MEF file.
+Before access them you need to open a MEF file with Astrodata, please see
+the &#8216;info&#8217; example here.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="77%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#info">info</a></td>
+<td>List information about the FITS units:</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#gethdu">getHDU</a></td>
+<td>Retrieves Header and Data Unit from an extension</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#getheaders">getHeaders</a></td>
+<td>Get headers from all units</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#getheader">getHeader</a></td>
+<td>Get one header</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#getheadervalue">getHeaderValue</a></td>
+<td>Returns the value from the given extension&#8217;s header</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#getphuheader">getPHUHeader</a></td>
+<td>Returns primary header</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#rephukeys">rePHUKeys</a></td>
+<td>Returns all keys that matches a Python regular expression</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong></p>
+<dl class="docutils" id="info">
+<dt>info()</dt>
+<dd><blockquote class="first">
+<div>List information about the FITS units.</div></blockquote>
+<div class="last highlight-python"><pre>ad = AstroData('nS20100102S0314.fits')
+print ad.info()
+#
+# The output is:
+Filename: nS20100102S0314.fits
+No.    Name         Type      Cards   Dimensions   Format
+0    PRIMARY     PrimaryHDU     169  ()            int16
+1    SCI         ImageHDU        36  (1024, 1024)  float32
+2    SCI         ImageHDU        35  (1024, 1024)  float32</pre>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="gethdu">
+<dt>getHDU (extid)</dt>
+<dd><blockquote class="first">
+<div>This function returns the HDU identified by the <tt class="docutils literal"><span class="pre">extid</span></tt> argument. This
+argument can be an integer or <tt class="docutils literal"><span class="pre">(extname,</span> <span class="pre">extver)</span></tt> tuple.</div></blockquote>
+<div class="last highlight-python"><div class="highlight"><pre><span class="n">hdu</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">getHDU</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>     <span class="c"># Get 1st extension hdu pointer.</span>
+<span class="n">header</span> <span class="o">=</span> <span class="n">hdu</span><span class="o">.</span><span class="n">header</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">hdu</span><span class="o">.</span><span class="n">data</span>
+<span class="n">phdu</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">getHDU</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>    <span class="c"># Get PHDU</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="getheaders">
+<dt>getHeaders()</dt>
+<dd><blockquote class="first">
+<div>Function returns header member(s) for all extension (except PHU).</div></blockquote>
+<div class="last highlight-python"><div class="highlight"><pre><span class="n">hdl</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">getHeaders</span><span class="p">()</span>
+<span class="k">print</span> <span class="n">hdl</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>          <span class="c"># Print all the extension 2 header keywords</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="getheader">
+<dt>getHeader(extn)</dt>
+<dd><blockquote class="first">
+<div>Function returns header member for SINGLE EXTENSION MEFs (which are those that
+have only one extension plus PHU).</div></blockquote>
+<div class="last highlight-python"><div class="highlight"><pre><span class="n">hd</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">getheader</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">hd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;cd1_1&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="getphuheader">
+<dt>getPHUHeader ()</dt>
+<dd><blockquote class="first">
+<div>This function returns PHU header.</div></blockquote>
+<div class="last highlight-python"><div class="highlight"><pre><span class="n">ad</span> <span class="o">=</span> <span class="n">AstroData</span><span class="p">(</span><span class="s">&#39;S20100102S0060.fits&#39;</span><span class="p">)</span>
+<span class="n">phu</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">getPHUHeader</span><span class="p">()</span>
+<span class="k">print</span> <span class="n">phu</span><span class="p">[</span><span class="s">&#39;ut&#39;</span><span class="p">]</span>         <span class="c"># Get the UT value from  the PHU.</span>
+                        <span class="c"># It is case insensitive</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="getheadervalue">
+<dt>getHeaderValue (extn, keyword)</dt>
+<dd><blockquote class="first">
+<div>This function returns the value from the given extension&#8217;s header.
+extn: identifies which extension int or (EXTNAME, EXTVER) tuple
+keyword: name of header entry to retrieve</div></blockquote>
+<div class="last highlight-python"><div class="highlight"><pre><span class="n">ad</span> <span class="o">=</span> <span class="n">AstroData</span><span class="p">(</span><span class="s">&#39;S20100102S0060.fits&#39;</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">ad</span><span class="o">.</span><span class="n">getHeaderValue</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s">&#39;cd1_1&#39;</span><span class="p">)</span>   <span class="c"># using the tuple notation</span>
+<span class="k">print</span> <span class="n">ad</span><span class="o">.</span><span class="n">getHeaderValue</span> <span class="p">((</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="s">&#39;cd1_1&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="phuheader">
+<dt>phuHeader(keywd)   (alias is phuValue)</dt>
+<dd><blockquote class="first">
+<div>This function returns a header from the primary header unit
+(extension 0 in a MEF).</div></blockquote>
+<div class="last highlight-python"><div class="highlight"><pre><span class="k">print</span> <span class="n">ad</span><span class="o">.</span><span class="n">phuHeader</span><span class="p">(</span><span class="s">&#39;UT&#39;</span><span class="p">)</span>          <span class="c"># print UT from the PHU</span>
+<span class="k">print</span> <span class="n">ad</span><span class="o">.</span><span class="n">phuValue</span><span class="p">(</span><span class="s">&#39;UT&#39;</span><span class="p">)</span>           <span class="c"># Same</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="rephukeys">
+<dt>rePHUKeys(re)</dt>
+<dd><blockquote class="first">
+<div>rePHUKeys returns all keys in this dataset&#8217;s PHU which match the given
+Python regular expression.</div></blockquote>
+<div class="last highlight-python"><pre>print ad.rePHUKeys('..CO')      # 2 characters from the beginning
+    ['DECOFFSE', 'FOCOFFEN', 'LPCOUNT', 'LPCOADDS']
+
+print ad.rePHUKeys('\w*ER')      # Any number of character from the beginning
+    ['OBSERVER', 'OBSERVAT', 'FILTER_R', 'PRSERVO', 'FILTER_B', 'TTSERVO']</pre>
+</div>
+</dd>
+</dl>
+<div class="section" id="meta-data-information-in-astrodata">
+<span id="meta-data-info"></span><h2>Meta data information in Astrodata<a class="headerlink" href="#meta-data-information-in-astrodata" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>These are the descriptors available for all the Gemini instruments. They present
+a uniform way of calling, but the value returned varies according to the instrument
+you are querying. Some descriptors accept arguments.</p>
+<div class="highlight-python"><pre>Example:  ad = AstroData('S20100102S0060.fits')   # Open a FITS file returning AD object
+          print ad.airmass()                      # Get the airmass value</pre>
+</div>
+</div></blockquote>
+<table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="74%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>airmass</td>
+<td>Airmass</td>
+</tr>
+<tr class="row-even"><td>az</td>
+<td>Azimuth</td>
+</tr>
+<tr class="row-odd"><td>camera</td>
+<td>Instrument</td>
+</tr>
+<tr class="row-even"><td>crpa</td>
+<td>Cassegrain rotator value (off, on)</td>
+</tr>
+<tr class="row-odd"><td>cwave</td>
+<td>ND</td>
+</tr>
+<tr class="row-even"><td>datalab</td>
+<td>Data label</td>
+</tr>
+<tr class="row-odd"><td>datasec</td>
+<td>Data section</td>
+</tr>
+<tr class="row-even"><td>dec</td>
+<td>Declination</td>
+</tr>
+<tr class="row-odd"><td>detsec</td>
+<td>Detecttor section</td>
+</tr>
+<tr class="row-even"><td>disperser</td>
+<td>ND</td>
+</tr>
+<tr class="row-odd"><td>el</td>
+<td>Elevation</td>
+</tr>
+<tr class="row-even"><td>exptime</td>
+<td>Exposure time</td>
+</tr>
+<tr class="row-odd"><td>filterid</td>
+<td>Filter identification</td>
+</tr>
+<tr class="row-even"><td>filtername</td>
+<td>Filter name</td>
+</tr>
+<tr class="row-odd"><td>fpmask</td>
+<td>Focal plane mask</td>
+</tr>
+<tr class="row-even"><td>gain</td>
+<td>Gain</td>
+</tr>
+<tr class="row-odd"><td>progid</td>
+<td>Program ID</td>
+</tr>
+<tr class="row-even"><td>instrument</td>
+<td>Instrument used</td>
+</tr>
+<tr class="row-odd"><td>mdfrow</td>
+<td>ND</td>
+</tr>
+<tr class="row-even"><td>nonlinear</td>
+<td>ND</td>
+</tr>
+<tr class="row-odd"><td>nsciext</td>
+<td>Number of Science extensions</td>
+</tr>
+<tr class="row-even"><td>object</td>
+<td>Object name</td>
+</tr>
+<tr class="row-odd"><td>obsid</td>
+<td>Observatin ID</td>
+</tr>
+<tr class="row-even"><td>obsclass</td>
+<td>Observation class</td>
+</tr>
+<tr class="row-odd"><td>observer</td>
+<td>Observer&#8217;s name</td>
+</tr>
+<tr class="row-even"><td>obsmode</td>
+<td>Observation mode</td>
+</tr>
+<tr class="row-odd"><td>obstype</td>
+<td>Observation type</td>
+</tr>
+<tr class="row-even"><td>obsepoch</td>
+<td>Observation epoch</td>
+</tr>
+<tr class="row-odd"><td>pixscale</td>
+<td>Pixel scale</td>
+</tr>
+<tr class="row-even"><td>progid</td>
+<td>Program id</td>
+</tr>
+<tr class="row-odd"><td>pupilmask</td>
+<td>Pupil mask</td>
+</tr>
+<tr class="row-even"><td>ra</td>
+<td>Right ascension</td>
+</tr>
+<tr class="row-odd"><td>rawiq</td>
+<td>Raw Image Quality</td>
+</tr>
+<tr class="row-even"><td>rawcc</td>
+<td>Raw Cloud Cover</td>
+</tr>
+<tr class="row-odd"><td>rawwv</td>
+<td>Raw Water Vapour/Transparency</td>
+</tr>
+<tr class="row-even"><td>rawbg</td>
+<td>Raw Background</td>
+</tr>
+<tr class="row-odd"><td>rawpireq</td>
+<td>PI Requirements Met</td>
+</tr>
+<tr class="row-even"><td>rawgemqa</td>
+<td>Gemini Quality Assessment</td>
+</tr>
+<tr class="row-odd"><td>rdnoise</td>
+<td>read out noise</td>
+</tr>
+<tr class="row-even"><td>satlevel</td>
+<td>saturatin level</td>
+</tr>
+<tr class="row-odd"><td>ssa</td>
+<td>SSA name</td>
+</tr>
+<tr class="row-even"><td>telescope</td>
+<td>Telescope name</td>
+</tr>
+<tr class="row-odd"><td>utdate</td>
+<td>UT date</td>
+</tr>
+<tr class="row-even"><td>uttime</td>
+<td>UT time</td>
+</tr>
+<tr class="row-odd"><td>wdelta</td>
+<td>ND</td>
+</tr>
+<tr class="row-even"><td>wrefpix</td>
+<td>ND</td>
+</tr>
+<tr class="row-odd"><td>xccdbin</td>
+<td>ND</td>
+</tr>
+<tr class="row-even"><td>yccdbin</td>
+<td>ND</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="astrodata-utilities">
+<span id="ad-utilities"></span><h2>AstroData Utilities<a class="headerlink" href="#astrodata-utilities" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>These are the utility calls available from the Astrodata object. In order to access these we
+need to have:</p>
+<div class="highlight-python"><pre># Open a GEMINI observation file.
+ad = AstroData('/tmp/existing_gemini_file.fits')
+
+Example:  ad.discoverTypes()      # displays all the Types associated with this exposure</pre>
+</div>
+</div></blockquote>
+<table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="71%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#discovertypes">discoverTypes</a></td>
+<td>List of processing status and typology</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#filename">filename</a></td>
+<td>Filename used as Astrodata argument</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#getdata">getData</a></td>
+<td>Get the pixel array associated with the dataset</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#setdata">setData</a></td>
+<td>Set the data portion of a single extension</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#getstatus">getStatus</a></td>
+<td>processing status of the associated data set</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#append">append</a></td>
+<td>Appends more data and header to the associated set</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#gettypes">getTypes</a></td>
+<td>Get the associated dataset typology</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#hdulist">hdulist</a></td>
+<td>object returned by Pyfits when opening the FITS file</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#checktype">checkType</a></td>
+<td>Check for a given type</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#hdurefcount">hdurefcount</a></td>
+<td>number of times <em>getHDUList</em> has been accessed</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#header">header</a></td>
+<td>header portion of the associated hdu</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#data">data</a></td>
+<td>data portion of the associated hdu</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#close">close</a></td>
+<td>Closes the AstroData object</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#types">types</a></td>
+<td>List the astrodata types</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#typesstatus">typesStatus</a></td>
+<td>processing status of the opened file</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#countexts">countExts</a></td>
+<td>number of extensions match a given <em>EXTNAME</em></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#istype">isType</a></td>
+<td>See if the given type belongs to the typology list</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mode">mode</a></td>
+<td>Astrodata opening mode</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#write">write</a></td>
+<td>Write the hdulis to a new FITS file</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="examples">
+<h3>EXAMPLES<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils" id="discovertypes">
+<dt>discoverTypes</dt>
+<dd><blockquote class="first">
+<div>This function provides a list of classifications of both processing status
+and typology which apply to the data encapsulated by this instance,
+identified by their string names.</div></blockquote>
+<div class="last highlight-python"><pre>example: ad.discoverTypes()
+              ['GEMINI', 'NICI_IMAGE', 'NICI', 'GEMINI_SOUTH', 'PREPARED']</pre>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="filename">
+<dt>filename</dt>
+<dd>Filename used as Astrodata argument.
+Ex:  print ad.filename    # No ()</dd>
+</dl>
+<dl class="docutils" id="getdata">
+<dt>getData</dt>
+<dd>Get the pixel array associated with the dataset. This is for a single extension MEF.
+See <em>getHDUlist</em> for a more general example.</dd>
+</dl>
+<dl class="docutils" id="getstatus">
+<dt>getStatus</dt>
+<dd>Gives the processing status of the associated data set.</dd>
+</dl>
+<dl class="docutils" id="append">
+<dt>append</dt>
+<dd><blockquote class="first">
+<div>Appends more data and header to the associated set</div></blockquote>
+<div class="last highlight-python"><pre>Example:  hdu = ad.getHDU(1)      # Get data and header from *ad*
+               adf = AstroData('S20100102S0148.fits')
+               adf.append(data=hdu.data, header=hdu.header)</pre>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="gettypes">
+<dt>getTypes</dt>
+<dd>Get the associated dataset typology. Similar to <em>discoverTypes</em></dd>
+</dl>
+<dl class="docutils" id="setdata">
+<dt>setData</dt>
+<dd>Set the data portion of a single extension</dd>
+</dl>
+<dl class="docutils" id="hdulist">
+<dt>hdulist</dt>
+<dd><blockquote class="first">
+<div>Is the object returned by Pyfits when opening the FITS file.</div></blockquote>
+<div class="last highlight-python"><div class="highlight"><pre><span class="c"># Get the HDU pair for the 1st extension</span>
+<span class="n">hdu</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">hdulist</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="checktype">
+<dt>checkType (type)</dt>
+<dd><blockquote class="first">
+<div>Check for a given type. Return True or False. The possible types are given
+by <em>getTypes</em></div></blockquote>
+<div class="last highlight-python"><pre>example:  ad.checkType('NICI')</pre>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="hdurefcount">
+<dt>hdurefcount</dt>
+<dd>Gives the number of times <em>getHDUList</em> has been accessed. <em>relhdul()</em> should
+be called after each <em>getHDUList</em> call.</dd>
+</dl>
+<dl class="docutils" id="header">
+<dt>header</dt>
+<dd>Get the header portion of the associated hdu.</dd>
+</dl>
+<dl class="docutils" id="data">
+<dt>data</dt>
+<dd><blockquote class="first">
+<div>Get the data portion of the associated hdu.</div></blockquote>
+<div class="last highlight-python"><pre>Example: header = ad[2].header       # Get header from extension 2
+         data = ad[2].data           # Get data from extension 2</pre>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="close">
+<dt>close()</dt>
+<dd>Closes the AstroData object</dd>
+</dl>
+<dl class="docutils" id="types">
+<dt>types</dt>
+<dd><blockquote class="first">
+<div>List the astrodata types.</div></blockquote>
+<div class="last highlight-python"><pre>Example:  ad.types   # No ()
+          ['NICI_FLAT', 'NICI_DARK', 'GEMINI', 'NICI_DARK_OLD',
+           'NICI_IMAGE', 'NICI', 'GEMINI_SOUTH', 'UNPREPARED']</pre>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="typesstatus">
+<dt>typesStatus</dt>
+<dd>List the processing status of the opened file.</dd>
+</dl>
+<dl class="docutils" id="countexts">
+<dt>countExts (extname)</dt>
+<dd><blockquote class="first">
+<div>Gives the number of extensions in the MEF files that match a given <em>EXTNAME</em> keyword value.</div></blockquote>
+<div class="last highlight-python"><pre>Example:  ad.countExts('SCI')
+   Note:  The *EXTNAME* value is case sensitive</pre>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="istype">
+<dt>isType (typename)</dt>
+<dd><blockquote class="first">
+<div>Boolean function to determine if the given type matches the list of types.</div></blockquote>
+<div class="last highlight-python"><pre>Example:   if ad.isType('NICI_FLAT'):
+               print 'Is Nici Flat frame'
+           else:
+               print 'NICI_FLAT is not a type of',ad.filename</pre>
+</div>
+</dd>
+</dl>
+<dl class="docutils" id="mode">
+<dt>mode</dt>
+<dd>Tells the mode used by Astrodata when opening the file.</dd>
+</dl>
+<dl class="docutils" id="write">
+<dt>write (filename)</dt>
+<dd><blockquote class="first">
+<div>Write to a new FITS file. The HDUlist has been already created.</div></blockquote>
+<div class="last highlight-python"><pre>EXAMPLE:
+
+ad = AstroData ('/tmp/existing_file.fits')
+
+# get the hdulist
+hdl = ad.gethdul()
+
+# Generate some new data
+data = numpy.arange(100*100)
+
+# Get the 1st extension header
+header = ad.getHeader(1)
+
+# append a keyword
+header.update('newkk',-1.23,comment='new keyw')
+
+
+# Replace Header and data for the 1st extension
+hdl[1].header = header
+hdl[1].data = data
+
+# Write out to a new file (Error if file exists)
+# NOTE: It will write the same number of extensions as the original 'ad'
+ad.write('/tmp/new.fits')
+
+# Or equivalently since *hdl* is of type Pyfits we can use the following
+# to overwrite if needed.
+hdl.writeto("/tmp/new.fits",clobber=True)
+
+# IF you want to write only one Unit, then you will need to
+# delete the other members of the 'hdulist'
+
+del hdl[1:3]       # Keep only the PHU
+hdl[0].data = data
+
+ad.write('/tmp/PHU.fits')      # Notice that we still use the 'ad' descriptor.</pre>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">AstroData Programmer&#8217;s Guide</a><ul>
+<li><a class="reference internal" href="#meta-data-information-in-astrodata">Meta data information in Astrodata</a></li>
+<li><a class="reference internal" href="#astrodata-utilities">AstroData Utilities</a><ul>
+<li><a class="reference internal" href="#examples">EXAMPLES</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="descriptor.html"
+                        title="previous chapter">Creating a new Instrument descriptor for Astrodata use</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/prog.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="descriptor.html" title="Creating a new Instrument descriptor for Astrodata use"
+             >previous</a> |</li>
+        <li><a href="index.html">fluxcal 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

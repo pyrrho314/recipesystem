@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ncmkflats. Create calibration files &mdash; ndoc v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="ndoc v0.1 documentation" href="../index.html" />
+    <link rel="up" title="NICI Commands" href="index.html" />
+    <link rel="next" title="ncscience. Analysis of science data" href="ncscience.html" />
+    <link rel="prev" title="ncprepare. Find masks center" href="ncprepare.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ncscience.html" title="ncscience. Analysis of science data"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ncprepare.html" title="ncprepare. Find masks center"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">ndoc v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">NICI Commands</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ncmkflats-create-calibration-files">
+<span id="ncmkflats"></span><h1>ncmkflats. Create calibration files<a class="headerlink" href="#ncmkflats-create-calibration-files" title="Permalink to this headline">¶</a></h1>
+<p><strong>ncmkflats(inputs idir=&#8217;&#8217; odir=&#8217;&#8217; sigma=6 clobber=False suffix=&#8217;default&#8217; logfile=&#8217;&#8217; verbose=False)</strong></p>
+<p>ncmkflats takes the <em>inputs</em> files containing FLATS frames with shutter open and close and creates the following calibration files:</p>
+<blockquote>
+<div class="highlight-python"><pre>flats_red_&lt;suffix&gt;.fits     # Dark subtracted and median divided (red frames)
+flats_blue_&lt;suffix&gt;.fits    # Dark subtracted and median divided (blue frames)
+sky_red_&lt;suffix&gt;.fits       # Denoised median of skycube_red
+sky_blue_&lt;suffix&gt;.fits      # Denoised median of skycube_red
+skycube_red_&lt;suffix&gt;.fits   # Stack of denoised red frames
+skycube_blue_&lt;suffix&gt;.fits  # Stack of denoised bluer frames</pre>
+</div>
+</blockquote>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><dl class="first docutils">
+<dt><em>inputs</em></dt>
+<dd><p class="first last">A input list of FITS files to process. This list can a Unix wildcard pathname, e.g. * .fits, root23[2-9].fits, root??.fits or a &#64; list, e.g. &#64;file.lis, where &#8216;file.lis&#8217; is a text file with a list of FITS files, one file per line or a plain list of FITS filenames separated by commas.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>idir</em></dt>
+<dd><p class="first last">Default is current directory. Directory pathname where the input files reside.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>odir</em></dt>
+<dd><p class="first last">Default is current directory. Directory pathname to put the output FITS files.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>sigma</em></dt>
+<dd><p class="first last">Default is 6. Set to Nan all pixel above this value from the median.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>clobber</em></dt>
+<dd><p class="first last">Default value is False. Will overwrite the output filename if value True.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>suffix</em></dt>
+<dd><p class="first last">Defaul value is the first rootname of the input list. Append the value to the file rootname. This should be the same as the one from the ncscience script.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>logfile</em></dt>
+<dd><p class="first last">Filename to hold log information. Default value is <em>gemini.log</em>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>verbose</em></dt>
+<dd><p class="first last">Default value is False. If True, information is displayed on the terminal as well.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Examples</strong></p>
+<ol class="arabic simple">
+<li>ncmkflats &#8216;<a href="#id1"><span class="problematic" id="id2">*</span></a>.fits&#8217; &#8211;odir=&#8217;/data&#8217; (Unix command)</li>
+</ol>
+<blockquote>
+All the FITS files in the current directory are read but only those with type FLAT are processed. Write the output FITS files in the directory &#8216;/data&#8217;.</blockquote>
+<ol class="arabic simple" start="2">
+<li>ncmkflats &#64;ncFlats.lis idir=&#8217;/data/20090312/&#8217; odir=&#8217;/data/flats/&#8217; suffix=&#8217;test_run&#8217; (Pyraf mode)</li>
+</ol>
+<blockquote>
+The input flats FITS files are in the list file &#8216;ncFlats.lis&#8217; as one
+filename per line. You can put the full pathname of each file in which
+case do not specified &#8216;idir&#8217;. If only filenames are given, then
+the script will open the FITS files in &#8216;idir&#8217;. The output files
+are written to &#8216;odir&#8217; pathname. The output file will have
+the suffix &#8216;test_run&#8217; as in <em>flats_red_test_run.fits</em>. Remember that
+in Unix mode you can get the list of this scripts&#8217; parameters by typing
+&#8216;ncmkflats -h&#8217;.</blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="ncprepare.html"
+                                  title="previous chapter">ncprepare. Find masks center</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="ncscience.html"
+                                  title="next chapter">ncscience. Analysis of science data</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/commands/ncmkflats.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ncscience.html" title="ncscience. Analysis of science data"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ncprepare.html" title="ncprepare. Find masks center"
+             >previous</a> |</li>
+        <li><a href="../index.html">ndoc v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >NICI Commands</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

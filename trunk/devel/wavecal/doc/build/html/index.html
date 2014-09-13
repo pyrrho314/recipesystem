@@ -1,0 +1,170 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Wavelength Calibration &mdash; Wavelength calibration user guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wavelength calibration user guide 0.1 documentation" href="#" />
+    <link rel="next" title="Missing functionality" href="todo.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="todo.html" title="Missing functionality"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="wavelength-calibration">
+<h1>Wavelength Calibration<a class="headerlink" href="#wavelength-calibration" title="Permalink to this headline">¶</a></h1>
+<p>Wavelength Calibration finds automatically a mapping from pixel coordinates to wavelengths given an ARC image from a reduced Gemini FITS file. The mapping is possible
+only if you have a reference list containing known wavelengths for the
+spectral lines in the arc image and a rough WCS values in the header.</p>
+<p>The main Wavecal class methods are:</p>
+<ul class="simple">
+<li><strong>wavecal</strong> Finds the mapping between pixel coordinates and wavelengths using a Matching Ratio Algorithm.</li>
+<li><strong>pix2ref</strong> Given a list of pixel coordinates calculates the associated wavelengths.</li>
+<li><strong>fit_image</strong> Fit a 3D function f(pix, row, wavelength) to the input image containing an ARC spectrum.</li>
+<li><strong>im_linearize</strong> Linearize the image applying the surface function evaluator from the method fit_image.</li>
+<li><strong>im_astrodata</strong> Generate an AstroData object given and ndarray and the input FITS PHU and HDU[‘SCI’].</li>
+<li><strong>winter</strong> A Winter class method to interactively find a solution.</li>
+</ul>
+<div class="toctree-wrapper compound">
+</div>
+<ul class="simple">
+<li><a class="reference internal" href="todo.html#todo"><em>MISSING FUNCTIONALITY</em></a></li>
+<li><a class="reference internal" href="availability.html#availability"><em>Accesing Wavecal</em></a></li>
+<li><a class="reference internal" href="inputData.html#inputdata"><em>Input Data</em></a></li>
+<li><a class="reference internal" href="dataRequirements.html#datarequirements"><em>Input Data Requirements</em></a></li>
+<li><a class="reference internal" href="quickExample.html#quickexample"><em>Quick Example</em></a></li>
+<li><a class="reference internal" href="imagefit.html#imagefit"><em>Fitting the ARC image</em></a></li>
+<li><a class="reference internal" href="linearize.html#linearize"><em>Linearize an image</em></a></li>
+<li><a class="reference internal" href="recipesPrimitives.html#prims"><em>Primitives and Recipes</em></a></li>
+<li><a class="reference internal" href="examples.html#examples"><em>Examples</em></a></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="examples.html#example1"><em>Example 1. Obtain the pixel mapping (wavecal) to wavelength for a GMOS Long Slit image</em></a></li>
+<li><a class="reference internal" href="imagefit.html#imagefit"><em>Example 2. Compute a fitting function to the ARC image.</em></a></li>
+<li><a class="reference internal" href="linearize.html#lin-example"><em>Example 3. Linearize an ARC image.</em></a></li>
+<li><a class="reference internal" href="linearize.html#lin-sci-example"><em>Example 4. Linearize a SCIENCE image.</em></a></li>
+<li><a class="reference internal" href="winter.html#winter"><em>Example 5. If Wavecal fails to converge: Interactive</em></a></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><a class="reference internal" href="functionality.html#functionality"><em>Work flow.</em></a></li>
+<li><a class="reference internal" href="wavecal.html#wcal"><em>Wavecal class</em></a></li>
+<li><a class="reference internal" href="wavecal.html#instrument"><em>Instrument class</em></a></li>
+<li><a class="reference internal" href="wavecal.html#gmos"><em>GMOS class</em></a></li>
+<li><a class="reference internal" href="wavecal.html#f2"><em>F2 class</em></a></li>
+<li><a class="reference internal" href="wavecal.html#gnirs"><em>Gnirs class</em></a></li>
+<li><a class="reference internal" href="wavecal.html#niri"><em>NIRI class</em></a></li>
+<li><a class="reference internal" href="wavecal.html#nifs"><em>NIFS class</em></a></li>
+<li><a class="reference internal" href="wavecal.html#matchlines"><em>MatchLines class</em></a></li>
+<li><a class="reference internal" href="winter.html#winter"><em>Winter</em></a>: Interactive line identification.</li>
+</ul>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Wavelength Calibration</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="todo.html"
+                        title="next chapter">Missing functionality</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="todo.html" title="Missing functionality"
+             >next</a> |</li>
+        <li><a href="#">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Gemini Observatory.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>addReferenceCatalogs &mdash; fluxcal v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fluxcal v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for addReferenceCatalogs</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">imp</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">import</span> <span class="nn">pyfits</span> <span class="kn">as</span> <span class="nn">pf</span>
+<span class="kn">import</span> <span class="nn">pywcs</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">astrodata</span> <span class="kn">import</span> <span class="n">AstroData</span>
+<span class="kn">from</span> <span class="nn">astrodata.adutils</span> <span class="kn">import</span> <span class="n">gemLog</span>
+<span class="kn">from</span> <span class="nn">detectSources</span> <span class="kn">import</span> <span class="n">DetectSources</span>
+
+<div class="viewcode-block" id="AddReferenceCatalogs"><a class="viewcode-back" href="../scripts.html#addReferenceCatalogs.AddReferenceCatalogs">[docs]</a><span class="k">class</span> <span class="nc">AddReferenceCatalogs</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">      **Syntax**</span>
+<span class="sd">           ar = addReferenceCatalogs.AddReferenceCatalogs(</span>
+<span class="sd">                (ad, catalogName=None, logLevel=6, logfile=&#39;&#39;)</span>
+<span class="sd">        </span>
+<span class="sd">      :param ad:</span>
+<span class="sd">            AstroData object containing a FITS hdulist with at least one</span>
+<span class="sd">            image extension with EXTNAME=&#39;SCI&#39; in the extension header.</span>
+<span class="sd">      :type ad: AstroData object</span>
+<span class="sd">      :param catalogName:</span>
+<span class="sd">            Filename of the catalog. &#39;smith.cat&#39; and &#39;gmosn.cat&#39;</span>
+<span class="sd">            are supported at this time.</span>
+<span class="sd">      :param logLevel: </span>
+<span class="sd">            Verbose level</span>
+<span class="sd">      :type logLevel: integer,default is 6.</span>
+<span class="sd">      :param logfile:</span>
+<span class="sd">             log file name to replace the default value</span>
+<span class="sd">      :type logfile: String. Default value is &#39;detectSources.log&#39;</span>
+<span class="sd">          </span>
+<span class="sd">      **Description**</span>
+<span class="sd">        Find standard stars from the current standard catalogs</span>
+<span class="sd">        gmosn.cat (GN) and smith.cat (GS) that falls into the</span>
+<span class="sd">        current field of the image extension from input file.</span>
+<span class="sd">        If any is found creates a FITS table extension to be </span>
+<span class="sd">        append to the file.</span>
+
+<span class="sd">         ::</span>
+
+<span class="sd">                The table description is</span>
+<span class="sd">                EXTNAME = &#39;REFCAT&#39;</span>
+<span class="sd">                EXTVER  = extn      # Extension number of the image.</span>
+<span class="sd">                REFID   = str       # Unique id from the standard catalog</span>
+<span class="sd">                RA      = ra        # ra and dec from the catalog</span>
+<span class="sd">                DEC     = dec</span>
+<span class="sd">                X       = x         # x,y pixel coordinate calculated with</span>
+<span class="sd">                Y       = y         # the image WCS</span>
+<span class="sd">                MAG     = mag       # standard star magnitude</span>
+<span class="sd">                TUNIT   = filter_name   # filter letter corresponding to</span>
+<span class="sd">                                      # FILTER2 value in the GMOS PHU</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ad</span><span class="p">,</span> <span class="n">catalogName</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">logLevel</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ad</span> <span class="o">=</span> <span class="n">ad</span>
+
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">outad</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outad</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;ref_&#39;</span><span class="o">+</span><span class="n">basename</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">logfile</span><span class="p">:</span>
+            <span class="n">logfile</span> <span class="o">=</span> <span class="s">&#39;selectreferences.log&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">gemLog</span><span class="o">.</span><span class="n">getGeminiLog</span><span class="p">(</span><span class="n">logName</span><span class="o">=</span><span class="n">logfile</span><span class="p">,</span> <span class="n">logLevel</span><span class="o">=</span><span class="n">logLevel</span><span class="p">)</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">defaultCategory</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s">&#39;ALL&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="s">&#39;selectReferences&#39;</span><span class="p">)</span>
+
+    
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s"> ****** SELECT REFERENCES for: </span><span class="si">%s</span><span class="s"> *******&quot;</span><span class="o">%</span><span class="n">ad</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AddReferenceCatalogs.getRefs"><a class="viewcode-back" href="../scripts.html#addReferenceCatalogs.AddReferenceCatalogs.getRefs">[docs]</a>    <span class="k">def</span> <span class="nf">getRefs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Run the add reference catalog. Actually adding the </span>
+<span class="sd">            Bintable to the input ad object.</span>
+<span class="sd"> </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="kn">from</span> <span class="nn">pyfits</span> <span class="kn">import</span> <span class="n">Column</span>
+
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+
+        <span class="n">extname</span> <span class="o">=</span> <span class="s">&#39;REFCAT&#39;</span>
+
+        <span class="n">outad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outad</span>
+
+        <span class="c"># Select catalog and format the output data</span>
+        <span class="n">usecols</span><span class="p">,</span><span class="n">formats</span><span class="p">,</span><span class="n">band</span><span class="p">,</span><span class="n">delimiter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selStdsCatalog</span><span class="p">()</span>
+        <span class="n">refid</span><span class="p">,</span><span class="n">ra</span><span class="p">,</span><span class="n">dec</span><span class="p">,</span><span class="n">fmag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readStds</span><span class="p">(</span><span class="n">usecols</span><span class="p">,</span> <span class="n">formats</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">)</span>
+
+        <span class="c"># Loop through the SCI extensions</span>
+        <span class="k">for</span> <span class="n">scix</span> <span class="ow">in</span> <span class="n">outad</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">]:</span>
+
+            <span class="n">xtver</span> <span class="o">=</span> <span class="n">scix</span><span class="o">.</span><span class="n">extver</span><span class="p">()</span>
+
+            <span class="c"># x,y are the coordinates of the reference stars within the </span>
+            <span class="c"># input image field.</span>
+            <span class="n">g</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search4standards</span><span class="p">(</span><span class="n">ra</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">xtver</span><span class="p">)</span>
+
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Found </span><span class="si">%d</span><span class="s"> standards for field in  </span><span class="si">%s</span><span class="s">[&#39;SCI&#39;,</span><span class="si">%d</span><span class="s">]&quot;</span><span class="o">%</span>\
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">outad</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span><span class="n">xtver</span><span class="p">))</span>
+
+            <span class="c"># g: index array with the index of the standards within the field.</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">nlines</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ra</span><span class="p">)</span>
+
+                <span class="c"># If extension already exists, just update</span>
+                <span class="k">if</span> <span class="n">outad</span><span class="p">[</span><span class="n">extname</span><span class="p">,</span><span class="n">xtver</span><span class="p">]:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Table already exists,updating values.&#39;</span><span class="p">)</span>
+                    <span class="n">tdata</span> <span class="o">=</span> <span class="n">outad</span><span class="p">[</span><span class="n">extname</span><span class="p">,</span><span class="n">xtver</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+                    <span class="n">theader</span> <span class="o">=</span> <span class="n">outad</span><span class="p">[</span><span class="n">extname</span><span class="p">,</span> <span class="n">xtver</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+                    <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refid&#39;</span><span class="p">)[:]</span> <span class="o">=</span> <span class="n">refid</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+                    <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;ra&#39;</span><span class="p">)[:]</span>    <span class="o">=</span> <span class="n">ra</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+                    <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;dec&#39;</span><span class="p">)[:]</span>   <span class="o">=</span> <span class="n">dec</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+                    <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)[:]</span>     <span class="o">=</span> <span class="n">x</span>
+                    <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)[:]</span>     <span class="o">=</span> <span class="n">y</span>
+                    <span class="n">tdata</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s">&#39;refmag&#39;</span><span class="p">)[:]</span>  <span class="o">=</span> <span class="n">fmag</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">c1</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;refid&#39;</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s">&#39;22A&#39;</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">refid</span><span class="p">[</span><span class="n">g</span><span class="p">])</span>
+                    <span class="n">c2</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;ra&#39;</span><span class="p">,</span>    <span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">ra</span><span class="p">[</span><span class="n">g</span><span class="p">])</span>
+                    <span class="n">c3</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;dec&#39;</span><span class="p">,</span>   <span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">dec</span><span class="p">[</span><span class="n">g</span><span class="p">])</span>
+                    <span class="n">c4</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>     <span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+                    <span class="n">c5</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>     <span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+                    <span class="c"># band:       1-char:  &#39;u&#39;,&#39;g&#39;,&#39;r&#39;,&#39;i&#39; or &#39;z&#39;</span>
+                    <span class="n">c6</span> <span class="o">=</span> <span class="n">Column</span> <span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;refmag&#39;</span><span class="p">,</span><span class="n">unit</span><span class="o">=</span><span class="n">band</span><span class="p">,</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;E&#39;</span><span class="p">,</span><span class="n">array</span><span class="o">=</span><span class="n">fmag</span><span class="p">[</span><span class="n">g</span><span class="p">])</span>
+                    <span class="n">colsdef</span> <span class="o">=</span> <span class="n">pf</span><span class="o">.</span><span class="n">ColDefs</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span><span class="n">c2</span><span class="p">,</span><span class="n">c3</span><span class="p">,</span><span class="n">c4</span><span class="p">,</span><span class="n">c5</span><span class="p">,</span><span class="n">c6</span><span class="p">])</span>
+
+                    <span class="n">tbhdu</span> <span class="o">=</span> <span class="n">pf</span><span class="o">.</span><span class="n">new_table</span><span class="p">(</span><span class="n">colsdef</span><span class="p">)</span>         <span class="c"># Creates a BINTABLE</span>
+
+                    <span class="c"># pyfits to AstroData</span>
+                    <span class="n">tabad</span> <span class="o">=</span> <span class="n">AstroData</span><span class="p">(</span><span class="n">tbhdu</span><span class="p">)</span>
+
+                    <span class="c"># Add or append keywords EXTNAME, EXTVER</span>
+                    <span class="n">tabad</span><span class="o">.</span><span class="n">renameExt</span><span class="p">(</span><span class="n">extname</span><span class="p">,</span> <span class="n">xtver</span><span class="p">)</span>
+                
+                    <span class="n">outad</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tabad</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span> <span class="s">&#39;No standard stars were found for this field.&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">outad</span>
+</div>
+<div class="viewcode-block" id="AddReferenceCatalogs.selStdsCatalog"><a class="viewcode-back" href="../scripts.html#addReferenceCatalogs.AddReferenceCatalogs.selStdsCatalog">[docs]</a>    <span class="k">def</span> <span class="nf">selStdsCatalog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">          Select standard catalog based on the value of</span>
+<span class="sd">          the instrument keyword. </span>
+<span class="sd">          The values is GMOS_N, the catalog is &#39;gmosn.cat&#39;</span>
+<span class="sd">          else &#39;smith.cat&#39;</span>
+
+<span class="sd">          INPUT:</span>
+<span class="sd">             self.ad: AD object </span>
+
+<span class="sd">          OUTPUT:</span>
+<span class="sd">              - usecols</span>
+<span class="sd">              - formats </span>
+<span class="sd">              - band:    1-char:  &#39;u&#39;,&#39;g&#39;,&#39;r&#39;,&#39;i&#39; or &#39;z&#39;</span>
+<span class="sd">              - delimiter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ad</span><span class="o">.</span><span class="n">filter_name</span><span class="p">()</span> 
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ad</span><span class="o">.</span><span class="n">isType</span><span class="p">(</span><span class="s">&#39;GMOS_S&#39;</span><span class="p">):</span> 
+            <span class="c"># Read &#39;smith.cat&#39; catalog of standards for GS.</span>
+            <span class="c"># ID,ra,dec,u,ue,un, g,re,gn, r,re,rn, i, ie, in, z,ze,zn</span>
+            <span class="c"># 0  1  2   3 4  5   6 7  8   9 10 11  12 13  14 15 16 17</span>
+
+                                        
+            <span class="bp">self</span><span class="o">.</span><span class="n">catName</span>  <span class="o">=</span> <span class="s">&#39;smith.cat&#39;</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;u&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="s">&#39;g&#39;</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span><span class="s">&#39;r&#39;</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="s">&#39;i&#39;</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="s">&#39;z&#39;</span><span class="p">:</span><span class="mi">15</span><span class="p">}</span>     <span class="c"># column position for filter mag</span>
+            <span class="n">fne</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;u&#39;</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="s">&#39;g&#39;</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="s">&#39;r&#39;</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="s">&#39;i&#39;</span><span class="p">:</span><span class="mi">13</span><span class="p">,</span><span class="s">&#39;z&#39;</span><span class="p">:</span><span class="mi">16</span><span class="p">}</span>   <span class="c"># column position for filter mag err</span>
+            <span class="n">band</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>                   <span class="c"># Get the first filtername letter</span>
+                                               <span class="c"># u,g,r,i,z</span>
+            <span class="n">usecols</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">fn</span><span class="p">[</span><span class="n">band</span><span class="p">],</span><span class="n">fne</span><span class="p">[</span><span class="n">band</span><span class="p">])</span>
+            <span class="n">formats</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;S22&#39;</span><span class="p">,</span><span class="s">&#39;f4&#39;</span><span class="p">,</span><span class="s">&#39;f4&#39;</span><span class="p">,</span><span class="s">&#39;f4&#39;</span><span class="p">,</span><span class="s">&#39;f4&#39;</span><span class="p">)</span>
+            <span class="n">delimiter</span> <span class="o">=</span> <span class="s">&#39; &#39;</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ad</span><span class="o">.</span><span class="n">isType</span><span class="p">(</span><span class="s">&#39;GMOS_N&#39;</span><span class="p">):</span>
+            <span class="c"># gmosn.cat</span>
+            <span class="c"># name,Field,RA,DEC,u_mag,v_mag,g_mag,r_mag,i_mag,z_mag,</span>
+            <span class="c"># 0    1     2  3   4     5     6     7      8    9</span>
+            <span class="c">#             y_mag,j_mag,h_mag,k_mag,lprime_mag,m_mag</span>
+            <span class="c">#             10     11    12   13    </span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">catName</span> <span class="o">=</span> <span class="s">&#39;gmosn.cat&#39;</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;u&#39;</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="s">&#39;g&#39;</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span><span class="s">&#39;r&#39;</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="s">&#39;i&#39;</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="s">&#39;z&#39;</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="s">&#39;y&#39;</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="s">&#39;j&#39;</span><span class="p">:</span><span class="mi">11</span><span class="p">,</span><span class="s">&#39;h&#39;</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="s">&#39;k&#39;</span><span class="p">:</span><span class="mi">13</span><span class="p">}</span>
+            <span class="n">band</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>                   <span class="c"># Get the first filtername letter</span>
+                                                <span class="c"># u,g,r,i,z</span>
+            <span class="n">usecols</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="n">fn</span><span class="p">[</span><span class="n">band</span><span class="p">])</span>
+            <span class="c">#NOTE fmag can have None</span>
+            <span class="n">formats</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;S20&#39;</span><span class="p">,</span><span class="s">&#39;f4&#39;</span><span class="p">,</span><span class="s">&#39;f4&#39;</span><span class="p">,</span><span class="s">&#39;S20&#39;</span><span class="p">)</span>
+            <span class="n">delimiter</span> <span class="o">=</span> <span class="s">&#39;,&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">,</span> <span class="s">&#39;GMOS file keyword INSTRUME is not GMOS-N nor GMOS-S.&#39;</span>
+            <span class="k">return</span> <span class="bp">None</span>
+            
+        <span class="k">return</span> <span class="n">usecols</span><span class="p">,</span><span class="n">formats</span><span class="p">,</span><span class="n">band</span><span class="p">,</span><span class="n">delimiter</span>
+</div>
+<div class="viewcode-block" id="AddReferenceCatalogs.readStds"><a class="viewcode-back" href="../scripts.html#addReferenceCatalogs.AddReferenceCatalogs.readStds">[docs]</a>    <span class="k">def</span> <span class="nf">readStds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">usecols</span><span class="p">,</span><span class="n">formats</span><span class="p">,</span><span class="n">delimiter</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Read selected References Catalog (ascii catalogs)</span>
+
+<span class="sd">           INPUT:</span>
+<span class="sd">             - self.catname:  Pathname to input References catalog.</span>
+<span class="sd">             - usecols:    Columns to read from catalog.</span>
+<span class="sd">             - formats:     Formats to read columns. EG: (&#39;S20&#39;,&#39;f4&#39;,&#39;f4&#39;,&#39;S20&#39;)</span>
+<span class="sd">                            For more details please see:</span>
+<span class="sd">                            python: help numpy.loadtxt</span>
+<span class="sd">            </span>
+<span class="sd">           OUTPUT:</span>
+<span class="sd">             # Arrays containing standars info for objects in the field.</span>
+
+<span class="sd">             - refid:     Catalog id</span>
+<span class="sd">             - ra,dec:    ra,dec</span>
+<span class="sd">             - fmag:      magnitude corrresponding to </span>
+<span class="sd">                         the selected band </span>
+<span class="sd">            </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+ 
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="n">fp</span><span class="p">,</span> <span class="n">pathname</span><span class="p">,</span> <span class="n">description</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">find_module</span><span class="p">(</span><span class="s">&#39;addReferenceCatalogs&#39;</span><span class="p">)</span>
+
+        <span class="n">catName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pathname</span><span class="p">),</span><span class="bp">self</span><span class="o">.</span><span class="n">catName</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span> <span class="s">&#39;Catalog name: &#39;</span><span class="o">+</span><span class="n">catName</span><span class="p">)</span>
+        <span class="n">cc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">catName</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="n">usecols</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="n">delimiter</span><span class="p">,</span> 
+                         <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;names&#39;</span><span class="p">:(</span><span class="s">&#39;ic&#39;</span><span class="p">,</span><span class="s">&#39;ra&#39;</span><span class="p">,</span><span class="s">&#39;dec&#39;</span><span class="p">,</span><span class="s">&#39;fmag&#39;</span><span class="p">),</span>
+                                <span class="s">&#39;formats&#39;</span><span class="p">:</span><span class="n">formats</span><span class="p">})</span>
+        <span class="n">refid</span> <span class="o">=</span> <span class="n">cc</span><span class="p">[</span><span class="s">&#39;ic&#39;</span><span class="p">]</span>
+        <span class="n">ra</span> <span class="o">=</span>    <span class="n">cc</span><span class="p">[</span><span class="s">&#39;ra&#39;</span><span class="p">]</span>
+        <span class="n">dec</span> <span class="o">=</span>   <span class="n">cc</span><span class="p">[</span><span class="s">&#39;dec&#39;</span><span class="p">]</span>
+        <span class="n">fmag</span> <span class="o">=</span>  <span class="n">cc</span><span class="p">[</span><span class="s">&#39;fmag&#39;</span><span class="p">]</span>
+
+        <span class="c"># change fmag to float if necessary</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fmag</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="s">&#39;isupper&#39;</span><span class="p">):</span>    <span class="c"># See if it is string</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fmag</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">fmag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;None&#39;</span><span class="p">:</span>
+                   <span class="n">fmag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fmag</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                   <span class="n">fmag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">999</span>         <span class="c"># Floating flag for None</span>
+
+        <span class="k">return</span> <span class="n">refid</span><span class="p">,</span><span class="n">ra</span><span class="p">,</span><span class="n">dec</span><span class="p">,</span><span class="n">fmag</span>
+</div>
+<div class="viewcode-block" id="AddReferenceCatalogs.search4standards"><a class="viewcode-back" href="../scripts.html#addReferenceCatalogs.AddReferenceCatalogs.search4standards">[docs]</a>    <span class="k">def</span> <span class="nf">search4standards</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ra</span><span class="p">,</span><span class="n">dec</span><span class="p">,</span><span class="n">ext</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">          Check if standards given by ra,dec fall in the</span>
+<span class="sd">          image field determine by its WCS information.</span>
+
+<span class="sd">          INPUT:         </span>
+<span class="sd">            - ra,dec: ra,dec of the whole input catalog.</span>
+<span class="sd">                      ra is in hour units.</span>
+<span class="sd">          OUTPUT:</span>
+<span class="sd">            - g:      Index array of the positions (ra,dec) that </span>
+<span class="sd">                      falls in the field.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">scihdr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ad</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">,</span><span class="n">ext</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+
+        <span class="n">wcs</span> <span class="o">=</span> <span class="n">pywcs</span><span class="o">.</span><span class="n">WCS</span><span class="p">(</span><span class="n">scihdr</span><span class="p">)</span>
+
+        <span class="c"># Convert world coordinates to pixel coordinates</span>
+        <span class="c"># The second argument is &quot;origin&quot; -- in this case we&#39;re declaring we</span>
+        <span class="c"># have 1-based (Fortran-like) coordinates.</span>
+
+        <span class="n">xy</span> <span class="o">=</span> <span class="n">wcs</span><span class="o">.</span><span class="n">wcs_sky2pix</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">ra</span><span class="o">*</span><span class="mi">15</span><span class="p">,</span><span class="n">dec</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">xx</span> <span class="o">=</span> <span class="n">xy</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">yy</span> <span class="o">=</span> <span class="n">xy</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">naxis1</span><span class="p">,</span><span class="n">naxis2</span> <span class="o">=</span> <span class="n">scihdr</span><span class="p">[</span><span class="s">&#39;naxis1&#39;</span><span class="p">],</span><span class="n">scihdr</span><span class="p">[</span><span class="s">&#39;naxis2&#39;</span><span class="p">]</span>
+
+        <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">yy</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">yy</span><span class="o">&lt;</span><span class="n">naxis2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">xx</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">xx</span><span class="o">&lt;</span><span class="n">naxis1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">g</span><span class="p">,</span><span class="n">xx</span><span class="p">[</span><span class="n">g</span><span class="p">],</span><span class="n">yy</span><span class="p">[</span><span class="n">g</span><span class="p">]</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fluxcal v0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

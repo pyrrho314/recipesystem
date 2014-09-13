@@ -1,0 +1,813 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Fluxcal Test script &mdash; fluxcal v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="fluxcal v0.1 documentation" href="index.html" />
+    <link rel="prev" title="Installation" href="running_fc.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="running_fc.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">fluxcal v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-fluxcal">
+<span id="fluxcal-test-script"></span><span id="detect-sources"></span><h1>Fluxcal Test script<a class="headerlink" href="#module-fluxcal" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="fluxcal.Fluxcal">
+<em class="property">class </em><tt class="descclassname">fluxcal.</tt><tt class="descname">Fluxcal</tt><big>(</big><em>ad</em>, <em>addBPM=True</em>, <em>sigma=0.0</em>, <em>threshold=2.5</em>, <em>fwhm=5.5</em>, <em>logfile='fluxcal.log'</em><big>)</big><a class="reference internal" href="_modules/fluxcal.html#Fluxcal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fluxcal.Fluxcal" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Test Script to drive</dt>
+<dd><ul class="first simple">
+<li>class DetectSources. Creates [OBJCAT,ext] table extension.</li>
+<li>class SelectReferences. Create [REFCAT,ext] table extension.</li>
+<li>class CorrelateObjRef. Look for common position in OBJCAT and REFCAT tables</li>
+<li>class CalculateZP. Calculate ZP correction from common position array.</li>
+</ul>
+<dl class="last docutils">
+<dt>INPUTS:</dt>
+<dd><ul class="first last simple">
+<li>ad             : Input AD object</li>
+<li>addBPM=True    : add BPM</li>
+<li>sigma=0.0      : sigma value for detectSource</li>
+<li>threshold=2.5, : value for DS</li>
+<li>fwhm=5.5,      : value for DS</li>
+<li>logfile=&#8217;fluxcal.log&#8217;</li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="highlight-python"><pre>Example:
+  import flux_cal as fc
+  from astrodata import AstroData
+
+  ad = AstroData('zzz.fits')
+  ff = Fluxcal(ad)    # Create object</pre>
+</div>
+<dl class="method">
+<dt id="fluxcal.Fluxcal.addbpm">
+<tt class="descname">addbpm</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/fluxcal.html#Fluxcal.addbpm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fluxcal.Fluxcal.addbpm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add BPM extension(s) to the AD object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fluxcal.Fluxcal.display">
+<tt class="descname">display</tt><big>(</big><em>extn=None</em><big>)</big><a class="reference internal" href="_modules/fluxcal.html#Fluxcal.display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fluxcal.Fluxcal.display" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display SCI extensions from the Astrodata object
+and mark objects and reference stars found in the
+input file tables OBJCAT and REFCAT.</p>
+<p>DS9 must be running.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fluxcal.Fluxcal.ds">
+<tt class="descname">ds</tt><big>(</big><big>)</big><a class="headerlink" href="#fluxcal.Fluxcal.ds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Local function</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fluxcal.Fluxcal.getBPM">
+<tt class="descname">getBPM</tt><big>(</big><em>userbpm</em><big>)</big><a class="reference internal" href="_modules/fluxcal.html#Fluxcal.getBPM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fluxcal.Fluxcal.getBPM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the BPM file from the flixcal directory and 
+return its the AstroData object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>userbpm</strong> &#8211; BPM file suplied by the user. Its size
+should match the SCI extension image size.</td>
+</tr>
+<tr class="field"><th class="field-name">Rparam ad:</th><td class="field-body">The bpm file astrodata object.</td>
+</tr>
+</tbody>
+</table>
+<p>If &#8216;userbpm&#8217; is not empty just return its AstroData object</p>
+<dl class="docutils">
+<dt>NOTE: We still need to create: bpmgmoss11_123.fits.gz   # unbinned mef files</dt>
+<dd>bpmgmosn11_123.fits.gz</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fluxcal.Fluxcal.getoxy">
+<tt class="descname">getoxy</tt><big>(</big><em>extn=1</em><big>)</big><a class="reference internal" href="_modules/fluxcal.html#Fluxcal.getoxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fluxcal.Fluxcal.getoxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get x,y,mag,err from the current file
+in the table extension [&#8216;OBJCAT&#8217;,extn]; otherwise
+give a filename</p>
+<dl class="docutils">
+<dt>INPUT:</dt>
+<dd><p class="first">file: FITS filename, if not default</p>
+<dl class="last docutils">
+<dt>extn: Default 1. Extension number, needs</dt>
+<dd>to be less than the number of
+SCI extensions in the file.</dd>
+</dl>
+</dd>
+<dt>OUTPUT:</dt>
+<dd>x,ymag,err:   Arrays from the [&#8216;OBJCAT&#8217;,extn] data.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fluxcal.Fluxcal.getrxy">
+<tt class="descname">getrxy</tt><big>(</big><em>extn=1</em><big>)</big><a class="reference internal" href="_modules/fluxcal.html#Fluxcal.getrxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fluxcal.Fluxcal.getrxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get x,y,mag, from the current file
+in the table extension [&#8216;REFCAT&#8217;,extn]; otherwise
+give a filename</p>
+<dl class="docutils">
+<dt>INPUT:</dt>
+<dd><p class="first">file: FITS filename, if not default.</p>
+<dl class="last docutils">
+<dt>extn: Default 1. Extension number, needs</dt>
+<dd>to be less than the number of
+SCI extensions in the file.</dd>
+</dl>
+</dd>
+<dt>OUTPUT:</dt>
+<dd>x,y,mag:   Arrays from the [&#8216;REFCAT&#8217;,extn]</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="id1">
+<h1>Detect Sources<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div>This is the first script that you need to run to be able to get
+result in CalculateZeropoint. It uses the &#8216;astrodata&#8217; package to
+handle input/output and a detection algorithm that follows daofind.
+Please see <a class="reference internal" href="#det-sources"><em>DetSources</em></a>.</div></blockquote>
+<span class="target" id="module-detectSources"></span><dl class="class">
+<dt id="detectSources.DetectSources">
+<em class="property">class </em><tt class="descclassname">detectSources.</tt><tt class="descname">DetectSources</tt><big>(</big><em>ad</em>, <em>sigma=0.0</em>, <em>threshold=2.5</em>, <em>fwhm=5.5</em>, <em>logLevel=6</em>, <em>logfile=''</em><big>)</big><a class="reference internal" href="_modules/detectSources.html#DetectSources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#detectSources.DetectSources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find x,y positions of all the objects in the input
+image. Append a FITS table extension with position
+information plus columns for standard objects to be
+updated when position from addReferenceCatalogs -if any are 
+found for this field.</p>
+<dl class="docutils">
+<dt><strong>Syntax:</strong></dt>
+<dd>ds = detectSources.DetectSources( ad, logLevel=6, logfile=&#8217;&#8216;)</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ad</strong> (<em>AstroData object</em>) &#8211; AstroData object containing a FITS hdulist with at least one
+image extension with EXTNAME=&#8217;SCI&#8217; in the extension header.</li>
+<li><strong>sigma</strong> (<em>Number [0.0]</em>) &#8211; The mean of the background value. If nothing is passed,
+detSources will run background() to determine it.</li>
+<li><strong>threshold</strong> (<em>Number [2.5]</em>) &#8211; Threshold intensity for a point source - should generally
+be 3 or 4 sigma above background RMS&#8221;[1]. It was found that 2.5
+works best for IQ source detection.</li>
+<li><strong>fwhm</strong> (<em>Number [5.5]</em>) &#8211; FWHM to be used in the convolve filter&#8221;. This ends up playing
+a factor in determining the size of the kernel put through 
+the gaussian convolve.</li>
+<li><strong>logLevel</strong> (<em>integer,[6]</em>) &#8211; Verbose level</li>
+<li><strong>logfile</strong> (<em>String. [&#8216;detectSources.log&#8217;]</em>) &#8211; log file name to replace the default value</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>INPUTS:</strong></dt>
+<dd>An AstroData object containing an IMAGE extension with
+EXTNAME value of &#8216;SCI&#8217; and an integer EXTVER value.</dd>
+<dt><strong>OBJCAT table:</strong></dt>
+<dd><p class="first">A FITS table (&#8216;OBJCAT&#8217;,extver) is appended to the input 
+Astrodata Object. This table contains the columns:</p>
+<ul class="last">
+<li><p class="first">&#8216;id&#8217;:    Unique ID. Simple running number.</p>
+</li>
+<li><p class="first">&#8216;x&#8217;:     x coordinate of the detected object. 1-based</p>
+</li>
+<li><dl class="first docutils">
+<dt>&#8216;y&#8217;:     x coordinate of the detected object, both x and y are</dt>
+<dd><p class="first last">with respect to the lower left corner. They are 1-based
+values, i.e. as in ds9.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">&#8216;ra&#8217;:    ra values, in degrees. Calculated from the fits header WCS</p>
+</li>
+<li><p class="first">&#8216;dec&#8217;:   dec values in degrees. ditto</p>
+</li>
+<li><p class="first">&#8216;flux&#8217;:  Flux given by the gauss fit of the object</p>
+</li>
+<li><p class="first">&#8216;refid&#8217;: Reference ID for the reference star found in the field</p>
+</li>
+<li><dl class="first docutils">
+<dt>&#8216;refmag&#8217;: Reference magnitude. &#8216;refid&#8217; and &#8216;refmag&#8217; will be fill</dt>
+<dd><p class="first last">by the &#8216;correlateWithReferenceCatalogs&#8217; function.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+<dt><strong>Methods:</strong></dt>
+<dd><dl class="first last docutils">
+<dt>runDS()    - Run the object detection returning the</dt>
+<dd>astrodata object with the table.</dd>
+</dl>
+</dd>
+</dl>
+<p><strong>EXAMPLE</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ad</span> <span class="o">=</span> <span class="n">Astrodata</span><span class="p">(</span><span class="s">&#39;mrgN20100402S0047.fits&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">detectSources</span><span class="o">.</span><span class="n">DetectSources</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">adout</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">runDS</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ad</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>      <span class="c"># will have the BINTABLE extension</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="detectSources.DetectSources.define_Table_cols">
+<tt class="descname">define_Table_cols</tt><big>(</big><em>ra</em>, <em>dec</em>, <em>flux</em><big>)</big><a class="reference internal" href="_modules/detectSources.html#DetectSources.define_Table_cols"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#detectSources.DetectSources.define_Table_cols" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define table columns for OBJCAT table</p>
+<dl class="docutils">
+<dt><strong>INPUT:</strong></dt>
+<dd><ul class="first last simple">
+<li>ra,dec:    ra,dec array from x,y position in the image field.</li>
+<li>self.x, self.y and self.flux</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="detectSources.DetectSources.findObjects">
+<tt class="descname">findObjects</tt><big>(</big><em>hdu</em><big>)</big><a class="reference internal" href="_modules/detectSources.html#DetectSources.findObjects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#detectSources.DetectSources.findObjects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Small layer to call detSources.
+returns x,y,flux</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="detectSources.DetectSources.getBPM">
+<tt class="descname">getBPM</tt><big>(</big><em>userbpm</em><big>)</big><a class="reference internal" href="_modules/detectSources.html#DetectSources.getBPM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#detectSources.DetectSources.getBPM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the BPM file from the flixcal directory and 
+return its the AstroData object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>userbpm</strong> &#8211; BPM file suplied by the user. Its size
+should match the SCI extension image size.</td>
+</tr>
+<tr class="field"><th class="field-name">Rparam ad:</th><td class="field-body">The bpm file astrodata object.</td>
+</tr>
+</tbody>
+</table>
+<p>If &#8216;userbpm&#8217; is not empty just return its AstroData object</p>
+<dl class="docutils">
+<dt>NOTE: We still need to create: bpmgmoss11_123.fits.gz   # unbinned mef files</dt>
+<dd>bpmgmosn11_123.fits.gz</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="detectSources.DetectSources.runDS">
+<tt class="descname">runDS</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/detectSources.html#DetectSources.runDS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#detectSources.DetectSources.runDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the actual object detection.
+- Create the table OBJCAT
+- return the output Astrodata object</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-addReferenceCatalogs">
+<span id="add-reference-catalog"></span><h1>Add Reference Catalog<a class="headerlink" href="#module-addReferenceCatalogs" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="addReferenceCatalogs.AddReferenceCatalogs">
+<em class="property">class </em><tt class="descclassname">addReferenceCatalogs.</tt><tt class="descname">AddReferenceCatalogs</tt><big>(</big><em>ad</em>, <em>catalogName=None</em>, <em>logLevel=6</em>, <em>logfile=''</em><big>)</big><a class="reference internal" href="_modules/addReferenceCatalogs.html#AddReferenceCatalogs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#addReferenceCatalogs.AddReferenceCatalogs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt><strong>Syntax</strong></dt>
+<dd><dl class="first last docutils">
+<dt>ar = addReferenceCatalogs.AddReferenceCatalogs(</dt>
+<dd>(ad, catalogName=None, logLevel=6, logfile=&#8217;&#8216;)</dd>
+</dl>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ad</strong> (<em>AstroData object</em>) &#8211; AstroData object containing a FITS hdulist with at least one
+image extension with EXTNAME=&#8217;SCI&#8217; in the extension header.</li>
+<li><strong>catalogName</strong> &#8211; Filename of the catalog. &#8216;smith.cat&#8217; and &#8216;gmosn.cat&#8217;
+are supported at this time.</li>
+<li><strong>logLevel</strong> (<em>integer,default is 6.</em>) &#8211; Verbose level</li>
+<li><strong>logfile</strong> (<em>String. Default value is &#8216;detectSources.log&#8217;</em>) &#8211; log file name to replace the default value</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Description</strong></dt>
+<dd><p class="first">Find standard stars from the current standard catalogs
+gmosn.cat (GN) and smith.cat (GS) that falls into the
+current field of the image extension from input file.
+If any is found creates a FITS table extension to be 
+append to the file.</p>
+<blockquote class="last">
+<div><div class="highlight-python"><pre>The table description is
+EXTNAME = 'REFCAT'
+EXTVER  = extn      # Extension number of the image.
+REFID   = str       # Unique id from the standard catalog
+RA      = ra        # ra and dec from the catalog
+DEC     = dec
+X       = x         # x,y pixel coordinate calculated with
+Y       = y         # the image WCS
+MAG     = mag       # standard star magnitude
+TUNIT   = filter_name   # filter letter corresponding to
+                      # FILTER2 value in the GMOS PHU</pre>
+</div>
+</div></blockquote>
+</dd>
+</dl>
+<dl class="method">
+<dt id="addReferenceCatalogs.AddReferenceCatalogs.getRefs">
+<tt class="descname">getRefs</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/addReferenceCatalogs.html#AddReferenceCatalogs.getRefs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#addReferenceCatalogs.AddReferenceCatalogs.getRefs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the add reference catalog. Actually adding the 
+Bintable to the input ad object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="addReferenceCatalogs.AddReferenceCatalogs.readStds">
+<tt class="descname">readStds</tt><big>(</big><em>usecols</em>, <em>formats</em>, <em>delimiter</em><big>)</big><a class="reference internal" href="_modules/addReferenceCatalogs.html#AddReferenceCatalogs.readStds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#addReferenceCatalogs.AddReferenceCatalogs.readStds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read selected References Catalog (ascii catalogs)</p>
+<dl class="docutils">
+<dt>INPUT:</dt>
+<dd><ul class="first last">
+<li><p class="first">self.catname:  Pathname to input References catalog.</p>
+</li>
+<li><p class="first">usecols:    Columns to read from catalog.</p>
+</li>
+<li><dl class="first docutils">
+<dt>formats:     Formats to read columns. EG: (&#8216;S20&#8217;,&#8217;f4&#8217;,&#8217;f4&#8217;,&#8217;S20&#8217;)</dt>
+<dd><p class="first last">For more details please see:
+python: help numpy.loadtxt</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+<dt>OUTPUT:</dt>
+<dd><p class="first"># Arrays containing standars info for objects in the field.</p>
+<ul class="last">
+<li><p class="first">refid:     Catalog id</p>
+</li>
+<li><p class="first">ra,dec:    ra,dec</p>
+</li>
+<li><dl class="first docutils">
+<dt>fmag:      magnitude corrresponding to </dt>
+<dd><p class="first last">the selected band</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="addReferenceCatalogs.AddReferenceCatalogs.search4standards">
+<tt class="descname">search4standards</tt><big>(</big><em>ra</em>, <em>dec</em>, <em>ext</em><big>)</big><a class="reference internal" href="_modules/addReferenceCatalogs.html#AddReferenceCatalogs.search4standards"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#addReferenceCatalogs.AddReferenceCatalogs.search4standards" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if standards given by ra,dec fall in the
+image field determine by its WCS information.</p>
+<dl class="docutils">
+<dt>INPUT:         </dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>ra,dec: ra,dec of the whole input catalog.</dt>
+<dd><p class="first last">ra is in hour units.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+<dt>OUTPUT:</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>g:      Index array of the positions (ra,dec) that </dt>
+<dd><p class="first last">falls in the field.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="addReferenceCatalogs.AddReferenceCatalogs.selStdsCatalog">
+<tt class="descname">selStdsCatalog</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/addReferenceCatalogs.html#AddReferenceCatalogs.selStdsCatalog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#addReferenceCatalogs.AddReferenceCatalogs.selStdsCatalog" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select standard catalog based on the value of
+the instrument keyword. 
+The values is GMOS_N, the catalog is &#8216;gmosn.cat&#8217;
+else &#8216;smith.cat&#8217;</p>
+<dl class="docutils">
+<dt>INPUT:</dt>
+<dd>self.ad: AD object</dd>
+<dt>OUTPUT:</dt>
+<dd><ul class="first last simple">
+<li>usecols</li>
+<li>formats</li>
+<li>band:    1-char:  &#8216;u&#8217;,&#8217;g&#8217;,&#8217;r&#8217;,&#8217;i&#8217; or &#8216;z&#8217;</li>
+<li>delimiter</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-correlateWithReferenceCatalogs">
+<span id="correlate-object-and-reference-positions"></span><h1>Correlate Object and reference positions<a class="headerlink" href="#module-correlateWithReferenceCatalogs" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs">
+<em class="property">class </em><tt class="descclassname">correlateWithReferenceCatalogs.</tt><tt class="descname">CorrelateWithReferenceCatalogs</tt><big>(</big><em>ad</em>, <em>logLevel=6</em>, <em>delta=7</em>, <em>logfile=''</em><big>)</big><a class="reference internal" href="_modules/correlateWithReferenceCatalogs.html#CorrelateWithReferenceCatalogs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt><strong>Description</strong></dt>
+<dd><p class="first">Read Table extensions OBJCAT and REFCAT from FITS file
+and writes into the columns &#8216;refid&#8217; and &#8216;refmag&#8217;.</p>
+<p class="last">Correlate the x,y positions from the field objects (OBJCATs)
+with the Reference positions (REFCATs). If any common positions
+are found, write their reference id and magnitudes in the 
+(&#8216;OBJCAT&#8217;,extv) table extension.</p>
+</dd>
+<dt><strong>Syntax</strong></dt>
+<dd><dl class="first last docutils">
+<dt>corr = correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs </dt>
+<dd>(ad, logLevel=6, delta=7, logfile=&#8217;&#8216;)</dd>
+</dl>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ad</strong> (<em>AstroData object</em>) &#8211; AstroData object containing a FITS hdulist with at least one
+image extension with EXTNAME=&#8217;SCI&#8217; in the extension header.</li>
+<li><strong>delta</strong> (<em>Pixels, float. Default value is 6 pixels.</em>) &#8211; Maximum difference allow between object and reference coordinates
+positions</li>
+<li><strong>logLevel</strong> (<em>integer. [6]</em>) &#8211; Verbose level</li>
+<li><strong>logfile</strong> (<em>String. [&#8216;detectSources.log&#8217;]</em>) &#8211; log file name to replace the default value</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ad</span> <span class="o">=</span> <span class="n">Astrodata</span><span class="p">(</span><span class="s">&#39;ds_rc_mrgN20100402S0047.fits&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ad</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>        <span class="c"># Should show OBJCAT and REFCAT extension</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">corr</span> <span class="o">=</span> <span class="n">correlateWithReferenceCatalogs</span><span class="o">.</span><span class="n">CorrelateWithReferenceCatalogs</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">adout</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">runCorr</span><span class="p">()</span>    <span class="c"># Will update the REFCAT extension</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">adout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;corr_mrgN20100402S0047.fits&#39;</span><span class="p">)</span>    <span class="c"># Save the modified file.</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs.match_cxy">
+<tt class="descname">match_cxy</tt><big>(</big><em>xx</em>, <em>sx</em>, <em>yy</em>, <em>sy</em>, <em>delta=6.5</em><big>)</big><a class="reference internal" href="_modules/correlateWithReferenceCatalogs.html#CorrelateWithReferenceCatalogs.match_cxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs.match_cxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Match reference positions (sx,sy) with those of the 
+object catalog (xx,xy). 
+Select those that are within delta pixels from
+the object positions.</p>
+<dl class="docutils">
+<dt>OUTPUT:</dt>
+<dd><ul class="first last simple">
+<li>obj_index: Index array of the objects matched.</li>
+<li>ref_index: Index array of the referecences matched.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs.runCorr">
+<tt class="descname">runCorr</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/correlateWithReferenceCatalogs.html#CorrelateWithReferenceCatalogs.runCorr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#correlateWithReferenceCatalogs.CorrelateWithReferenceCatalogs.runCorr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Match the reference position in table REFCAT with the
+position in table OBJCAT.</p>
+<dl class="docutils">
+<dt>This is a 2 pass algorithm.</dt>
+<dd><ul class="first last simple">
+<li>First it look for object positions within a radious of 50 pixels
+around a reference one.</li>
+<li>Takes the median of the difference between the 2 positions and
+shift the reference positions by that amount.</li>
+<li>Select the object positions within a radious of 6 pixels
+around a reference one.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-calculateZeropoint">
+<span id="calculate-zeropoint-image-quality"></span><h1>Calculate Zeropoint, Image quality<a class="headerlink" href="#module-calculateZeropoint" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="calculateZeropoint.CalculateZeropoint">
+<em class="property">class </em><tt class="descclassname">calculateZeropoint.</tt><tt class="descname">CalculateZeropoint</tt><big>(</big><em>ad</em>, <em>logLevel=6</em>, <em>logfile=''</em>, <em>zplogfile='ZPcorr.log'</em>, <em>extinction=None</em><big>)</big><a class="reference internal" href="_modules/calculateZeropoint.html#CalculateZeropoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#calculateZeropoint.CalculateZeropoint" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt><strong>Syntax</strong></dt>
+<dd><dl class="first last docutils">
+<dt>zp = calculateZeropoint.CalculateZeropoint(</dt>
+<dd>ad, logLevel=6, logfile=&#8217;&#8216;, zplogfile=&#8217;ZPcorr.log&#8217;, extinction=None)</dd>
+</dl>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ad</strong> (<em>AstroData object</em>) &#8211; AstroData object containing a FITS hdulist with at least one
+image extension with EXTNAME=&#8217;SCI&#8217; in the extension header.</li>
+<li><strong>logLevel</strong> (<em>integer,default is 6.</em>) &#8211; Verbose level</li>
+<li><strong>logfile</strong> (<em>String. Default value is &#8216;calculateZeropoint.log&#8217;</em>) &#8211; log file name to replace the default value</li>
+<li><strong>zplogfile</strong> (<em>Filename with default value &#8216;ZPcorr.log&#8217;</em>) &#8211; log file containing Zero Point correction information</li>
+<li><strong>extinction</strong> (<em>Float [None].</em>) &#8211; extinction correction coefficient if the image is not Gemini.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Description.</strong>
+Zero Point correction Calculation.</p>
+<ul>
+<li><p class="first">Input Image FITS file with one or more SCI extensions
+having table extensions created with detectSources and 
+addReferenceCatalogs script.</p>
+</li>
+<li><p class="first">Read FITS table extension(S) with extname &#8216;OBJCAT&#8217;
+containing columns &#8216;refid&#8217; and &#8216;refmag&#8217; with at least
+one data point. These have the reference standard object name
+and magnitudes for the filter used in the exposure.</p>
+</li>
+<li><p class="first">Each x,y position  from OBJCAT containing a non-empty standard
+in &#8216;refid&#8217; are used to create a text file &#8216;ZPcoo&#8217; in the working
+directory.</p>
+</li>
+<li><p class="first">Call iraf.imexam to get FWHM</p>
+</li>
+<li><p class="first">Call iraf.apphot.phot to get Flux, and iMag (instrumental magnitude)</p>
+</li>
+<li><p class="first">Zero point correction: ( &#8216;k&#8217; is  the extinction coefficient)</p>
+<blockquote>
+<div><p>ZPCorr = Reference_Magnitude - [iMag - k*(airmass-1)]</p>
+</div></blockquote>
+</li>
+<li><p class="first">Image Quality (IQ) is calculated as:</p>
+<blockquote>
+<div><p>Seeing = FWHM*pixel_scale</p>
+<p>IQ = [mean(Seeing) / (airmass**0.6)]</p>
+</div></blockquote>
+</li>
+<li><p class="first">Append keywords ZP_CORR, ZP_ERROR, IMAGE_IQ</p>
+</li>
+</ul>
+<p>ERROR Propagation:</p>
+<ul class="simple">
+<li>ZP_ERROR: At this time only the GS &#8216;smith.cat&#8217; has error values
+for each magnitude. In the meantime we only calculate the standard
+deviation of the ZPcorr array and assign it to ZP_ERROR.</li>
+</ul>
+<p>Output file:</p>
+<ul class="simple">
+<li>ZPcorr.log is the filename to append the new ZP values:
+&#8220;ZPCorr  ZPerror IQ     Sample Filter  Date_time&#8221;.</li>
+</ul>
+<p><strong>Example</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ad</span> <span class="o">=</span> <span class="n">Astrodata</span><span class="p">(</span><span class="s">&#39;corr_mrgN20100402S0047.fits&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ad</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>    <span class="c"># It should show tables OBJCAT and REFCAT</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">czp</span> <span class="o">=</span> <span class="n">calculateZeropoint</span><span class="o">.</span><span class="n">CalculateZeropoint</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="calculateZeropoint.CalculateZeropoint.do_phot">
+<tt class="descname">do_phot</tt><big>(</big><em>hdu</em>, <em>refmag</em>, <em>flux</em><big>)</big><a class="reference internal" href="_modules/calculateZeropoint.html#CalculateZeropoint.do_phot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#calculateZeropoint.CalculateZeropoint.do_phot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run iraf.imexamine and iraf.photpars.phot.</p>
+<dl class="docutils">
+<dt>INPUT:</dt>
+<dd><ul class="first last simple">
+<li>hdu:      ad[&#8216;SCI&#8217;,extver]. Astrodata Object.</li>
+<li></li>
+</ul>
+</dd>
+<dt>OUTPUT:</dt>
+<dd><ul class="first last simple">
+<li>ZPCorr:   Median of ZP correction array</li>
+<li>ZPerror:  Standard deviation of ZParray values</li>
+<li>IQ:       Image quality.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="calculateZeropoint.delete_file">
+<tt class="descclassname">calculateZeropoint.</tt><tt class="descname">delete_file</tt><big>(</big><em>dfile</em><big>)</big><a class="reference internal" href="_modules/calculateZeropoint.html#delete_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#calculateZeropoint.delete_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>deletes a list of files</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="calculateZeropoint.readcols2fl">
+<tt class="descclassname">calculateZeropoint.</tt><tt class="descname">readcols2fl</tt><big>(</big><em>file</em>, <em>unpack=False</em>, <em>dval=nan</em><big>)</big><a class="reference internal" href="_modules/calculateZeropoint.html#readcols2fl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#calculateZeropoint.readcols2fl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read columns to a float.
+if INDEF replace for dval.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-detSources">
+<span id="detsources"></span><span id="det-sources"></span><h1>DetSources<a class="headerlink" href="#module-detSources" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="detSources.detSources">
+<tt class="descclassname">detSources.</tt><tt class="descname">detSources</tt><big>(</big><em>image='', hdu=None, outfile='', verbose=False, sigma=0.0, threshold=2.5, fwhm=5.5, sharplim=[0.20000000000000001, 1.0], roundlim=[-1.0, 1.0], window=None, exts=None, timing=False, grid=False, rejection=None, ratio=None, drawWindows=False, dispFrame=1</em><big>)</big><a class="reference internal" href="_modules/detSources.html#detSources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#detSources.detSources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs similar to the source detecting algorithm 
+&#8216;<a class="reference external" href="http://idlastro.gsfc.nasa.gov/ftp/pro/idlphot/find.pro">http://idlastro.gsfc.nasa.gov/ftp/pro/idlphot/find.pro</a>&#8216;.</p>
+<dl class="docutils">
+<dt>References:</dt>
+<dd><p class="first">This code is heavily influenced by &#8216;<a class="reference external" href="http://idlastro.gsfc.nasa.gov/ftp/pro/idlphot/find.pro">http://idlastro.gsfc.nasa.gov/ftp/pro/idlphot/find.pro</a>&#8216;.
+&#8216;find.pro&#8217; was written by W. Landsman, STX  February, 1987.</p>
+<p class="last">This code was converted to Python with areas re-written for optimization by:
+River Allen, Gemini Observatory, December 2009. <a class="reference external" href="mailto:riverallen&#37;&#52;&#48;gmail&#46;com">riverallen<span>&#64;</span>gmail<span>&#46;</span>com</a></p>
+</dd>
+<dt>Revisions:</dt>
+<dd><dl class="first last docutils">
+<dt>NZ - Feb 2011. Taken out of iqtools. Added hdu and listed the numpy functions instead.</dt>
+<dd><ul class="first last simple">
+<li>added peakIntensity (flux) as output.</li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>image</strong> &#8211; The filename of the fits file. It must be in the format N2.fits[1] 
+for the specific extension. (i.e.) If you want to find objects only in 
+the image extension [1], than you would pass N2.fits[1].</li>
+<li><strong>outfile</strong> (<em>String</em>) &#8211; The name of the file where the output will be written. By default 
+output will not be written (ie if outfile is left as &#8220;&#8221;, no output file is written).</li>
+<li><strong>verbose</strong> (<em>Boolean [False]</em>) &#8211; Print out non-critical and debug information.</li>
+<li><strong>sigma</strong> (<em>Number [0.0]</em>) &#8211; The mean of the background value. If nothing is passed, 
+detSources will run background() to determine it.</li>
+<li><strong>threshold</strong> (<em>Number [2.5]</em>) &#8211; &#8220;Threshold intensity for a point source - should generally 
+be 3 or 4 sigma above background RMS&#8221;[1]. It was found that 2.5 
+works best for IQ source detection.</li>
+<li><strong>fwhm</strong> (<em>Number [5.5]</em>) &#8211; &#8220;FWHM to be used in the convolve filter&#8221;[1]. This ends up playing a factor in 
+determining the size of the kernel put through the gaussian convolve.</li>
+<li><strong>sharplim</strong> (<em>2-Element List of Numbers. [0.2,1.0]</em>) &#8211; &#8220;2 element vector giving low and high cutoff for the sharpness 
+statistic (Default: [0.2,1.0] ).  Change this default only if the stars 
+have significantly larger or smaller concentration than a Gaussian&#8221;[1]</li>
+<li><strong>roundlim</strong> (<em>2-Element List of Numbers. [-1.0,1.0]</em>) &#8211; &#8220;2 element vector giving low and high cutoff for the roundness 
+statistic (Default: [-1.0,1.0] ).  Change this default only if the stars 
+are significantly elongated.&#8221;[1]</li>
+<li><strong>window</strong> &#8211; Rectangle regions of the data to process. detSources will only 
+look at the data within windows passed, if a window is passed. If no
+window is set, detSources will look at the entire image.
+Beware: small objects on the edges of the windows may not be detected.</li>
+<li><strong>timing</strong> (<em>Boolean [False]</em>) &#8211; If timing is set to true, the return type for detSources will be a tuple. 
+The tuple is of the form (xyArray, overalltime) where overalltime represents 
+the time it took detSources to run minus any displaying time. This feature is 
+for engineering purposes.</li>
+<li><strong>grid</strong> (<em>Boolean [False]</em>) &#8211; If no window is set, detSources will run the image in a grid. 
+This is supposed to work in conjunction with rejection.</li>
+<li><strong>rejection</strong> (<em>A list of rejection functions  [None]</em>) &#8211; Rejection functions to be run on each grid point. See baseHeuristic() for an example.</li>
+<li><strong>ratio</strong> (<em>int [None]</em>) &#8211; What the ratio or grid size should be. Ratio of 5 means the image will 
+be split up into a 5x5 grid. Should be modified to take fixe grid size (50,50), for example.</li>
+<li><strong>drawWindows</strong> (<em>Boolean [False]</em>) &#8211; If this is set to True, will attempt to draw the windows using 
+iraf.tvmark().  Beware: a ds9 must be running.</li>
+<li><strong>dispFrame</strong> &#8211; This works in conjunction with drawWindows.
+debug=False, grid=False, rejection=None, ratio=None, drawWindows=False,
+dispFrame=1</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A list of centroids. For example:</p>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A 2-D list.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="primitives">
+<h1>Primitives<a class="headerlink" href="#primitives" title="Permalink to this headline">¶</a></h1>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Fluxcal Test script</a></li>
+<li><a class="reference internal" href="#id1">Detect Sources</a></li>
+<li><a class="reference internal" href="#module-addReferenceCatalogs">Add Reference Catalog</a></li>
+<li><a class="reference internal" href="#module-correlateWithReferenceCatalogs">Correlate Object and reference positions</a></li>
+<li><a class="reference internal" href="#module-calculateZeropoint">Calculate Zeropoint, Image quality</a></li>
+<li><a class="reference internal" href="#module-detSources">DetSources</a></li>
+<li><a class="reference internal" href="#primitives">Primitives</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="running_fc.html"
+                        title="previous chapter">Installation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/scripts.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="running_fc.html" title="Installation"
+             >previous</a> |</li>
+        <li><a href="index.html">fluxcal v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, nz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

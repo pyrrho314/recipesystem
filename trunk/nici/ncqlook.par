@@ -1,0 +1,10 @@
+inputs,s,a,"",,,"wild card or date of nici observation (yyyymmdd)"
+idir,s,a,"",,,"input directory"
+odir,s,a,"",,,"output directory"
+log,b,h,yes,,,""
+lists,b,h,yes,,,""
+saturate,r,a,5000,,,"saturate level"
+nodisplay,b,a,no,,,"Do not display frames?"
+full,b,a,no,,,"rebin frames to 256x256?"
+port,i,a,5137,,,"alternate port number for displaying"
+mode,s,h,"ql",,,

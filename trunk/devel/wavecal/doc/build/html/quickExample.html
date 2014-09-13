@@ -1,0 +1,273 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Quick Wavecal example &mdash; Wavelength calibration user guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wavelength calibration user guide 0.1 documentation" href="index.html" />
+    <link rel="next" title="Fitting the ARC image" href="imagefit.html" />
+    <link rel="prev" title="Requirements" href="dataRequirements.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="imagefit.html" title="Fitting the ARC image"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dataRequirements.html" title="Requirements"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="quick-wavecal-example">
+<span id="quickexample"></span><h1>Quick Wavecal example<a class="headerlink" href="#quick-wavecal-example" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Start your favorite Python shell</li>
+<li>Importing modules</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">astrodata</span> <span class="kn">import</span> <span class="n">AstroData</span>
+
+<span class="c"># Importing the Wavecal class.</span>
+<span class="kn">from</span> <span class="nn">wavecal</span> <span class="kn">import</span> <span class="n">Wavecal</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ul class="simple">
+<li>Create a Wavecal object with the default parameters.</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><pre># 'gemini_arc.fits' is a generic name for any Gemini instruments
+# producing a ARC image. The file needs to ne properly 'prepared' and
+# flat reduced if necessary.
+ad = AstroData("gemini_arc.fits")
+
+wc = Wavecal(ad)
+
+# To see the parameter values
+wc.info()
+
+# For an explanation on the parameters please see:
+help Wavecal
+
+# Do the wavecal
+wc.wavecal()
+
+# Plot the results.
+wc.plot_ref()</pre>
+</div>
+<div class="figure">
+<img alt="_images/plot_ref.png" src="_images/plot_ref.png" />
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># The upper subplot shows the reference arc spectra for the</span>
+<span class="c"># wavelength range of the input arc data. The lower subplot</span>
+<span class="c"># show the input spectra for the middle row (actually a median</span>
+<span class="c"># of 10 to 20 rows about the middle row). The numbers should point to</span>
+<span class="c"># the same feature indicating a good match.</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ul class="simple">
+<li>One plot with wavelength marks and pixel coordinates axis.
+wc.plot_features()</li>
+</ul>
+<blockquote>
+<div><div class="figure">
+<img alt="_images/plot_features.png" src="_images/plot_features.png" />
+</div>
+</div></blockquote>
+<ul class="simple">
+<li>Print the arrays for the final fitting</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><pre># Display the peak pixel coordinate, fit and wavelength list. The sequence numbering indicates
+# the numbers on the plot.
+
+wc.features()
+
+1   299.262 9784.503
+2   389.680 9657.786
+3   606.542 9354.220
+4   700.034 9224.499
+5   772.719 9122.967
+6  1100.694 8667.944
+7  1276.037 8424.647
+8  1288.224 8408.210
+9  1391.998 8264.522
+10 1500.162 8115.311
+11 1508.525 8103.693
+12 1621.481 7948.176
+13 1784.581 7723.761
+14 1849.380 7635.106
+15 1945.178 7503.869
+16 2033.011 7383.980
+17 2055.706 7353.293
+18 2114.457 7272.936
+19 2162.686 7206.980
+20 2206.617 7147.042
+21 2265.301 7067.218
+22 2292.397 7030.251
+23 2340.139 6965.431
+24 2360.478 6937.664
+25 2409.310 6871.289
+26 2496.485 6752.833
+27 2552.269 6677.282
+28 2696.431 6483.083
+29 2707.655 6466.553
+30 2745.228 6416.307
+31 2768.529 6384.717
+32 2780.388 6369.575
+33 2833.609 6296.872
+34 2926.450 6172.278
+35 2946.025 6145.441
+36 2969.234 6114.923
+37 3010.770 6059.373
+38 3022.234 6043.223
+39 3030.519 6032.127</pre>
+</div>
+</div></blockquote>
+<ul class="simple">
+<li>Print the same but separately</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="c"># The pixel and wavelength are available as members:</span>
+
+<span class="k">print</span> <span class="n">wc</span><span class="o">.</span><span class="n">pix</span>
+<span class="k">print</span> <span class="n">wc</span><span class="o">.</span><span class="n">user</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ul class="simple">
+<li>Check the fitting function</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="c"># The member &#39;z&#39; is an object containning informatio about the fitting. A summary</span>
+<span class="c"># is available in</span>
+
+<span class="n">wc</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+
+<span class="c"># Printing the fitting function, order and coefficients.</span>
+
+<span class="k">print</span> <span class="s">&#39;Fitting function name: &#39;</span><span class="p">,</span><span class="n">wc</span><span class="o">.</span><span class="n">z</span><span class="o">.</span><span class="n">fitname</span>
+<span class="k">print</span> <span class="s">&#39;Fitting order used: &#39;</span><span class="p">,</span> <span class="n">wc</span><span class="o">.</span><span class="n">z</span><span class="o">.</span><span class="n">order</span>
+<span class="k">print</span> <span class="s">&#39;Fitting coefficient: &#39;</span><span class="p">,</span> <span class="n">wc</span><span class="o">.</span><span class="n">z</span><span class="o">.</span><span class="n">coeff</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ul class="simple">
+<li>Using the fitting function to evaluate some pixel position to wavelength.
+For example, the peaks pixel positions array.</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="k">print</span> <span class="n">wc</span><span class="o">.</span><span class="n">z</span><span class="p">(</span><span class="n">wc</span><span class="o">.</span><span class="n">xpeaks</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ul class="simple">
+<li>Using the current linelist (see in wc.info()), check if we have an entry for each
+of the peaks.</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="c"># Run pix2ref method to get reference lines that match the</span>
+<span class="c"># input pixel array. See &#39;help wc.pix2ref&#39; for explanation.</span>
+<span class="c"># &#39;pw&#39; is a list of tuples (pixe, reference line)</span>
+
+<span class="n">pw</span> <span class="o">=</span> <span class="n">wc</span><span class="o">.</span><span class="n">pix2ref</span><span class="p">(</span><span class="n">pixel_array</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dataRequirements.html"
+                        title="previous chapter">Requirements</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="imagefit.html"
+                        title="next chapter">Fitting the ARC image</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/quickExample.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="imagefit.html" title="Fitting the ARC image"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dataRequirements.html" title="Requirements"
+             >previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Gemini Observatory.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+127.0.0.1 - - [23/Jan/2014 12:52:48] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [23/Jan/2014 12:52:48] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [23/Jan/2014 12:52:48] "POST /RPC2 HTTP/1.1" 200 -
+Cannot import PIL
+PRS Proxy listening on port 53530...
+adcc95: startup report going to /var/folders/pq/yynx25xn6jbg6gcz0147vjjh00033r/T/clf4pid5370HblgOu
+starting xmlrpc client to port 54530... started
+prs50: no reduce instances running
+CQ44L: load
+em152: no persistence file adcc_events.jsa
+starting httpserver on port ... 8777 prsproxy version: [('PRSProxy', '0.2')]
+registering client 5370, number currently registered: 1
+registering client details: {'port': 54530}
+ADCC: unregistering client 5370, number remaining registered 0
+prsproxy exiting, no reduce instances to serve.
+started
+shutting down http interface

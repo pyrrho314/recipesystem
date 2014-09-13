@@ -1,0 +1,13 @@
+ Some WCS definitions.
+        # Input arc wcs
+        # OR from CD
+                # Near the pole
+                cdelt1  = cd1_1
+                cdelt2  = cd2_2
+                crota1  = atan2 ( cd2_1, cd1_1)
+                crota2  = atan2 (-cd1_2, cd2_2)
+                CD1_1 = CDELT1 * cos (CROTA2)
+                CD1_2 = -CDELT2 * sin (CROTA2)
+                CD2_1 = CDELT1 * sin (CROTA2)
+                CD2_2 = CDELT2 * cos (CROTA2)
+

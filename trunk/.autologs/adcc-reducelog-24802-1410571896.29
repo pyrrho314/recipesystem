@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/craiga/GALLEY/recipesystem/trunk/astrodata/scripts/adcc.py", line 41, in <module>
+    from astrodata.adutils.reduceutils.prsproxyutil import calibration_search
+  File "/home/craiga/GALLEY/recipesystem/trunk/astrodata/adutils/reduceutils/prsproxyutil.py", line 18, in <module>
+    CALURL_DICT   = get_lookup_table("Gemini/calurl_dict","calurl_dict")
+  File "/home/craiga/GALLEY/recipesystem/trunk/astrodata/Lookups.py", line 30, in get_lookup_table
+    modname = ConfigSpace.lookup_path(modname)
+  File "/home/craiga/GALLEY/recipesystem/trunk/astrodata/ConfigSpace.py", line 393, in lookup_path
+    raise ConfigSpaceExcept("No Configuration Package Associated with %s" % domain)
+astrodata.ConfigSpace.ConfigSpaceExcept: No Configuration Package Associated with Gemini

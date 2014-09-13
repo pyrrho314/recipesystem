@@ -1,0 +1,6 @@
+include ReleaseNote
+include INSTALL
+include Copyright
+include README
+#recursive-include doc *
+recursive-include doc-local *

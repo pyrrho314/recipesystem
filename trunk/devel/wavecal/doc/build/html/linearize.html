@@ -1,0 +1,157 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Resample an image to linear wavelength co-ordinates &mdash; Wavelength calibration user guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wavelength calibration user guide 0.1 documentation" href="index.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Fitting the ARC image" href="imagefit.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="imagefit.html" title="Fitting the ARC image"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="resample-an-image-to-linear-wavelength-co-ordinates">
+<span id="linearize"></span><h1>Resample an image to linear wavelength co-ordinates<a class="headerlink" href="#resample-an-image-to-linear-wavelength-co-ordinates" title="Permalink to this headline">¶</a></h1>
+<p>Given that in general an arc image presents distortion, we want to capture this in a function and been able to correct with respect to a given point.</p>
+<p>After <a class="reference internal" href="imagefit.html#imagefit"><em>fittting the arcs</em></a>, the method &#8216;fit_image&#8217; also calculates an inverse function f(z,y,x) such that we can obtain a pixel value from a given pair (z,y).</p>
+<p>We then generate a set of lambdas with a dispertion value (cdelt = (self.z(nx) - self.z(1))/nx) as (lambdas = (ixx-crpix)*cdelt + crval), where &#8216;ixx&#8217; is the array of indices (1..nx) along the dispersion axis.  With the inverse function we obtain the pixel coordinates corresponding to each lambda value. Interpolating the input image values at each of these new pixel coordinates using spline interpolation we linearize the input image.</p>
+<ul class="simple" id="lin-example">
+<li>Example: Resample an ARC image to linear wavelength co-ordinates</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">astrodata</span> <span class="kn">import</span> <span class="n">AstroData</span>
+
+<span class="kn">from</span> <span class="nn">wavecal</span> <span class="kn">import</span> <span class="n">Wavecal</span>
+
+<span class="n">ad</span> <span class="o">=</span> <span class="n">AstroData</span><span class="p">(</span><span class="s">&#39;gsS20130526S0013.fits&#39;</span><span class="p">)</span>
+
+<span class="c"># Create a Wavecal object with a GMOS LongSlit file.</span>
+<span class="n">wc</span> <span class="o">=</span> <span class="n">Wavecal</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+
+<span class="c"># Resample the image and output as AstroData object</span>
+<span class="n">adout</span> <span class="o">=</span> <span class="n">wc</span><span class="o">.</span><span class="n">resample_image_asAstrodata</span><span class="p">()</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ul class="simple" id="lin-sci-example">
+<li>Example: Resample a SCIENCE data array using the resample_imageTo_LinearCoords()</li>
+</ul>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="c"># Get the science image ndarray</span>
+<span class="n">science_data</span> <span class="o">=</span> <span class="n">ad</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+
+<span class="c"># Linearize this</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">wc</span><span class="o">.</span><span class="n">resample_imageTo_LinearCoords</span><span class="p">(</span><span class="n">science_data</span><span class="p">)</span>
+
+<span class="c"># Create an AstroData object with the linearized image</span>
+<span class="n">adout</span> <span class="o">=</span> <span class="n">wc</span><span class="o">.</span><span class="n">im_astrodata</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+<span class="c"># See that the SCI header contains the correct WCS</span>
+<span class="k">print</span> <span class="n">adout</span><span class="p">[</span><span class="s">&#39;SCI&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">items</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="imagefit.html"
+                        title="previous chapter">Fitting the ARC image</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="next chapter">Examples</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/linearize.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="imagefit.html" title="Fitting the ARC image"
+             >previous</a> |</li>
+        <li><a href="index.html">Wavelength calibration user guide 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Gemini Observatory.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

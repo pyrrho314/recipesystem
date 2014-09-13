@@ -1,0 +1,32 @@
+
+
+Fluxcal
+-------
+
+    This directory contains all is necessary for you to run
+fluxcal providing you have some of the dependencies.
+
+Dependencies: 
+
+Gemini/astrodata package.
+
+pytools:    Use the WCS manipulation class only. 
+            if you need a copy please contact me:
+            nzarate@gemini.edu
+
+pyraf, numpy, iqtools
+
+Help files
+----------
+
+The help files are:
+http://chara.hi.gemini.edu/svn/DRSoftware/gemini_python/trunk/devel/fluxcal/doc/build/html/index.html
+
+OR if you downloaded the fluxcal package in a directory named 'fluxcal'
+
+file://<pathname_to_fluxcal>/doc/build/html/index.html
+
+Nelson Zarate
+nzarate@gemini.edu
+
+

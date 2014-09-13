@@ -1,0 +1,11 @@
+inputs,s,a,"",,,"Input NICI files"
+idir,s,a,"",,,"Path for input directory"
+odir,s,a,"",,,"Path for output directory"
+central,b,h,no,,,"Reduce the output image to 512x512?"
+suffix,s,h,"default",,,"Value to append to output rootnames"
+bsize,i,h,5,,,"Boxcar smoothing size"
+mdfw,i,h,11,,,"Medfiltering width"
+clobber,b,h,no,,,"Clobber output file?"
+logfile,s,h,"",,,"Logfile"
+verbose,b,h,no,,,"Verbose"
+mode,s,h,"ql",,,
