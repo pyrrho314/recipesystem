@@ -1,9 +1,12 @@
 import generalclassification
 import os
 
+# needs to move to configuration space
 _data_object_classes = {
     ".fits": ("astrodata.AstroData", "AstroData"),
-    ".json": ("jsondata", "JSONData")
+    ".json": ("jsondata", "JSONData"),
+    ".csv": ("jsondata", "TxtData"),
+    ".txt": ("jsondata", "TxtData")
     }
 
 _gen_classification_library = None
@@ -24,6 +27,7 @@ class GeneralData(object):
                 instor = _data_object_classes[suffix]
                 if (initarg.endswith(suffix)):
                     module, tclass = instor
+                    print "gd29:",module, tclass
                     exec("from %s import %s" % instor)
                     retv = eval("%s(initarg)" % tclass) 
         else:
@@ -60,7 +64,11 @@ class GeneralData(object):
     
     def get_types(self, prune = False):
         # don't assume any types, subtypes of data 
-        return []
+        from astrodata.AstroDataType import ClassificationLibrary
+        cl = ClassificationLibrary.get_classification_library()
+        types = cl.discover_types(self)
+        return types
+        
     types = property(get_types)
     
     def add_suffix(self, suffix = None):

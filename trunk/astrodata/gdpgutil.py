@@ -198,7 +198,7 @@ def inherit_index(typ = None, index = None, for_child = None):
     if not typ and not index:
         return None
         
-    # print "gd168:", typ
+    print "gd168:", typ
     if typ in index.keys():
         return (typ, index[typ])
     else:
@@ -207,7 +207,7 @@ def inherit_index(typ = None, index = None, for_child = None):
         if type(typ) == str:
             typo = cl.get_type_obj(typ)
         
-        if typo.parent:
+        if typo and typo.parent:
             if for_child == None:
                 for_child = typ
             

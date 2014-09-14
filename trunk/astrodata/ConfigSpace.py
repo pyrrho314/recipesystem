@@ -182,6 +182,15 @@ class ConfigSpace(object):
                                 #print "CS134:", subpath
                                 if re.match(PACKAGEMARKER, subpath):
                                     ppath = os.path.join(path, subpath)
+                                    
+                                    ## @@KSMOD
+                                    pypath = os.path.join(ppath, "py"); 
+                                    # print "CS185: checking for py:",pypath
+                                    if (os.path.exists(pypath) and (not pypath in sys.path) ):
+                                        #print "CS185: adding package path to sys.path:",ppath
+                                        sys.path.append(pypath)   
+                                    ## 
+                                    
                                     # this code exists to allow packages early in the path
                                     # to hide one's later in the path
                                     pknam = os.path.basename(ppath)

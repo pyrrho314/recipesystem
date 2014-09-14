@@ -950,6 +950,7 @@ class ClassificationLibrary (object):
                     # print "ADT970: loading types"
                     defsFile = open(fullpath)
                     newtypes=[]
+                    print "processing settype: %s" % fullpath
                     exec (defsFile)
                     #exec defsFile
                     defsFile.close()
@@ -969,7 +970,7 @@ class ClassificationLibrary (object):
                         tdict[newtype.name] = newtype
                 elif (re.match(self.generalDataStorageREMask, dfile)):
                     #
-                    # Doesn't us newtypes idiom, instead, uses local_env in exec
+                    # Doesn't use newtypes idiom, instead, uses local_env in exec
                     #   to inspect for DataClassification sublclasses
                     #
                     fullpath = os.path.join(root, dfile)
@@ -1019,7 +1020,7 @@ class ClassificationLibrary (object):
         @returns: True if the type applies to the dataset, False otherwise
         @rtype: Bool
         """
-        
+        print "ADT1023: check_type"
         if  isinstance(dataset, AstroData.AstroData):
             hdulist = dataset.get_hdulist()
             freeHDUList = True
@@ -1078,7 +1079,7 @@ class ClassificationLibrary (object):
         @type dataset: either L{AstroData} instance or L{HDUList}
         @param all: flag to drive if a dictionary of three different lists
         is returned, if C{all} is True.  If False, a list of all status and processing
-        types is returned as a list of strong names.  If True, a dictionary 
+        types is returned as a list of string names.  If True, a dictionary 
         is returned.  Element with the key "typology" will contain the typology
         related classifications, key "status" will contain the processing status related
         classifications, and key "all" will contain the union of both sets and is the 

@@ -27,10 +27,24 @@ def dict2pretty(name, var, indent=0, namewidth = None):
                                                     "key": name
                                                }
          
-         for i in range(0, len(var)):
-            key = "[%d]"%i
-            value = var[i];
-            retstr += dict2pretty(key, value, indent+1, namewidth = 3)
+         listlen = len(var)
+         
+         if len(var) < 50:
+             oneline = ", ".join(var)
+             if len(oneline)<120:
+                return dict2pretty(name, oneline, indent)
+            
+         if listlen > 10:
+            last = listlen - 1
+            mid = int(last/2);
+            retstr += dict2pretty("[0]", var[0], indent+1, namewidth = 9) 
+            retstr += dict2pretty("[%d]"%mid, var[mid],indent+1, namewidth = 9)
+            retstr += dict2pretty("[%d]"%last, var[last], indent+1, namewidth = 9)  
+         else:
+            for i in range(0, listlen):
+                key = "[%d]"%i
+                value = var[i];
+                retstr += dict2pretty(key, value, indent+1, namewidth = 3)
     else:
         retstr += "\n%(indent)s%(key)s = %(val)s" % {"indent": fulltab,
                                                        "key": _pad_str(name, namewidth),

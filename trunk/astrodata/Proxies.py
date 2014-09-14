@@ -124,7 +124,7 @@ def start_adcc(callerlockfile = None):
     # with a dead host.
     if True: # not os.path.exists(racefile):
         while not os.path.exists(clfn):
-            print "P123:waiting for", clfn, pid
+            #print "P123:waiting for", clfn, pid
             sleep(1)
         
     if os.path.exists(clfn):
