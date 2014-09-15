@@ -1,14 +1,16 @@
+import termcolor as tc
 
-def dict2pretty(name, var, indent=0, namewidth = None):
+def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_type = None):
     retstr = ""
     tabspc = " "*4
     fulltab = tabspc*indent
     if not namewidth:
         namewidth = len(name)
     if isinstance(var, dict):
-        retstr += "\n%(indent)s%(key)s:" % {
+        retstr += "\n%(indent)s%(key)s %(type)s:" % {
                                                     "indent":fulltab,
-                                                    "key": name,
+                                                    "key": tc.colored(name, attrs=["bold"]),
+                                                    "type": tc.colored(repr(type(var)), attrs=["dark"]),
                                                     "extra": tabspc
                                                  }
         namewidth = maxkeylen(var)
@@ -23,8 +25,9 @@ def dict2pretty(name, var, indent=0, namewidth = None):
             #print key,value
             retstr += dict2pretty(key, value, indent+1, namewidth = namewidth)
     elif isinstance(var, list):
-         retstr += "\n%(indent)s%(key)s" % { "indent":fulltab,
-                                                    "key": name
+         retstr += "\n%(indent)s%(key)s %(type)s:" % { "indent":fulltab,
+                                                    "key": tc.colored(name, attrs=["bold"]),
+                                                    "type": tc.colored(repr(type(var)), attrs=["dark"]),
                                                }
          
          listlen = len(var)
@@ -32,23 +35,32 @@ def dict2pretty(name, var, indent=0, namewidth = None):
          if len(var) < 50:
              oneline = ", ".join(var)
              if len(oneline)<120:
-                return dict2pretty(name, oneline, indent)
+                return dict2pretty(name, oneline, indent, say_type = type(var), namewidth = namewidth)
             
-         if listlen > 10:
+         if listlen > 10 and not complete == True:
             last = listlen - 1
             mid = int(last/2);
-            retstr += dict2pretty("[0]", var[0], indent+1, namewidth = 9) 
-            retstr += dict2pretty("[%d]"%mid, var[mid],indent+1, namewidth = 9)
-            retstr += dict2pretty("[%d]"%last, var[last], indent+1, namewidth = 9)  
+            retstr += dict2pretty("[0]", var[0], indent+1, namewidth = namewidth) 
+            retstr += dict2pretty("[%d]"%mid, var[mid],indent+1, namewidth = namewidth)
+            retstr += dict2pretty("[%d]"%last, var[last], indent+1, namewidth = namewidth)  
          else:
             for i in range(0, listlen):
                 key = "[%d]"%i
                 value = var[i];
-                retstr += dict2pretty(key, value, indent+1, namewidth = 3)
+                retstr += dict2pretty(key, value, indent+1, namewidth = namewidth)
     else:
-        retstr += "\n%(indent)s%(key)s = %(val)s" % {"indent": fulltab,
-                                                       "key": _pad_str(name, namewidth),
-                                                       "val": var
+        if say_type:
+            stype = repr(say_type)
+        else:
+            stype = repr(type(var))
+            
+        retstr += "\n%(indent)s%(key)s %(type)s =  %(val)s" % {
+                                                        "indent": fulltab,
+                                                        "key": tc.colored(
+                                                                _pad_str(name, namewidth)
+                                                                , attrs=["bold"]),
+                                                        "type": tc.colored(stype, attrs=["dark"]),
+                                                        "val": var.strip()
                                                        }
     if indent == 0:
         retstr = retstr.strip()
@@ -66,7 +78,7 @@ def maxkeylen (d):
 def _pad_str(tstr, length):
     slen = len(tstr)
     pad = " " * (length-slen)
-    return tstr+pad
+    return pad+tstr
 
 def context_args(context_args):
     """Converts a user supplied list in the format returned by argparse

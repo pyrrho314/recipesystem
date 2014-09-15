@@ -267,9 +267,10 @@ class ReductionObject(object):
                 # recipies and subrecipes --> self.memtrack(primname, "YIELD")
                 # needs to be made smarter 
                 if rc == None:
-                    raise ReductionExcept(
+                    rc = context
+                    if False:                    
+                        raise ReductionExcept(
                             "Primitive '%s' returned None for rc on yield\n" % primname)
- 
                 rcmd = rc.pop_return_command()
                 if rcmd == "return_from_recipe":
                     rc.terminate_primitive()

@@ -9,7 +9,6 @@ from datetime import datetime
 from astrodata.AstroData import AstroData
 from astrodata import IDFactory
 import traceback
-import astrodata
 import AstroDataType
 import ConfigSpace
 from ConfigSpace import RECIPEMARKER
@@ -21,10 +20,12 @@ import IDFactory as idFac # id hashing functions
 from Errors import ReduceError
 from gdpgutil import pick_config
 from ParamObject import PrimitiveParameter
+import astrodata
 from astrodata.adutils import gemLog
 from AstroDataType import get_classification_library
 from ReductionContextRecords import CalibrationRecord, \
-    StackableRecord, AstroDataRecord, FringeRecord
+    StackableRecord, AstroDataRecord, FringeRecord, \
+    GeneralDataRecord
 from ReductionObjects import ReductionObject
 from ReductionObjectRequests import UpdateStackableRequest, \
     GetStackableRequest, DisplayRequest, ImageQualityRequest
@@ -587,7 +588,7 @@ class ReductionContext(dict):
         for out in self.outputs[self._current_stream]:
             if type(out) == AstroDataRecord:
                 newinputlist.append(out)
-            elif issubclass(type(out), GeneralData):
+            elif issubclass(type(out), GeneralDataRecord):
                 newinputlist.append(out)
             else:
                 mes = "Bad Argument: Wrong Type '%(val)s' '%(typ)s'." \
@@ -658,14 +659,17 @@ class ReductionContext(dict):
         choose the stream, use ``get_stream(..)`` for that.  To report modified
         datasets back to the stream use ``report_output(..)``.
         """
-        if style==None:
+        if style=="RECORD":
+            ## @@KSCHANGE: by default we will return the elements loaded
+            ## style == None now below with AD (which is not AstroData specific
             return self.inputs
-        elif style == "AD": #@@HARDCODED: means "as AstroData instances"
+        elif style == None or style == "AD": #@@HARDCODED: means "as AstroData instances"
             retl = []
             for inp in self.inputs:
-                if inp.ad == None:
+                print "RM669:", inp.data_obj
+                if inp.data_obj == None:
                     inp.load()
-                retl.append(inp.ad)
+                retl.append(inp.data_obj)
             return retl
         elif style == "FN": #@@HARDCODED: means "as Filenames"
             retl = [inp.filename for inp in self.inputs]
@@ -764,10 +768,9 @@ class ReductionContext(dict):
         """
         if len(self.inputs) == 0:
             return None
-        if self.inputs[0].ad == None:
-            # @@NOTE: return none if reference image not loaded, reconsider
-            #         raise ReduceError
-            return None
+        if isinstance(self.inputs[0], GeneralDataRecord):
+            return self.inputs[0].gd;
+            
         return self.inputs[0].ad
     
     
@@ -1091,7 +1094,7 @@ class ReductionContext(dict):
             if self.inputs:
                 rets += "\nInput (self.inputs)"
                 for rcr in self.inputs:
-                    if isinstance(rcr, \
+                    if isinstance(rcr,
                         astrodata.ReductionContextRecords.AstroDataRecord):
                         rets += "\n    ReductionContextRecords.AstroDataRecord:"
                         rets += str(rcr)
@@ -1476,6 +1479,8 @@ class ReductionContext(dict):
             self.outputs[stream].append(AstroDataRecord(inp, self.display_id, load=load))
         elif isinstance(inp, AstroData):
             self.outputs[stream].append(AstroDataRecord(inp))
+        elif isinstance(inp, GeneralData):
+            self.outputs[stream].append(GeneralDataRecord(inp))
         elif type(inp) == list:
             for temp in inp:
                 # This is a good way to check if IRAF failed.
@@ -1488,11 +1493,13 @@ class ReductionContext(dict):
                     orecord = AstroDataRecord(temp[0], self.display_id, parent=temp[1], load=load)
                     #print 'RM370:', orecord
                 elif issubclass(type(temp), GeneralData):
-                    orecord = temp
+                    orecord = GeneralDataRecord(temp)
                 elif isinstance(temp, AstroData):
                     # print "RM891:", type(temp)
                     orecord = AstroDataRecord(temp)
                 elif isinstance(temp, AstroDataRecord):
+                    orecord = temp
+                elif isinstance(temp, GeneralDataRecord):
                     orecord = temp
                 elif type(temp) == str:
                     if not os.path.exists(temp):
@@ -2453,6 +2460,7 @@ if True: # was firstrun logic... python interpreter makes sure this module only 
         curdir = root
         curpack = ConfigSpace.from_which(curdir)
         for sfilename in files:
+            #print "RM2456:", sfilename
             curpath = os.path.join(curdir, sfilename)
             
             m = re.match(recipeREMask, sfilename)
@@ -2543,6 +2551,7 @@ if True: # was firstrun logic... python interpreter makes sure this module only 
                 # print "RM2271:", sfilename, fullpath
                 centralReductionMap.update({sfilename: fullpath})
             elif mri: # this is a recipe index
+                #print "RM2546: sfilename=", sfilename
                 efile = open(fullpath, "r")
                 # print "RM1559:", fullpath
                 # print "RM1560:before: cri", centralRecipeIndex

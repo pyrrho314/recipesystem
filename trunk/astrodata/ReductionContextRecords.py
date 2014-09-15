@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from astrodata.AstroData import AstroData
+from astrodata.generaldata import GeneralData
 import os
 
 #------------------------------------------------------------------------------ 
@@ -15,6 +16,7 @@ class ReductionContextRecord( object ):
             timestamp = datetime.now()
         self.timestamp = timestamp
     
+  
     
 class CalibrationRecord( ReductionContextRecord ):
     '''
@@ -104,7 +106,24 @@ timestamp = %s
 
 ##@@FIXME: Because of the nature of how Output -> Input, the name of this record may need to change
 ## at some point.
-class AstroDataRecord( ReductionContextRecord ):
+class DataObjectRecord( ReductionContextRecord):
+    _data_obj = None
+    
+#    def __init__(self, *args, **args):
+#        super(DataObjectRecord, self).__init__(*args, **args) 
+        
+    def get_data_obj(self):
+        return self._data_obj
+    def set_data_obj(self, val):
+        self._data_obj = val
+    def del_data_obj(self):
+        self._data_obj = None
+        
+    data_obj = property(get_data_obj, set_data_obj, del_data_obj)
+    
+    
+    
+class AstroDataRecord( DataObjectRecord ):
     '''
     Contains any metadata related to output/input within the ReductionContext.
     This is used specifically in the ReductionContext records inputs and outputs.
@@ -113,6 +132,15 @@ class AstroDataRecord( ReductionContextRecord ):
     filename = None
     ad = None
     parent = None
+    
+    # making self.ad compatible with DataObjectRecort.data_obj
+    def get_data_obj(self):
+        return self.ad
+    def set_data_obj(self, val):
+        self.ad = val
+    def del_data_obj(self):
+        self.ad = None
+    data_obj = property(get_data_obj, set_data_obj, del_data_obj)
     
     def __init__(self, filename, display_id=None, timestamp=None, parent=None, load = True):
         super( AstroDataRecord, self ).__init__( timestamp )
@@ -156,4 +184,72 @@ class AstroDataRecord( ReductionContextRecord ):
                                 self.timestamp, 
                                 self.parent, 
                                 str(self.ad) )
+        return rets
+    
+    def data_obj(self):
+        return ad
+        
+class GeneralDataRecord( DataObjectRecord ):
+    '''
+    Contains any metadata related to output/input within the ReductionContext.
+    This is used specifically in the ReductionContext records inputs and outputs.
+    '''
+    display_id = None
+    filename = None
+    parent = None
+    gd = None
+    
+    def get_data_obj(self):
+        return self.gd
+    def set_data_obj(self, val):
+        self.gd = val
+    def del_data_obj(self):
+        self.gd = None
+    data_obj = property(get_data_obj, set_data_obj, del_data_obj)
+    
+    def __init__(self, filename, display_id=None, timestamp=None, parent=None, load = True):
+        super( GeneralDataRecord, self ).__init__( timestamp )
+        #print "RCR110:", type(filename), isinstance(filename, AstroData)
+        if isinstance(filename, GeneralData):
+            self.filename = filename.filename
+            self.gd = filename
+            self.parent = parent #filename.filename
+        elif type( filename ) == str:
+            self.filename = filename
+            if load == True:
+                self.gd = GeneralData.create_data_object( filename )
+            else:
+                self.gd = None
+            self.parent = parent
+        elif type( filename ) == GeneralDataRecord:
+            gdr = filename
+            self.display_id = gdr.display_id
+            self.filename   = gdr.filename
+            self.gd         = gdr.ad
+            self.parent     = gdr.parent        
+            return                      
+        else:
+            raise "BAD ARGUMENT"
+        ##@@TODO: display_id may be obsolete
+        self.display_id = display_id
+            
+    def load(self):
+        self.gd = GeneralData.create_data_object(self.filename)
+        print "RCR221: loading %s %s" %(self.filename, self.gd)
+        
+    def is_loaded(self):
+        return not (self.gd == None)    
+    def __str__(self):
+        rets = """
+    gd.filename  = %s
+    display_id   = %s
+    filename     = %s
+    timestamp    = %s
+    parent       = %s
+    type         = %s \n""" % ( self.gd.filename, 
+                                str(self.display_id),
+                                str(self.filename), 
+                                self.timestamp, 
+                                self.parent, 
+                                str(self.gd) )
         return rets  

@@ -266,18 +266,27 @@ class ConfigSpace(object):
             # we want this path in front...
             rpath.extend(pathlist)
             pathlist = rpath
-        # print "CS197:", repr(pathlist)
+        
+        if False:
+            from astrodata.adutils.ksutil import dict2pretty
+            from math import ceil, log
+            print dict2pretty("pathlist (CS270):", pathlist,complete = True, namewidth = 3 ) #ceil(log(len(pathlist))) )
         
         pkmask = {}
+        
         for path in pathlist:
             # print "@@@@@@@@:",".svn" in path,":::",  path
             if os.path.isdir(path):
-                        # print "ISADIR"
+                        #print "CS279: ISADIR ", path
+                        
                         subdirs = os.listdir(path)
                         for subpath in subdirs:
                             if not os.path.isdir(os.path.join(path,subpath)):
                                 continue
+                            #print "CS285: subpath", subpath
+                            
                             if re.match(PACKAGEMARKER, subpath):
+                                #print "CS288: .... is a PACKAGE"
                                 # this logic allows packages early in the path
                                 # to hide packages late in the path
                                                                 
