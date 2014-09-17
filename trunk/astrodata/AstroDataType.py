@@ -269,6 +269,7 @@ class DataClassification(object):
     
     # classification library
     library = None
+    suggested_data_obj = None
     
     usage = ""    
     
@@ -1066,6 +1067,15 @@ class ClassificationLibrary (object):
         except KeyError:
             return None
             
+    
+    def recommend_data_object(self,typ):
+        to = self.get_type_obj(typ)
+        if hasattr(to, "suggested_data_object"):
+            #print "ADT1074: recommend_data_object[%s]"%typ, to.suggested_data_object
+            return to.suggested_data_object
+        else:
+            return None
+    
     def type_is_child_of(self, typename, parenttyp):
         child = self.get_type_obj(typename)
         parent = self.get_type_obj(parenttyp)
@@ -1308,3 +1318,5 @@ def get_classification_library():
         return ClassificationLibrary.__single
     else:
        ClassificationLibrary.__single = ClassificationLibrary()
+       
+globalClassificationLibrary = get_classification_library()

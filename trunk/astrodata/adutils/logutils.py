@@ -21,7 +21,7 @@ def customize_log(log=None):
     '''
     def arghandler(args=None, levelnum=None, prefix=None):
         largs = list(args)
-        slargs = str(largs[0]).split('\n')
+        slargs = (largs[0].encode("utf-8").split('\n'))
         for line in slargs:
             if prefix:
                 line = prefix + line

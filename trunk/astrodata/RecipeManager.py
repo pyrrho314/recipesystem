@@ -666,7 +666,7 @@ class ReductionContext(dict):
         elif style == None or style == "AD": #@@HARDCODED: means "as AstroData instances"
             retl = []
             for inp in self.inputs:
-                print "RM669:", inp.data_obj
+                # print "RM669:", inp.data_obj
                 if inp.data_obj == None:
                     inp.load()
                 retl.append(inp.data_obj)
@@ -2120,9 +2120,10 @@ class RecipeLibrary(object):
         # problem.
         
         ro = ReductionObjects.ReductionObject()
-        print "RM2113: settype =", astrotype
+        #print "RM2113: settype =", astrotype, dataset
+    
         primsetlist = self.retrieve_primitive_set(dataset=dataset, astrotype=astrotype)
-        # print "RM2071:",repr(primsetlist)
+        #print "RM2071:",repr(primsetlist)
         ro.recipeLib = self
         if primsetlist:
             ro.curPrimType = primsetlist[0].astrotype
@@ -2145,7 +2146,7 @@ class RecipeLibrary(object):
         return ro
         
     def retrieve_primitive_set(self, dataset=None, astrotype=None):
-        # print "RM117:",astrotype
+        #print "RM2149:",astrotype, dataset
         
         val = None
         if (astrotype == None) and (dataset != None):

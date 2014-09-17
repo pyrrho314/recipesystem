@@ -1,12 +1,20 @@
-import generalclassification
+# (c) Novem LLC
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.import generalclassification
+
 import os
+from astrodata.AstroDataType import get_classification_library
+cl = get_classification_library() 
 
 # needs to move to configuration space
 _data_object_classes = {
     ".fits": ("astrodata.AstroData", "AstroData"),
     ".json": ("jsondata", "JSONData"),
-    ".csv": ("jsondata", "TxtData"),
-    ".txt": ("jsondata", "TxtData")
+    ".txt": ("jsondata", "TxtData"),
+    ".xls": ("jsondata", "PandasData"),
+    ".csv": ("jsondata", "PandasData"),
+    ".setref": ("jsondata", "SetrefData")
     }
 
 _gen_classification_library = None
@@ -19,22 +27,28 @@ class GeneralData(object):
     filename = False
     
     @classmethod
-    def create_data_object(cls, initarg):
+    def create_data_object(cls, initarg, hint = None):
+        #print "gd26: initarg", initarg, hint
         retv = None
-        if (isinstance(initarg, str)):
+        if True: #(isinstance(initarg, str)):
             # @@ TODO: improve the generalization, externalize to configspace
-            for suffix in _data_object_classes:
-                instor = _data_object_classes[suffix]
-                if (initarg.endswith(suffix)):
-                    module, tclass = instor
-                    print "gd29:",module, tclass
-                    exec("from %s import %s" % instor)
-                    retv = eval("%s(initarg)" % tclass) 
-        else:
-            from astrodata.AstroData import AstroData
-            retv = AstroData(initarg)
+            if hint:
+                instor = hint
+                module,tclass = hint
+            else:
+                for suffix in _data_object_classes:
+                    instor = _data_object_classes[suffix]
+                    lowerarg = initarg.lower()
+                    if (lowerarg.endswith(suffix)):
+                        break;
+                    
+            module, tclass = instor
+            # print "gd29:",module, tclass
+            exec("from %s import %s" % instor)
+            retv = eval("%s(initarg)" % tclass)
             
         return retv
+        
     def _get_ad(self):
         return self
     
@@ -68,8 +82,8 @@ class GeneralData(object):
         cl = ClassificationLibrary.get_classification_library()
         types = cl.discover_types(self)
         return types
-        
     types = property(get_types)
+    
     
     def add_suffix(self, suffix = None):
         if not suffix:

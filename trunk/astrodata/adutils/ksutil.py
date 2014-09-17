@@ -1,11 +1,13 @@
 import termcolor as tc
-
+from pprint import pprint,pformat
 def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_type = None):
+    #retstr = pformat(var)
     retstr = ""
-    tabspc = " "*4
+    tabspc = "-"*4
     fulltab = tabspc*indent
+    _o_namewidth = namewidth
     if not namewidth:
-        namewidth = len(name)
+        namewidth = len(str(name))
     if isinstance(var, dict):
         retstr += "\n%(indent)s%(key)s %(type)s:" % {
                                                     "indent":fulltab,
@@ -13,7 +15,8 @@ def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_typ
                                                     "type": tc.colored(repr(type(var)), attrs=["dark"]),
                                                     "extra": tabspc
                                                  }
-        namewidth = maxkeylen(var)
+        sub_namewidth = maxkeylen(var)
+        #print "ks19: sub_nw=", sub_namewidth
         if len(var) == 0:
             retstr += "\n%(indent)s%(tab)s:::empty:::" % {"indent":fulltab,
                                                           "tab":tabspc
@@ -23,7 +26,10 @@ def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_typ
         for key in keys:
             value = var[key]
             #print key,value
-            retstr += dict2pretty(key, value, indent+1, namewidth = namewidth)
+            newstr = dict2pretty(key, value, indent+1, namewidth = sub_namewidth )
+            #print "ks28: indent =", indent, namewidth, _o_namewidth
+            #print "ks31: newstr", newstr
+            retstr += newstr
     elif isinstance(var, list):
          retstr += "\n%(indent)s%(key)s %(type)s:" % { "indent":fulltab,
                                                     "key": tc.colored(name, attrs=["bold"]),
@@ -78,7 +84,7 @@ def maxkeylen (d):
 def _pad_str(tstr, length):
     slen = len(tstr)
     pad = " " * (length-slen)
-    return pad+tstr
+    return tstr+pad
 
 def context_args(context_args):
     """Converts a user supplied list in the format returned by argparse
