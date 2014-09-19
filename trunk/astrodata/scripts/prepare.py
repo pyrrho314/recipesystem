@@ -13,7 +13,8 @@ try:
                 
     from astrodata.adutils import logutils
     from optparse import OptionParser
-    
+    from datetime import datetime
+    import os
     
     version = '1_0'
 
@@ -87,8 +88,13 @@ try:
     parser.add_option("--logmode", dest="logmode", default="standard", 
                       type="string", help="Set logging mode (standard, "
                       "console, debug, null)")
-    parser.add_option("--logfile", dest="logfile", default="reduce.log", 
-                      type='string', help="name of log (default = 'reduce.log')") 
+    #date specific log
+    d = datetime.now()
+    logpath = "log/LOG_prepare_%s" % d.isoformat()
+    if not os.path.exists(os.path.dirname(logpath)):
+        os.makedirs(os.path.dirname(logpath))
+    parser.add_option("--logfile", dest="logfile", default=logpath, 
+                      type='string', help="name of log (default = 'log/LOG_prepare_<isodate>.log')") 
     parser.add_option("--loglevel", dest="loglevel", default="stdinfo", 
                       type="string", help="Set the verbose level for console "
                       "logging; (critical, error, warning, status, stdinfo, "
@@ -571,7 +577,12 @@ try:
                 # renaming files to output (current) directory
                 # helps to ensure we don't overwrite raw data (i.e. on auto-write at end)
                 # todo: formalize these rules more
-                ad.filename = os.path.basename(ad.filename)
+                if isinstance(ad, AstroData):
+                    ad.filename = os.path.basename(ad.filename)
+                else:
+                    #print "SET OUTPUT_DIRECTORY, NOT ASTRODATA"
+                    ad.output_directory = os.getcwd()
+                    #print "output_directory", ad.output_directory
                 ad.mode = "readonly"
 
                 nl.append(ad)
