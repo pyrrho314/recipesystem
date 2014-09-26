@@ -225,7 +225,7 @@ class PRSProxy(object):
         return newProxy
         
     def unregister(self):
-        # print "P262 self.registered=", repr(self.registered)
+        #print "P262 self.registered=", repr(self.registered)
         if self.registered:
             self.prs.unregister(os.getpid())
             self.registered=False

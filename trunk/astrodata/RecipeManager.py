@@ -36,6 +36,12 @@ import eventsmanagers
 import traceback
 from primitivescat import PrimitivesCatalog
 
+try:
+    import termcolor
+    COLORSTR = termcolor.line_color
+except:
+    COLORSTR = lambda arg: arg 
+
 # GeneralData generalizing refactoring
 from astrodata import generaldata
 from astrodata.generaldata import GeneralData
@@ -170,6 +176,9 @@ class ReductionContext(dict):
     arguments = None
     cache_files = None
     
+    #
+    _output_reported = False
+    
     # dictionary with local args (given in recipe as args, generally)
     _running_contexts = None
     _localparms = None 
@@ -256,6 +265,9 @@ class ReductionContext(dict):
             return True
         return dict.__contains__(self, thing)
         
+    def _get_output_reported(self):
+        return self._output_reported;
+    output_reported = property(_get_output_reported)
     def get_context(self):
         # print "RM209:",repr(self._running_contexts)
         return ":".join(self._running_contexts)
@@ -1456,6 +1468,7 @@ class ReductionContext(dict):
         interact with the datastream in which it was invoked (or access
         other streams).
         """
+        self._output_reported = True
         ##@@TODO: Read the new way code is done.
         #if category != MAINSTREAM:
         #    raise RecipeExcept("You may only use " + 
@@ -2182,7 +2195,7 @@ class RecipeLibrary(object):
                         blmsg = blmsg % {"impname": importname}
                         msg = blmsg + "\n" + traceback.format_exc() + "\n" + blmsg
                         if log:
-                            log.error(msg)
+                            log.error(COLORSTR(msg, "grey", "on_red", ["reverse"]))
                         else:                    
                             print "PRINTED, not logged:\n"+msg
                     b = datetime.now()

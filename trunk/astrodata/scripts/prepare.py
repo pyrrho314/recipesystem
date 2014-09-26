@@ -5,16 +5,22 @@
 #import hotshot
 #importprof = hotshot.Profile("hotshot_edi_stats")
 #------------------------------------------------------------------------------ 
-
+TCOLOR = None
 try:
     #print "reduce IN BRANCH"
     from astrodata import generaldata
     from astrodata.generaldata import GeneralData
+    from astrodata.adutils import ksutil
                 
     from astrodata.adutils import logutils
     from optparse import OptionParser
     from datetime import datetime
     import os
+    try:
+        import termcolor
+        COLORSTR = termcolor.line_color
+    except:
+        COLORSTR = lambda arg: arg 
     
     version = '1_0'
 
@@ -102,7 +108,7 @@ try:
     parser.add_option("--showcolors", dest="show_colors", default=False, 
                       action="store_true", help="Shows available colors based "
                       "on terminal setting (used for debugging color issues)")
-    parser.add_option("--writefinal", dest="writefinal", default=False, action="store_true", help= "Write final files to output.")
+    parser.add_option("--nfw", "--no_final_write", dest="writefinal", default=True, action="store_false", help= "Don't write final files to output.")
     
     # @@DEPRECATED remove --usercal flag below, was old name
     parser.add_option("--override_cal", "--usercal", dest="user_cals", default=None, type="string",
@@ -567,9 +573,11 @@ try:
         # If there was super intelligence, it would determine ordering. For now, it will 
         # run recipes in simple ordering, (i.e. the order values() is returned in).
         allinputs = typeIndex.values()
-        #print "r507:", repr(allinputs)
+        print "p576 intelligence:", repr(allinputs)
     else:
+        print "p578:", repr(allinputs)
         nl = []
+        # allinputs is FILENAMES here, below it becomes "DatasetData" objects (GeneralData or AstroData).
         for inp in allinputs:
             try:
                 # OLD ad = AstroData(inp)
@@ -580,11 +588,11 @@ try:
                 if isinstance(ad, AstroData):
                     ad.filename = os.path.basename(ad.filename)
                 else:
-                    #print "SET OUTPUT_DIRECTORY, NOT ASTRODATA"
+                    #print "SET OUTPUT_DIRECTORY, file GeneralData, NOT ASTRODATA"
                     ad.output_directory = os.getcwd()
                     #print "output_directory", ad.output_directory
                 ad.mode = "readonly"
-
+                print "p594: ad",ad.filename, ad.get_types()
                 nl.append(ad)
                 ad = None #danger of accidentally using this!
             except:
@@ -599,8 +607,41 @@ try:
             allinputs = [None]
         else:
             allinputs = [nl]
-
-
+        print "p610: nl=", nl
+    ## GROUPING
+    groupedinputs = {}
+    grouplist = None
+    _typehasrec = {}
+    for inplist in allinputs:
+        print "(p615)", inplist
+        for inp in inplist:
+            print("(p616) filename: %s" % inp.filename)
+            for typ in inp.get_types():
+                print("   type: %s" % typ)
+                if typ not in groupedinputs:
+                    # any recipe associated with this type
+                    if typ in _typehasrec:
+                        has_rec = _typehasrec[typ]
+                    else:
+                        rec = rl.get_applicable_recipes(astrotype = typ)
+                        
+                        if len(rec):
+                            # yes
+                            has_rec = True
+                            _typehasrec[typ] = has_rec
+                            groupedinputs[typ] = []
+                        else:
+                            continue
+                if has_rec:
+                    groupedinputs[typ].append(inp)
+        
+    if len(groupedinputs):
+        print "p621: %s" % repr(groupedinputs)
+        grouplist = groupedinputs.values()
+    unsortedinputs = allinputs
+    if grouplist:
+        allinputs = grouplist
+        
     #===============================================================================
     # Local PRS Components
     #===============================================================================
@@ -612,14 +653,18 @@ try:
 
     numReductions = len(allinputs)
     i = 1
-    log.info("About to process %d lists of datasets."% len(allinputs))
-    #print "r554", repr(allinputs)
+    log.stdinfo("About to process %d lists of datasets."% len(allinputs))
+    for i in range(0, len(allinputs)):
+        log.info(ksutil.dict2pretty("allinputs list #%d"%i, allinputs[i]))
+    
+    print "p646: allinputs", allinputs
     for infiles in allinputs: #for dealing with multiple sets of files.
         #print "r232: profiling end"
         #prof.close()
         #raise "over"
         try:
-            log.info("Starting Reduction on set #%d of %d" % (i, numReductions))
+            log.info(COLORSTR("Starting Reduction on set #%d of %d" % (i+1, numReductions),
+                        color = "yellow", on_color="on_grey", attrs=["bold","reverse"]))
             if infiles:
                 for infile in infiles:
                     log.info("    %s" % (infile.filename))
@@ -637,10 +682,10 @@ try:
                     ro = rl.retrieve_reduction_object(astrotype = options.astrotype)
             except:
                 reduceServer.finished=True
-                try:
-                    prs.unregister()
-                except:
-                    log.warning("Trouble unregistering from adcc shared services.")
+                #try:
+                #    prs.unregister()
+                #except:
+                #    log.warning("Trouble unregistering from adcc shared services.")     
                 raise
 
             # add command clause
@@ -991,29 +1036,52 @@ try:
                     outputs = co.get_stream("main")
                     clobber = co["clobber"]
                     if clobber:
+                        log.warning("clobber flag is DEPRECATED")
                         clobber = clobber.lower()
                         if clobber == "false":
                             clobber = False
                         else:
                             clobber = True
-                    if options.writefinal: # AUTOWRITE @@GALLEY CHANGE 
+                    if options.writefinal and co.output_reported: # AUTOWRITE @@GALLEY CHANGE 
+                        msg = "End of Recipe: WRITING FINAL OUTPUTS (r1048):"
+                        msg += " "*(80-len(msg))
+                        log.stdinfo(COLORSTR( msg,
+                                             "white", "on_blue"))
                         for output in outputs:
-                            ad = output.ad
-                            name = ad.filename
-                            # print "r908:", ad.mode
+                            ds = output.data_obj
+                            name = ds.filename
+                            log.stdinfo("%s %s/%s" % 
+                                            (   COLORSTR("file:", "white", "on_blue"),   
+                                                ds.output_directory, 
+                                                COLORSTR(ds.basename, attrs=["bold"])
+                                            )
+                                        )
                             try:
-                                ad.write(clobber = clobber, suffix = "_final", rename=True)
-                                log.stdinfo("Wrote %s in output directory" % ad.filename)
+                                written = ds.write(clobber = clobber, suffix = "_final", rename=True)
+                                if written == True:
+                                    log.stdinfo("      Wrote %s in output directory" % COLORSTR(ds.filename, attrs = ["bold"]))
+                                elif written == False:
+                                    log.stdinfo("      %s chose not to write %s" % (  COLORSTR(str(type(output)), attrs= ["bold"]), 
+                                                                                COLORSTR(ds.filename, attrs = ["bold"])
+                                                                              )
+                                               )
+                                else:
+                                    log.stdinfo("     Dataset did not report success writing %s" % COLORSTR(ds.filename, attrs = ["bold"]))
+                                
                             except Errors.OutputExists:
-                                log.error( "CANNOT WRITE %s, already exists" % ad.filename)
+                                log.error( "CANNOT WRITE %s, already exists" % ds.filename)
                             except Errors.AstroDataReadonlyError, err:
-                                log.warning('%s is in "readonly" mode, will not attempt to write.' % ad.filename)
+                                log.warning('%s is in "readonly" mode, will not attempt to write.' % ds.filename)
                             except Errors.AstroDataError, err:
-                                log.error("CANNOT WRITE %s: " % ad.filename + err.message)
+                                log.error("CANNOT WRITE %s: " % ds.filename + err.message)
                             except:
-                                log.error("CANNOT WRITE %s, unknown reason" % ad.filename)
+                                log.error("CANNOT WRITE %s, unknown reason" % ds.filename)
                                 raise
-
+                        msg = "End of Recipe: WROTE FINAL OUTPUTS (r1080):"
+                        msg += " "*(80-len(msg))
+                        log.stdinfo(COLORSTR( msg,
+                                             "white", "on_blue"))
+                        
                 if interactiveMode == True:
                     reclist = ["USER"]
                 else:
@@ -1033,21 +1101,33 @@ try:
             log.error(str(rnf))
         except RecipeExcept, x:
             # print "r995:", str(dir(x))
-            traceback.print_exc()
+            
+            tlog = traceback.format_exc().strip()
+            tlog = COLORSTR(tlog, attrs=["dark"])
+            print tlog
             print "INSTRUCTION MIGHT BE A MISPELLED PRIMITIVE OR RECIPE NAME"
             msg = "name of recipe unknown" 
             if hasattr(x, "name"):
                 msg = '"%s" is not a known recipe or primitive name' % x.name
-            print "-"*len(msg)
-            print msg
-            print "-"*len(msg)
+            print COLORSTR("-"*len(msg), "grey", "on_red", ["reverse"])
+            print COLORSTR(msg,"grey", "on_yellow", ["reverse", "bold"])
+            print COLORSTR("-"*len(msg), "grey", "on_red", ["reverse"])
                         
         except:
             import traceback
             if infiles:
-                log.error("PROBLEM WITH ONE SET OF FILES:\n\t%s \n%s"
-                        %(",".join([inp.filename for inp in infiles]),
-                             traceback.format_exc()))
+                logtitle = ("PROBLEM WITH ONE SET OF FILES: \n\t")
+                logfileist = "\n\t".join([inp.filename for inp in infiles])
+                logtrace = traceback.format_exc().strip()
+                
+                if COLORSTR:
+                    logtrace = COLORSTR(logtrace, color="red",
+                                        on_color="on_white", attrs = ["dark"])
+                                        
+                logerrstr = "%s%s\n%s" % ( logtitle,
+                                            logfileist,
+                                            logtrace)
+                log.error(logerrstr)
             else:
                 log.warning("No input files %s" % traceback.format_exc())
         if False:

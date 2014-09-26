@@ -4,16 +4,28 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.import generalclassification
 
 import os
+from astrodata.Errors import Error
 from astrodata.AstroDataType import get_classification_library
+import termcolor as tc
+
 cl = get_classification_library() 
 
+class GD_OperationNotPermitted(Error):
+    """ GeneralData related exceptions, raised if an operation is not permitted,
+        like setting an output_filename property (it's constructed from the
+        output_directory and the basename).
+    """
+    message  = "Operation Not Permitted"
+
 # needs to move to configuration space
+# make this a member of GeneralData (?)
 _data_object_classes = {
     ".fits": ("astrodata.AstroData", "AstroData"),
     ".json": ("jsondata", "JSONData"),
     ".txt": ("jsondata", "TxtData"),
     ".xls": ("jsondata", "PandasData"),
     ".csv": ("jsondata", "PandasData"),
+    ".h5": ("jsondata", "PandasData"),
     ".setref": ("jsondata", "SetrefData")
     }
 
@@ -28,6 +40,10 @@ class GeneralData(object):
     _filename = None
     # output_directory is a property
     _output_directory = None
+    _suggested_data_classes = {
+        "TABLE": ("jsondata", "PandasData"),
+        "TXT" : ("jsondata", "TxtData")
+        }
     
     @classmethod
     def create_data_object(cls, initarg, hint = None):
@@ -57,8 +73,9 @@ class GeneralData(object):
     
     ############
     #properties
-    debug_filename = False
     
+    # filename
+    debug_filename = False
     def _get_filename(self):
         if self.debug_filename:
             print "gd63: get filename = %s" %self._filename
@@ -75,6 +92,7 @@ class GeneralData(object):
         self._filename = name
         if self.debug_filename:
             print "gd73: set filename = %s" %self._filename
+        self.prop_put("_data.filename", self._filename)
         return
         
     def _del_filename(self, name):
@@ -82,11 +100,11 @@ class GeneralData(object):
             print "gd76: del filename = %s" %self._filename
         self._set_filename(None)
     filename = property(_get_filename, _set_filename, _del_filename)
-    
+    # end filename
+    # output directory
     def _get_output_directory(self):
         if self._output_directory == None:
-            self.output_directory == os.getcwd()
-            raise "catch this"
+            self._output_directory = os.getcwd()
             
         return self._output_directory
         
@@ -100,6 +118,15 @@ class GeneralData(object):
     output_directory = property(_get_output_directory, 
                                 _set_output_directory, 
                                 _del_output_directory)
+                                
+    def _get_output_filename(self):
+        return os.join.path(self.output_directory, self.basename)
+    def _set_output_filename(self):
+        raise GD_OperationNotPermitted("cannot set 'output_filename', it is constructed from 'output_dir' and 'basename'")
+    output_filename = property(_get_output_filename, _set_output_filename)
+    
+    # end output directory
+    
     # properties
     #############
         
@@ -121,12 +148,23 @@ class GeneralData(object):
     basename = property(_basename)
     
     def _dirname(self):
-        return os.path.dirname(self.dirname)
-    dirname = property(_basename)
+        return os.path.dirname(self.filename)
+    dirname = property(_dirname)
            
+    # virtuals... for children
     def do_write(self):
         # child class does this
         pass
+        
+    # properties
+    def prop_exists(self, name):
+        return False
+    def prop_put(self, name, *args, **argv):
+        return None
+    def prop_get(self, name):
+        return None
+    def prop_add(self, name, item):
+        return None
     
     def get_classification_library(self):
         global _gen_classification_library
@@ -147,7 +185,10 @@ class GeneralData(object):
         return types
     types = property(get_types)
     
-    
+    def is_type(self, settype):
+        types = self.get_types()
+        return settype in types
+           
     
     def add_suffix(self, suffix = None):
         if not suffix:
@@ -160,23 +201,43 @@ class GeneralData(object):
         
         fname = os.path.join(dirname, basecore)+baseext
         return fname
+    def allow_extant_write(self):
+        return False
         
     def nativeStorage(self):
         return False
-        
-    def write(self, clobber = False, suffix=None, rename = True):
+    
+    def recommend_data_object(self):
+        import gdpgutil as gd
+        hints = self.get("type_hints")
+        print "gd190: hints=", hints
+        if hints:
+            modandclass = gd.pick_config(hints, self._suggested_data_classes, "leaves")
+            return modandclass
+        else: 
+            modandclass = gd.pick_config(self, self._suggested_data_classes, "leaves")
+            return modandclass
+            
+    def write(self, suffix=None, rename = True, ** args):
         # make our filename relative to the output dir
         
         oldname = self.filename
         outname = os.path.join(self.output_directory, self.basename)
         self.filename = outname
-        newname = self.add_suffix(suffix)
-        if newname:
-            if os.path.exists(newname) and not clobber:
-                print "gd83: not writing, %s already exists, and clobber==False" % newname
-                return False
-            
-        self.do_write(self.filename, rename = rename)
+        newname = self.filename
+        if suffix:
+            newname = self.add_suffix(suffix)
+        if os.path.exists(newname):
+            print "(gd225) %s already exists" % newname
+            # check exists_policy
+            if self.allow_extant_write():
+                # e.g.: SetrefData simply moves the extant out of the way using a ";N" postfix
+                print "        but %s allows extant write" % tc.colored(repr(type(self)), attrs=["bold"])
+            else:
+                raise GD_OperationNotAllowed("General Data does not allow overwriting data by default.")
+                
+        self.do_write(newname, rename = rename)
         
         if rename and self.filename == oldname:
             print "gd87: rename == True but name was not changed, still %s, expected %s" % (self.filename, newname)
+        return True

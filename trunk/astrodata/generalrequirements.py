@@ -39,6 +39,9 @@ class MemberReq(Requirement):
         
 HASMEMBER = MemberReq
 
+# class MemberIs
+# MEMBERIS
+
 class MemberContains(Requirement):
     member_name = None
     val_check = True
@@ -60,6 +63,55 @@ class MemberContains(Requirement):
             mmatch = False
         
         return mmatch
+MEMBERCONTAINS = MemberContains
+
+# Properties
+
+class PropertyReq(Requirement):
+    prop_name = None
+    def __init__(self, memstr):
+        self.prop_name = memstr
         
-MEMBERCONTAINS = MemberContains        
+    def satisfied_by(self, dataset):
+        mmatch = False
+        mmatch = self.prop_exists(self.prop_name)
+        return mmatch
+        
+HASPROP = PropertyReq
+
+class PropertyIsReq(Requirement):
+    prop_name = None
+    prop_val = None
+    def __init__(self, propkey, propval):
+        self.prop_key = propkey
+        self.prop_val = propval
+    def satisfied_by(self, dataset):
+        val = dataset.prop_get(self.prop_key)
+        # print "gr90:", self.prop_key, self.prop_val, val
+        if val == self.prop_val:
+            return True
+        else:
+            return False
+        
+PROPERTY = PropertyIsReq
+
+class PropContains(Requirement):
+    prop_key = None
+    prop_val = True
+    
+    def __init__(self, propkey, propval):
+        self.prop_key = propkey
+        self.prop_val = propval
+    
+    def satisfied_by(self, dataset):
+        container = self.prop_get(self.prop_key)
+        mmatch = False
+        try:
+            mmatch = self.prop_val in container
+        except:
+            mmatch = False
+        
+        return mmatch
+        
+PROPCONTAINS = MemberContains        
        

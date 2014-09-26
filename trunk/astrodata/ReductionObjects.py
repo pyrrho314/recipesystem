@@ -8,7 +8,12 @@ import inspect
 import urllib2 #(to get httperror)
 from usercalibrationservice import user_cal_service
 import pprint
-
+try:
+    import termcolor
+    COLORSTR = termcolor.line_color
+except:
+    COLORSTR = lambda arg: arg 
+    
 log = logutils.get_logger(__name__)
 
 heaptrack = False
@@ -211,12 +216,12 @@ class ReductionObject(object):
             # top-level recipe, set indent=0, add some extra demarcation
             logutils.update_indent(0, context['logmode'])
             context.update({'index':0})
-            log.status("="*80)
+            log.status( COLORSTR("="*80, "grey", "on_blue"))
             if primname.startswith('proxy'):
                 log.debug(logstring)
             else:
                 log.status(logstring)
-                log.status("="*80)
+                log.status(COLORSTR("="*80, "grey", "on_blue"))
         else:
             if btype=="RECIPE":
 
@@ -228,14 +233,16 @@ class ReductionObject(object):
                     indx = context['index'] + 1
                     context.update({'index':indx})
                     logutils.update_indent(indx, context['logmode'])
-                    log.status(logstring)
-                    log.status("=" * len(logstring))
+                    log.status(COLORSTR(logstring, "white", "on_blue"))
+                    log.status(COLORSTR("=" * len(logstring),
+                                            "white", "on_blue"))
             else:
                 indx = context['index'] + 1
                 context.update({'index':indx})
                 logutils.update_indent(indx, context['logmode'])
-                log.status(logstring)
-                log.status("-" * len(logstring))
+                log.status(COLORSTR(logstring, "white", "on_green"))
+                log.status(COLORSTR("-" * len(logstring), 
+                                    "white", "on_green"))
                 
         # primset init should perhaps be called ready
         # because it needs to be called each step because though
@@ -288,7 +295,7 @@ class ReductionObject(object):
             msg = "The running primitive, '%s'." % primname
             raise # IterationError(msg)
         except:
-            print "%(name)s failed due to an exception." %{'name':primname}
+            print COLORSTR("recipe: '%(name)s' failed due to an exception." %{'name':primname}, "yellow", "on_red", ["bold"])
             logutils.update_indent(0, context['logmode'])
             raise
         context.curPrimName = None
@@ -360,11 +367,11 @@ class ReductionObject(object):
         newprimset.param_dict = paramdict0               
         
     def add_prim_set(self,primset, add_to_front = False):
-        #import traceback
-        #print "=="*20
-        #print "RO327:"
-        #traceback.print_stack()
-        #print "=="*20
+        import traceback
+        print "=="*20
+        print "RO327:"
+        traceback.print_stack()
+        print "=="*20
         
         if type(primset) == list:
             for ps in primset:
@@ -395,7 +402,7 @@ class ReductionObject(object):
     def get_prim_set(self, primname):
         primset = None
         if self.curPrimType != self.primstype_order[0]:
-            # print "RO355:", self.curPrimType, self.primstype_order
+            print "RO355:", self.curPrimType, self.primstype_order
             raise ReductionExcept("curPrimType does not equal primstype_order[0], unexpected")
         # print "RO399:", self.primstype_order
         for atype in self.primstype_order:

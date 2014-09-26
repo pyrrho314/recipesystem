@@ -1,9 +1,10 @@
 import sys
 #------------------------------------------------------------------------------ 
 from astrodata.AstroData import AstroData
+from astrodata.generaldata import GeneralData
 import AstroDataType
 
-from ReductionContextRecords import AstroDataRecord
+from ReductionContextRecords import AstroDataRecord, GeneralDataRecord
 from copy import copy
 import Errors
 from Errors import GDPGUtilError
@@ -141,15 +142,15 @@ def open_if_name(dataset):
     #print "gdpg141:\n"*5
     #print type(dataset), issubclass(type(dataset), generaldata.GeneralData)
     #print "gdpg143:\n"*5
-    
+    if not dataset:
+        raise GDPGUtilExcept("dataset NONE (gdpg146)")
     bNeedsClosing = False
     if type(dataset) == str:
         bNeedsClosing = True
         gd = GeneralData(dataset)
-    elif issubclass(type(dataset), generaldata.GeneralData):
+    elif issubclass(type(dataset), GeneralData):
         bNeedsClosing = False
         gd = dataset
-        
     elif type(dataset) == AstroData:
         bNeedsClosing = False
         gd = dataset
@@ -223,14 +224,22 @@ def pick_config(dataset, index, style = "unique"):
     is unique.
     
     """
-    ad,obn = open_if_name(dataset)
-    cl = ad.get_classification_library()
-    
+    cl = None
+    ad = None
+    types = None
     candidates = {}
-    if style == "unique" or style == "leaves":
-        types = ad.get_types(prune=True)
+        
+    if isinstance(dataset, list):
+        types = dataset
+        cl = AstroDataType.globalClassificationLibrary
     else:
-        types = ad.get_types()
+        ad,obn = open_if_name(dataset)
+        cl = ad.get_classification_library()
+        
+        if style == "unique" or style == "leaves":
+            types = ad.get_types(prune=True)
+        else:
+            types = ad.get_types()
         
     # print "\nGU58:", types, "\nindex:",index, "\n"
     # only one type can imply a package
@@ -310,6 +319,6 @@ def pick_config(dataset, index, style = "unique"):
             print "config index:", repr(index), "${NORMAL}"
             s = "NO CONFIG for %s" % (ad.filename)
             raise GDPGUtilExcept(s)
-            
-    close_if_name(ad, obn)
+    if ad:
+        close_if_name(ad, obn)
     return candidates

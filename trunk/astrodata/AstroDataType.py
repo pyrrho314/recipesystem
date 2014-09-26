@@ -9,7 +9,6 @@ import sys
 import sre_constants
 from ConfigSpace import config_walk
 from Errors import AstroDataTypeError
-
 from astrodata import new_pyfits_version
 
 verbose = False
@@ -1021,12 +1020,17 @@ class ClassificationLibrary (object):
         @returns: True if the type applies to the dataset, False otherwise
         @rtype: Bool
         """
-        print "ADT1023: check_type"
+        #print "ADT1023: check_type"
         if  isinstance(dataset, AstroData.AstroData):
             hdulist = dataset.get_hdulist()
             freeHDUList = True
         else:
-            if  (not isinstance(dataset, pyfits.HDUList)):
+            import generaldata
+            
+            # @@CHEF: must remove pyfits ref here, and indeed, whole requirment to be general
+            if  not (isinstance(dataset, generaldata.GeneralData) or
+                     isinstance(dataset, pyfits.HDUList)
+                    ):
                 raise BadArgument()
             freeHDUList = False
             hdulist = dataset
@@ -1065,15 +1069,6 @@ class ClassificationLibrary (object):
             rettype = self.typesDict[typename]
             return rettype
         except KeyError:
-            return None
-            
-    
-    def recommend_data_object(self,typ):
-        to = self.get_type_obj(typ)
-        if hasattr(to, "suggested_data_object"):
-            #print "ADT1074: recommend_data_object[%s]"%typ, to.suggested_data_object
-            return to.suggested_data_object
-        else:
             return None
     
     def type_is_child_of(self, typename, parenttyp):

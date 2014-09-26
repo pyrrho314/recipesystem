@@ -102,7 +102,8 @@ class MatchShapeError(Error):
 
 class NoLoggerError(AstroDataError):
     message = "Request for Logger preceded creation of logger."
-    
+
+        
 class OutputError(Error):
     """
     Exception raised for instances when an output value is None or empty
