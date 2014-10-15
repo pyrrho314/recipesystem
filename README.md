@@ -9,4 +9,4 @@ besides Gemini's FITS-oriented AstroData object. At the same time, we will be ex
 (automatic scaling), as well as more general purpose HTML5/Javascript interfaces for system control and monitoring.
 
 
-<sup>*</sup> Novem is Novem, llc, of Bar Harbor, Maine at [[http://novem.technology/]].
+<sup>*</sup> Novem is Novem, llc, of Bar Harbor, Maine at http://novem.technology/.
