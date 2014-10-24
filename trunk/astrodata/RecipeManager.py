@@ -709,7 +709,11 @@ class ReductionContext(dict):
         
         ``get_stream`` returns a list of AstroData instances in the specified stream.
         """
-        
+        if stream == "*":
+            retdict = {}
+            for eam in self.outputs:
+                retdict[eam] = self.get_stream(stream = eam, empty=empty, style=style)
+            return retdict
         if stream in self.outputs:
             outputs = self.outputs[stream]
         else:
@@ -815,7 +819,12 @@ class ReductionContext(dict):
             stacklist = self.get_list(sid) #.filelist
             wholelist.extend(stacklist)
         return wholelist
-        
+    def get(self, key, default=None):
+        if key in self:
+            return self[key]
+        else:
+            return default
+                
     def get_list(self, id):
         """
         :param id: Lists are associated with arbitrary identifiers,
@@ -1468,7 +1477,6 @@ class ReductionContext(dict):
         interact with the datastream in which it was invoked (or access
         other streams).
         """
-        self._output_reported = True
         ##@@TODO: Read the new way code is done.
         #if category != MAINSTREAM:
         #    raise RecipeExcept("You may only use " + 
@@ -1481,8 +1489,11 @@ class ReductionContext(dict):
         # the first report happens so we can clear the set at that time.
         # print "RM1459:report_output:"+stream+"|"+repr(self._output_streams) 
         if stream not in self._output_streams:
+            #print "STREAM CREATE", stream
             self._output_streams.append(stream)
             self.outputs.update({stream:[]})
+        else:
+            self._output_reported = True
             
         # this clause makes sure there is a list in self.outputs
         if stream not in self.outputs:
@@ -1494,6 +1505,7 @@ class ReductionContext(dict):
             self.outputs[stream].append(AstroDataRecord(inp))
         elif isinstance(inp, GeneralData):
             self.outputs[stream].append(GeneralDataRecord(inp))
+            
         elif type(inp) == list:
             for temp in inp:
                 # This is a good way to check if IRAF failed.
@@ -1968,7 +1980,7 @@ class RecipeLibrary(object):
                 ro = self.bind_recipe(ro, name, rfunc)
                 #p rint "RM1918:", dir(ro)
             else:
-                raise RecipeExcept("Error: Recipe Source for '%s' Not Found\n\ttype=%s, instruction_name=%s, src=%s"
+                raise RecipeExcept("Error: Recipe Source for '%s' Not Found\ntype=%s, instruction_name=%s, src=%s"
                                     % (name, astrotype, name, src), name = name)
         elif dataset != None:
             gd, bnc = open_if_name(dataset)

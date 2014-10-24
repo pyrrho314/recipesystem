@@ -108,7 +108,10 @@ try:
     parser.add_option("--showcolors", dest="show_colors", default=False, 
                       action="store_true", help="Shows available colors based "
                       "on terminal setting (used for debugging color issues)")
-    parser.add_option("--nfw", "--no_final_write", dest="writefinal", default=True, action="store_false", help= "Don't write final files to output.")
+    parser.add_option("--nfw", "--no_final_write", 
+                        dest="writefinal", default=True, 
+                        action="store_false", 
+                        help= "Don't write final files to output.")
     
     # @@DEPRECATED remove --usercal flag below, was old name
     parser.add_option("--override_cal", "--usercal", dest="user_cals", default=None, type="string",
@@ -575,7 +578,7 @@ try:
         allinputs = typeIndex.values()
         print "p576 intelligence:", repr(allinputs)
     else:
-        print "p578:", repr(allinputs)
+        #print "p578:", repr(allinputs)
         nl = []
         # allinputs is FILENAMES here, below it becomes "DatasetData" objects (GeneralData or AstroData).
         for inp in allinputs:
@@ -592,7 +595,7 @@ try:
                     ad.output_directory = os.getcwd()
                     #print "output_directory", ad.output_directory
                 ad.mode = "readonly"
-                print "p594: ad",ad.filename, ad.get_types()
+                #print "p594: ad",ad.filename, ad.get_types()
                 nl.append(ad)
                 ad = None #danger of accidentally using this!
             except:
@@ -607,17 +610,25 @@ try:
             allinputs = [None]
         else:
             allinputs = [nl]
-        print "p610: nl=", nl
-    ## GROUPING
+        #print "p610: nl=", nl
+    
+    ##
+    ## INPUT GROUPING
+    ##
     groupedinputs = {}
     grouplist = None
+    
     _typehasrec = {}
+    SORTDBG = False
     for inplist in allinputs:
-        print "(p615)", inplist
+        if SORTDBG: print "(k615)", inplist
         for inp in inplist:
-            print("(p616) filename: %s" % inp.filename)
+            has_rec = False
+            if SORTDBG:
+                print("(k616) filename: %s" % inp.filename)
             for typ in inp.get_types():
-                print("   type: %s" % typ)
+                if SORTDBG:
+                    print("   type: %s" % typ)
                 if typ not in groupedinputs:
                     # any recipe associated with this type
                     if typ in _typehasrec:
@@ -634,12 +645,18 @@ try:
                             continue
                 if has_rec:
                     groupedinputs[typ].append(inp)
-        
+                    break
+            if not has_rec:
+                if "misc" not in groupedinputs:
+                    groupedinputs["misc"] = []
+                groupedinputs["misc"].append(inp)        
+    
     if len(groupedinputs):
-        print "p621: %s" % repr(groupedinputs)
+        if SORTDBG:
+            print "p621: %s" % repr(groupedinputs)
         grouplist = groupedinputs.values()
     unsortedinputs = allinputs
-    if grouplist:
+    if not options.recipename and grouplist:
         allinputs = grouplist
         
     #===============================================================================
@@ -654,20 +671,23 @@ try:
     numReductions = len(allinputs)
     i = 1
     log.stdinfo("About to process %d lists of datasets."% len(allinputs))
-    for i in range(0, len(allinputs)):
-        log.info(ksutil.dict2pretty("allinputs list #%d"%i, allinputs[i]))
     
-    print "p646: allinputs", allinputs
+    if SORTDBG:
+        for i in range(0, len(allinputs)):
+            log.info(ksutil.dict2pretty("allinputs list #%d"%i, allinputs[i]))
+        print "p646: allinputs", allinputs
+    
     for infiles in allinputs: #for dealing with multiple sets of files.
         #print "r232: profiling end"
         #prof.close()
         #raise "over"
         try:
-            log.info(COLORSTR("Starting Reduction on set #%d of %d" % (i+1, numReductions),
+            log.status(COLORSTR("Starting Reduction on set #%d of %d" % (i, numReductions),
                         color = "yellow", on_color="on_grey", attrs=["bold","reverse"]))
-            if infiles:
+            if False: #infiles:
                 for infile in infiles:
                     log.info("    %s" % (infile.filename))
+                    
             currentReductionNum = i
             i += 1
 
@@ -687,7 +707,6 @@ try:
                 #except:
                 #    log.warning("Trouble unregistering from adcc shared services.")     
                 raise
-
             # add command clause
             if ro:
                 ro.register_command_clause(command_clause)
@@ -736,16 +755,16 @@ try:
             if numi < 1:
                 title = "  No Datasets  "
             elif numi == 1:        
-                title = "  Processing dataset: %s  " % (str(infilenames[0])) #**
+                title = "  Processing single dataset: %s  " % (str(infilenames[0])) #**
             else:
-                title = "  Processing datasets:"
+                title = "  Processing %d datasets:" % len(infilenames)
                 for infiln in infilenames:
                     title += "\n    %s" % infiln
             tl = len(title)
-            tb = " " * tl
-            log.stdinfo(tb)
+            #tb = " " * tl
+            #log.stdinfo(tb)
             log.stdinfo(title)
-            log.stdinfo(tb)
+            #log.stdinfo(tb)
             
             
             if options.recipename == None:
@@ -762,7 +781,7 @@ try:
                 recs = recdict[typ]
                 log.info("  for type: %s" % typ)
                 for rec in recs:
-                    log.info("    %s" % rec)
+                    log.info(COLORSTR("    %s" % rec, attrs=["bold"]))
 
             bReportHistory = False
             cwlist = []
@@ -784,7 +803,7 @@ try:
                 for rec in reclist:
                     if rec == "USER":
                         try:
-                            rec = raw_input("reduce: ")
+                            rec = raw_input("recipe: ")
                             rec = rec.strip()
                             if rec == "exit":
                                 interactiveMode = False
@@ -925,7 +944,7 @@ try:
                             if options.astrotype:
                                 rl.load_and_bind_recipe(ro, rec, astrotype=options.astrotype)
                             else:
-                                rl.load_and_bind_recipe(ro,rec, dataset=infile[0])
+                                rl.load_and_bind_recipe(ro,rec, dataset=infiles[0])
                         if (useTK):
                             cw.running(rec)
 
@@ -1033,7 +1052,9 @@ try:
                     co.is_finished(True)
 
                     # write outputs
-                    outputs = co.get_stream("main")
+                    #outputs = co.get_stream("main")
+                    allstreams = co.get_stream("*")
+                    
                     clobber = co["clobber"]
                     if clobber:
                         log.warning("clobber flag is DEPRECATED")
@@ -1042,46 +1063,57 @@ try:
                             clobber = False
                         else:
                             clobber = True
-                    if options.writefinal and co.output_reported: # AUTOWRITE @@GALLEY CHANGE 
-                        msg = "End of Recipe: WRITING FINAL OUTPUTS (r1048):"
+                    if options.writefinal: # AUTOWRITE @@GALLEY CHANGE 
+                        msg = "(r1048) End of Recipe: WRITING FINAL OUTPUTS:"
                         msg += " "*(80-len(msg))
                         log.stdinfo(COLORSTR( msg,
                                              "white", "on_blue"))
-                        for output in outputs:
-                            ds = output.data_obj
-                            name = ds.filename
-                            log.stdinfo("%s %s/%s" % 
-                                            (   COLORSTR("file:", "white", "on_blue"),   
-                                                ds.output_directory, 
-                                                COLORSTR(ds.basename, attrs=["bold"])
-                                            )
-                                        )
-                            try:
-                                written = ds.write(clobber = clobber, suffix = "_final", rename=True)
-                                if written == True:
-                                    log.stdinfo("      Wrote %s in output directory" % COLORSTR(ds.filename, attrs = ["bold"]))
-                                elif written == False:
-                                    log.stdinfo("      %s chose not to write %s" % (  COLORSTR(str(type(output)), attrs= ["bold"]), 
-                                                                                COLORSTR(ds.filename, attrs = ["bold"])
-                                                                              )
-                                               )
-                                else:
-                                    log.stdinfo("     Dataset did not report success writing %s" % COLORSTR(ds.filename, attrs = ["bold"]))
+                        for streamn in allstreams:
+                            outputs = allstreams[streamn]
+                            msg = "Writing from Context Stream (r1048): %s" % streamn
+                            msg += " "*(80-len(msg))
+                            log.stdinfo(COLORSTR( msg,
+                                                 "white", "on_blue", ["reverse"]))
+                            
+                            for output in outputs:
                                 
-                            except Errors.OutputExists:
-                                log.error( "CANNOT WRITE %s, already exists" % ds.filename)
-                            except Errors.AstroDataReadonlyError, err:
-                                log.warning('%s is in "readonly" mode, will not attempt to write.' % ds.filename)
-                            except Errors.AstroDataError, err:
-                                log.error("CANNOT WRITE %s: " % ds.filename + err.message)
-                            except:
-                                log.error("CANNOT WRITE %s, unknown reason" % ds.filename)
-                                raise
-                        msg = "End of Recipe: WROTE FINAL OUTPUTS (r1080):"
+                                ds = output.data_obj
+                                name = ds.filename
+                                log.stdinfo("%s %s/%s" % 
+                                                (   COLORSTR("file:", "white", "on_blue", ["reverse"]),   
+                                                    ds.output_directory, 
+                                                    COLORSTR(ds.basename, attrs=["bold"])
+                                                )
+                                            )
+                                try:
+                                    needs_save = not (ds._saved if hasattr(ds,"_saved") else True)
+                                    if needs_save:
+                                        written = ds.write()
+                                        if written == True:
+                                            log.stdinfo("      Wrote %s in output directory" % COLORSTR(ds.filename, attrs = ["bold"]))
+                                        elif written == False:
+                                            log.stdinfo("      %s chose not to write %s" % (  COLORSTR(str(type(output)), attrs= ["bold"]), 
+                                                                                        COLORSTR(ds.filename, attrs = ["bold"])
+                                                                                      )
+                                                       )
+                                        else:
+                                            log.stdinfo("     Dataset did not report success writing %s" % COLORSTR(ds.filename, attrs = ["bold"]))
+                                    else:
+                                        log.status("      Does not need writing.")
+                                except Errors.OutputExists:
+                                    log.error( "CANNOT WRITE %s, already exists" % ds.filename)
+                                except Errors.AstroDataReadonlyError, err:
+                                    log.warning('%s is in "readonly" mode, will not attempt to write.' % ds.filename)
+                                except Errors.AstroDataError, err:
+                                    log.error("CANNOT WRITE %s: " % ds.filename + err.message)
+                                except:
+                                    log.error("CANNOT WRITE %s, unknown reason" % ds.filename)
+                                    raise
+                        msg = "(r1111) End of Recipe: WROTE FINAL OUTPUTS"
                         msg += " "*(80-len(msg))
                         log.stdinfo(COLORSTR( msg,
                                              "white", "on_blue"))
-                        
+                    
                 if interactiveMode == True:
                     reclist = ["USER"]
                 else:
@@ -1104,13 +1136,14 @@ try:
             
             tlog = traceback.format_exc().strip()
             tlog = COLORSTR(tlog, attrs=["dark"])
-            print tlog
+            # print tlog
             print "INSTRUCTION MIGHT BE A MISPELLED PRIMITIVE OR RECIPE NAME"
             msg = "name of recipe unknown" 
             if hasattr(x, "name"):
                 msg = '"%s" is not a known recipe or primitive name' % x.name
             print COLORSTR("-"*len(msg), "grey", "on_red", ["reverse"])
             print COLORSTR(msg,"grey", "on_yellow", ["reverse", "bold"])
+            print COLORSTR(x.message, "grey", "on_green", ["reverse"])
             print COLORSTR("-"*len(msg), "grey", "on_red", ["reverse"])
                         
         except:

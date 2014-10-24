@@ -181,7 +181,7 @@ class ReductionObject(object):
         
     def substeps(self, primname, context):
         self.memtrack(primname, "START")
-        
+        # print "RO184: primstype_order = %s" % self.primstype_order
         savedLocalparms = context.localparms
         context.status = "RUNNING"
         
@@ -368,10 +368,11 @@ class ReductionObject(object):
         
     def add_prim_set(self,primset, add_to_front = False):
         import traceback
-        print "=="*20
-        print "RO327:"
-        traceback.print_stack()
-        print "=="*20
+        if False:
+            print "=="*20
+            print "RO372: add_prim_set", repr(self.primstype_order),repr(primset)
+            traceback.print_stack()
+            print "=="*20
         
         if type(primset) == list:
             for ps in primset:
@@ -385,11 +386,15 @@ class ReductionObject(object):
                 print repr(primset.param_dict)
                 raise ReductionExcept("Primitive btype=RECIPE should not have a param_dict")
             primset.param_dict = {}
-        if not self.primDict.has_key(primset.astrotype):
-            if add_to_front:
+        
+        if add_to_front:
+            if len(self.primstype_order)==0 or self.primstype_order[0] != primset.astrotype:
                 self.primstype_order.insert(0,primset.astrotype)
-            else:
+        else:
+            if len(self.primstype_order)==0 or self.primstype_order[-1] != primset.astrotype:
                 self.primstype_order.append(primset.astrotype)
+    
+        if not self.primDict.has_key(primset.astrotype):
             self.primDict.update({primset.astrotype:[]})
         primset.ro = self
         primsetary = self.primDict[primset.astrotype]
@@ -402,8 +407,8 @@ class ReductionObject(object):
     def get_prim_set(self, primname):
         primset = None
         if self.curPrimType != self.primstype_order[0]:
-            print "RO355:", self.curPrimType, self.primstype_order
-            raise ReductionExcept("curPrimType does not equal primstype_order[0], unexpected")
+            print "RO405:", self.curPrimType, self.primstype_order
+            raise ReductionExcept("(RO406) curPrimType %(curprimtype)s does not equal primstype_order[0], %(pto)s unexpected" % {"curprimtype":self.curPrimType, "pto":self.primstype_order})
         # print "RO399:", self.primstype_order
         for atype in self.primstype_order:
             primset =  self.get_prim_set_for_type(primname, astrotype = atype)
