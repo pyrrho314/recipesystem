@@ -3,6 +3,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.import generalclassification
 
+DEBUG=True
+
 from Requirements import Requirement
 
 class FilenameReq(Requirement):
@@ -34,7 +36,9 @@ class MemberReq(Requirement):
             mmatch = True
         except:
             mmatch = False
-            
+        
+        if DEBUG:
+            print "HASMEMBER %s is %s" %(self.member_name, mmatch)   
         return mmatch
         
 HASMEMBER = MemberReq
@@ -55,13 +59,16 @@ class MemberContains(Requirement):
         
         try:
             targ = eval("dataset.%s" % (self.member_name))
-            if isinstance(targ, list):
+            if hasattr(targ, "__contains__"): #isinstance(targ, list):
+                #print "supports IN", self.val_check, targ
                 mmatch = self.val_check in targ
             else:
+                #print "no support IN"
                 mmatch = (self.val_check == targ)
+            # print "matched=",mmatch
         except:
             mmatch = False
-        
+            
         return mmatch
 MEMBERCONTAINS = MemberContains
 
@@ -113,5 +120,5 @@ class PropContains(Requirement):
         
         return mmatch
         
-PROPCONTAINS = MemberContains        
+PROPCONTAINS = PropContains        
        

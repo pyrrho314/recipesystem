@@ -44,6 +44,7 @@ class GeneralData(object):
         "TABLE": ("jsondata", "PandasData"),
         "TXT" : ("jsondata", "TxtData")
         }
+    _saved = True
     
     @classmethod
     def create_data_object(cls, initarg, hint = None):
@@ -197,9 +198,11 @@ class GeneralData(object):
         dirname = os.path.dirname(self.filename)
         basecore, baseext = os.path.splitext(base)
         
-        basecore += suffix
+        basecore += "_%s" % suffix
         
         fname = os.path.join(dirname, basecore)+baseext
+        self.filename = fname
+        self.is_changed()
         return fname
     def allow_extant_write(self):
         return False
@@ -218,7 +221,7 @@ class GeneralData(object):
             modandclass = gd.pick_config(self, self._suggested_data_classes, "leaves")
             return modandclass
             
-    def write(self, suffix=None, rename = True, ** args):
+    def write(self, suffix=None, ** args):
         # make our filename relative to the output dir
         
         oldname = self.filename
@@ -236,8 +239,19 @@ class GeneralData(object):
             else:
                 raise GD_OperationNotAllowed("General Data does not allow overwriting data by default.")
                 
-        self.do_write(newname, rename = rename)
+        self.do_write(newname)
         
-        if rename and self.filename == oldname:
-            print "gd87: rename == True but name was not changed, still %s, expected %s" % (self.filename, newname)
+        self._saved = True
         return True
+    def needs_write(self):
+        self._saved = False
+    def is_changed(self):
+        self._changed = True
+        self.needs_write()
+            
+    def write_nonexistant(self):
+        if not os.path.exists(self.filename):
+            self.write()
+            return True
+        else:
+            return False
