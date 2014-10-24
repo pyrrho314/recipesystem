@@ -36,10 +36,9 @@ import ReductionObjectRequests
 # import StackKeeper
 import LocalCalibrationService
 import gdpgutil
-import tkMonitor
+#import tkMonitor
 import IDFactory
 import LocalCalibrationService
-import tkMonitor
 import Errors
 
 import AstroData as astrodata_module
