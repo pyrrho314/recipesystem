@@ -234,7 +234,7 @@ try:
     useTK =  options.bMonitor
     # ------
     #$Id: recipeman.py,v 1.8 2008/08/05 03:28:06 callen Exp $
-    from astrodata.tkMonitor import *
+    #from astrodata.tkMonitor import *
 
     adatadir = "./recipedata/"
     calindfile = "./.reducecache/calindex.pkl"
