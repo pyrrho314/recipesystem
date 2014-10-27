@@ -9,7 +9,7 @@ from copy import copy
 #
 ######################
 
-PACKAGEMARKER = "(^(astrodata_.*)|(kitchen_.*)$)"
+PACKAGEMARKER = "(^(astrodata_.*)|(kitchen_.*)|(kit_.*)$)"
 CONFIGMARKER = "ADCONFIG_"
 spaces = {  "descriptors":"descriptors",
             "structures":"structures",
