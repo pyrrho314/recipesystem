@@ -1,4 +1,4 @@
-import termcolor as tc
+from astrodata import termcolor as tc
 from pprint import pprint,pformat
 
 def calc_fulltab(indent):
