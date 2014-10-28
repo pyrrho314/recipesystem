@@ -16,11 +16,14 @@ try:
     from optparse import OptionParser
     from datetime import datetime
     import os
+    def echo(tstr, color = None, on_color = None, attrs = None ):
+        return tstr
     try:
         import termcolor
         COLORSTR = termcolor.line_color
     except:
-        COLORSTR = lambda arg: arg 
+        
+        COLORSTR = echo
     
     version = '1_0'
 
