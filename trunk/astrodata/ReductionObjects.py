@@ -9,7 +9,7 @@ import urllib2 #(to get httperror)
 from usercalibrationservice import user_cal_service
 import pprint
 try:
-    import termcolor
+    from astrodata.adutils import termcolor
     COLORSTR = termcolor.line_color
 except:
     COLORSTR = lambda arg: arg 

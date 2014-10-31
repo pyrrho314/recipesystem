@@ -6,7 +6,7 @@
 import os
 from astrodata.Errors import Error
 from astrodata.AstroDataType import get_classification_library
-import termcolor as tc
+from astrodata.adutils import termcolor as tc
 
 cl = get_classification_library() 
 
@@ -20,15 +20,24 @@ class GD_OperationNotPermitted(Error):
 # needs to move to configuration space
 # make this a member of GeneralData (?)
 _data_object_classes = {
-    ".fits": ("astrodata.AstroData", "AstroData"),
-    ".json": ("jsondata", "JSONData"),
-    ".txt": ("jsondata", "TxtData"),
-    ".xls": ("jsondata", "PandasData"),
-    ".csv": ("jsondata", "PandasData"),
-    ".h5": ("jsondata", "PandasData"),
-    ".setref": ("jsondata", "SetrefData")
+    "tif": ("hbdata","HBRasterData"),
+    "fits": ("astrodata.AstroData", "AstroData"),
+    "json": ("jsondata", "JSONData"),
+    "txt": ("jsondata", "TxtData"),
+    "xls": ("jsondata", "PandasData"),
+    "csv": ("jsondata", "PandasData"),
+    "h5": ("jsondata", "PandasData"),
+    "setref": ("jsondata", "ReferenceOnlyData")
     }
-
+_data_object_precedence = [ "tif",
+                            "fits", 
+                            "json",
+                            "txt",
+                            "xls",
+                            "csv",
+                            "h5",
+                            "setref",
+                          ]
 _gen_classification_library = cl
 
 class HDUnit(object):
@@ -57,11 +66,13 @@ class GeneralData(object):
                 module,tclass = hint
             else:
                 if isinstance(initarg, basestring):
-                    for suffix in _data_object_classes:
+                    for suffix in _data_object_precedence:
+                        completesuffix = ".%s"%suffix
                         instor = _data_object_classes[suffix]
                         lowerarg = initarg.lower()
-                        if (lowerarg.endswith(suffix)):
+                        if (lowerarg.endswith(completesuffix)):
                             break;
+                    # if no file matches by extension, setref will be used
             if isinstance(initarg, basestring):
                 initarg = os.path.abspath(initarg)   
                 # print "gd47:", initarg     

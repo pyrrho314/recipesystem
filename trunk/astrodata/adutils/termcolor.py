@@ -114,8 +114,8 @@ def colored(text, color=None, on_color=None, attrs=None):
         colored('Hello, World!', 'red', 'on_grey', ['blue', 'blink'])
         colored('Hello, World!', 'green')
     """
-    if attrs and "reverse" in attrs:
-        attrs.remove("reverse")
+    #if attrs and "reverse" in attrs:
+    #    attrs.remove("reverse")
     if COLOR_ON and (os.getenv('ANSI_COLORS_DISABLED') is None):
         fmt_str = '\033[%dm%s'
         if color is not None:

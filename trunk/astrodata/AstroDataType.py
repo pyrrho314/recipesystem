@@ -49,7 +49,7 @@ class ClassReq(Requirement):
         for typ in self.typeReqs:
             #print "type(%s)" % typ
             if (verbt) : print "ADT127 TYPES:", self.typeReqs
-            if (library.check_type(typ, hdulist)):   #'hdulist' should be called 'hdulist'
+            if (library.check_type(typ, hdulist)):   #'hdulist' should be called 'dataset'
                 if(verbt) : print "satisfied"
                 numsatisfied = numsatisfied + 1
             else:
@@ -932,6 +932,7 @@ class ClassificationLibrary (object):
         and it is important to add the new class to the C{newtypes} variable
         in the definition file, or else the load function will not see it.
         """
+        
         for root, dirn, files in config_walk(spacename):
             # print "ADT931:_+_+", root
             for dfile in files:
@@ -978,7 +979,7 @@ class ClassificationLibrary (object):
                     global_env = globals()
                     local_env  = {}
                     exec(gdFile, global_env, local_env)
-                    # print "ADT958:", local_env
+                    #print "ADT958:", local_env
                     # these are thing defined in the execed file
                     for key in local_env: 
                         obj = local_env[key]

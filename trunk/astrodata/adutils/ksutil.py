@@ -1,8 +1,12 @@
-from astrodata import termcolor as tc
+from astrodata.adutils import termcolor as tc
 from pprint import pprint,pformat
+from astrodata.Errors import Error
+
+class KSUtilError(Error):
+    msg = "error in ksutil.py"
 
 def calc_fulltab(indent):
-    tabspc = "-"*4
+    tabspc = " "*4
     fulltab = tabspc*indent
     return fulltab
 
@@ -77,15 +81,19 @@ def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_typ
         if say_type:
             stype = repr(say_type)
         else:
-            stype = repr(type(var))
+            vtype = type(var)
+            if vtype.__name__ not in dir(__builtins__):
+                stype ="<object>"
+                stype = repr(type(var))
+            else: 
+                stype = repr(type(var))
             
         if isinstance(var, basestring):
             pvar = var.strip()
         else:
             pvar = repr(var)
-        
-        
-        retstr += "\n%(indent)s%(key)s %(type)s =  %(val)s" % {
+  
+        retstr += "\n%(indent)s%(key)s =  %(val)s  %(type)s" % {
                                                         "indent": fulltab,
                                                         "key": tc.colored(
                                                                 _pad_str(name, namewidth)
@@ -96,6 +104,36 @@ def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_typ
     if indent == 0:
         retstr = retstr.strip()
     return retstr
+
+from collections import defaultdict
+
+def etree_to_dict(t):
+    d = {t.tag: {} if t.attrib else None}
+    children = list(t)
+    if children:
+        dd = defaultdict(list)
+        for dc in map(etree_to_dict, children):
+            for k, v in dc.iteritems():
+                dd[k].append(v)
+        d = {t.tag: {k:v[0] if len(v) == 1 else v for k, v in dd.iteritems()}}
+    if t.attrib:
+        d[t.tag].update(('@' + k, v) for k, v in t.attrib.iteritems())
+    if t.text:
+        text = t.text.strip()
+        if children or t.attrib:
+            if text:
+              d[t.tag]['#text'] = text
+        else:
+            d[t.tag] = text
+    return d
+
+def xml_dict_load(filename):
+    import xml.etree.ElementTree as ET
+    tree = ET.parse(filename)
+    dic = etree_to_dict(tree.getroot())
+    return dic
+
+        
 
 def maxkeylen (d):
     keys = d.keys()
@@ -164,5 +202,22 @@ def called_me(extra_frame = 0):
         "index":         index
         }
     return fi
-        
+       
+def str2pytype(value, pytype = None):
+    retval = None
+    if pytype == bool:
+        if type(value) == str:
+            if (value.lower() == "true"):
+                retval = True
+            elif (value.lower() == "false"):
+                retval = False
+            else:
+                mes = "%s is not legal boolean setting " % value
+                mes += 'for "boolean %s"' % parmname
+                raise KSUtilError(mes)
+        else:
+            retval = pytype(value)  
+    else:
+        retval = pytype(value)
+    return retval                   
 

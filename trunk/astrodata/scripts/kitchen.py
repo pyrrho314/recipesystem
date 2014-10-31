@@ -19,7 +19,7 @@ try:
     def echo(tstr, color = None, on_color = None, attrs = None ):
         return tstr
     try:
-        import termcolor
+        from astrodata.adutils import termcolor
         COLORSTR = termcolor.line_color
     except:
         
@@ -111,6 +111,8 @@ try:
     parser.add_option("--showcolors", dest="show_colors", default=False, 
                       action="store_true", help="Shows available colors based "
                       "on terminal setting (used for debugging color issues)")
+    parser.add_option("--nocolor", dest="no_color", default = False,
+                        action="store_true", help="Can be used to turn off ANSI color")
     parser.add_option("--nfw", "--no_final_write", 
                         dest="writefinal", default=True, 
                         action="store_false", 
@@ -679,7 +681,20 @@ try:
         for i in range(0, len(allinputs)):
             log.info(ksutil.dict2pretty("allinputs list #%d"%i, allinputs[i]))
         print "p646: allinputs", allinputs
+    ################
+    # GLOBAL FEATURE: turn color log on and off
+    # while a good idea probably, mostly needed for ipython notebook where
+    # color does not work for some reason
+    from astrodata.adutils.ksutil import str2pytype
+    coloron = not options.no_color
     
+    print("termcolor rc['color'] = %s" % coloron)
+    if coloron:
+        termcolor.COLOR_ON = True
+    else:
+        termcolor.COLOR_ON = False
+    ################
+                            
     for infiles in allinputs: #for dealing with multiple sets of files.
         #print "r232: profiling end"
         #prof.close()
@@ -855,8 +870,9 @@ try:
                             if infiles:
                                 #co.add_input(infiles)
                                 co.populate_stream(infiles)
-                            co.set_iraf_stdout(irafstdout)
-                            co.set_iraf_stderr(irafstdout)
+                            
+                            # @@NRS co.set_iraf_stdout(irafstdout)
+                            # @@NRS co.set_iraf_stderr(irafstdout)
 
                            # odl way rl.retrieve_parameters(infile[0], co, rec)
                             if hasattr(options, "user_params"):
@@ -899,7 +915,6 @@ try:
                                 time.sleep(.1)
                             cw.new_control_window(rec,co)
                             cw.mainWindow.protocol("WM_DELETE_WINDOW", co.finish) 
-
 
                         # @@TODO:evaluate use of init for each recipe vs. for all recipes
                         ro.init(co)
@@ -974,6 +989,7 @@ try:
                         #######
                         # not this only works because we install a stdout filter right away with this
                         # member function
+                        
                         if (True): # try:
                             ro.run(rec, co)
                             #import cProfile

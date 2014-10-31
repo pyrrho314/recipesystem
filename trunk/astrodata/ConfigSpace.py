@@ -150,6 +150,7 @@ class ConfigSpace(object):
         @returns: list of directories
         @rtype: list"""
         # print "CS152:", spacename
+        from pprint import pformat
         if (self.configdirs != None):
             if spacename in self.configdirs:
                 print "CS155:", spacename, pformat(self.configdirs)

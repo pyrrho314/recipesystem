@@ -37,7 +37,7 @@ import traceback
 from primitivescat import PrimitivesCatalog
 
 try:
-    import termcolor
+    from astrodata.adutils import termcolor
     COLORSTR = termcolor.line_color
 except:
     COLORSTR = lambda arg: arg 
@@ -261,7 +261,7 @@ class ReductionContext(dict):
         These parameters will generally be those passed in as arguments
         to a primitive call from a recipe.
         """
-        if thing in self._localparms:
+        if self._localparms and (thing in self._localparms):
             return True
         return dict.__contains__(self, thing)
         

@@ -1,5 +1,6 @@
 class Error(Exception):
     """Base class for exceptions in this module."""
+    message = "General Error"
     def __init__(self, message=None):
         if message != None:
             self.message = message

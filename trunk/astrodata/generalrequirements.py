@@ -15,8 +15,9 @@ class FilenameReq(Requirement):
     
     def satisfied_by(self, dataset):
         import re
-        fmatch = re.match(self.file_re, dataset.filename)
-        #print "GR12:", dataset.filename, fmatch
+        fmatch = re.match(self.file_re, dataset.basename)
+        if DEBUG:
+            print "gr12:", dataset.filename, self.file_re, fmatch
         if fmatch:
             return True
         else:
@@ -81,8 +82,11 @@ class PropertyReq(Requirement):
         
     def satisfied_by(self, dataset):
         mmatch = False
-        mmatch = self.prop_exists(self.prop_name)
-        return mmatch
+        
+        mmatch = dataset.prop_exists(self.prop_name)
+        
+        #print "greq88:", self.prop_name, mmatch
+        return True if mmatch else False
         
 HASPROP = PropertyReq
 
