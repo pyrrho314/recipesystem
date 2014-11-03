@@ -98,8 +98,9 @@ def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_typ
                                                         "key": tc.colored(
                                                                 _pad_str(name, namewidth)
                                                                 , attrs=["bold"]),
-                                                        "type": tc.colored(stype, attrs=["dark"]),
-                                                        "val": pvar
+                                                        "type": tc.colored(
+                                                                  _pad_str(stype, len(stype)), attrs=["dark"]),
+                                                        "val": _pad_str(pvar,20)
                                                        }
     if indent == 0:
         retstr = retstr.strip()
@@ -139,12 +140,13 @@ def maxkeylen (d):
     keys = d.keys()
     kl = 0
     for key in keys:
-        keylen = len(key)
+        keylen = len(str(key))
         if keylen>kl:
             kl = keylen
     return kl
             
 def _pad_str(tstr, length):
+    tstr = str(tstr)
     slen = len(tstr)
     pad = " " * (length-slen)
     return tstr+pad
