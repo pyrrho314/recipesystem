@@ -1,7 +1,6 @@
 import sys, os
 from copy import deepcopy
 
-from pyraf import iraf
 from astrodata import AstroData
 
 from astrodata.RecipeManager import RecipeLibrary, ReductionContext

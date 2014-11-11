@@ -54,6 +54,7 @@ class GeneralData(object):
         "TXT" : ("jsondata", "TxtData")
         }
     _saved = True
+    _changed = False
     
     @classmethod
     def create_data_object(cls, initarg, hint = None):
@@ -68,9 +69,12 @@ class GeneralData(object):
                 if isinstance(initarg, basestring):
                     for suffix in _data_object_precedence:
                         completesuffix = ".%s"%suffix
+                        # print "gd71:", completesuffix
                         instor = _data_object_classes[suffix]
                         lowerarg = initarg.lower()
+                        # print "gd74:", lowerarg
                         if (lowerarg.endswith(completesuffix)):
+                            # print "gd77:", lowerarg
                             break;
                     # if no file matches by extension, setref will be used
             if isinstance(initarg, basestring):
@@ -203,6 +207,12 @@ class GeneralData(object):
            
     
     def add_suffix(self, suffix = None):
+        fname = self.with_suffix(suffix = suffix)
+        self.filename = fname
+        self.is_changed()
+        return fname
+        
+    def with_suffix(self, suffix = None):
         if not suffix:
             return self.filename
         base = os.path.basename(self.filename)
@@ -212,9 +222,7 @@ class GeneralData(object):
         basecore += "_%s" % suffix
         
         fname = os.path.join(dirname, basecore)+baseext
-        self.filename = fname
-        self.is_changed()
-        return fname
+        return fname    
     def allow_extant_write(self):
         return False
         
@@ -254,12 +262,14 @@ class GeneralData(object):
         
         self._saved = True
         return True
+        
+    # file state BEGIN
     def needs_write(self):
         self._saved = False
     def is_changed(self):
         self._changed = True
         self.needs_write()
-            
+    # file state END        
     def write_nonexistant(self):
         if not os.path.exists(self.filename):
             self.write()

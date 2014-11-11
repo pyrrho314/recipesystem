@@ -29,16 +29,25 @@ def get_lookup_table(modname, *lookup):
     @param lookup: name of the lookup table to load
     @type lookup: string
     """
-
+    retval = None
     modname = ConfigSpace.lookup_path(modname)
     if ".py" in modname:
         f = file(modname)
-      
-        exec(f)
+        g = {}
+        l = {}
+        
+        exec(f,g,l)
+        
+        #print "L38:",l.keys(),l
+        
         f.close()
 
         if len(lookup) == 1:
-            retval = eval (lookup[0])
+            retval = l[lookup[0]]
+        elif len(lookup) == 0:
+            retval = []
+            for key in l:
+                retval.append(l[key])
         else:
             retval = []
             for item in lookup:

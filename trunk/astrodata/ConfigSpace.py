@@ -412,8 +412,9 @@ def lookup_path(name):
         raise ConfigSpaceExcept("Can't find: %s, No Configuration Package Associated with %s" % (name, domain))
     fpath = os.path.join(tpath, LOOKUPDIRNAME, *a[1:])
     
-    if (fpath[-3:] != ".py") and (fpath[-5:]) != ".fits":
-        fpath += ".py"
+    if not os.path.exists(fpath):
+        if (fpath[-3:] != ".py") and (fpath[-5:]) != ".fits":
+            fpath += ".py"
 
         
     return fpath

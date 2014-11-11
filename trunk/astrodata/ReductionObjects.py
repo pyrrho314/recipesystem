@@ -216,12 +216,12 @@ class ReductionObject(object):
             # top-level recipe, set indent=0, add some extra demarcation
             logutils.update_indent(0, context['logmode'])
             context.update({'index':0})
-            log.status( COLORSTR("="*80, "grey", "on_blue"))
+            log.status( COLORSTR("="*80, "blue", "on_white"))
             if primname.startswith('proxy'):
                 log.debug(logstring)
             else:
                 log.status(logstring)
-                log.status(COLORSTR("="*80, "grey", "on_blue"))
+                log.status(COLORSTR("="*80, "blue", "on_white"))
         else:
             if btype=="RECIPE":
 
@@ -233,16 +233,16 @@ class ReductionObject(object):
                     indx = context['index'] + 1
                     context.update({'index':indx})
                     logutils.update_indent(indx, context['logmode'])
-                    log.status(COLORSTR(logstring, "white", "on_blue"))
+                    log.status(COLORSTR(logstring, "blue"))
                     log.status(COLORSTR("=" * len(logstring),
-                                            "white", "on_blue"))
+                                            "blue"))
             else:
                 indx = context['index'] + 1
                 context.update({'index':indx})
                 logutils.update_indent(indx, context['logmode'])
-                log.status(COLORSTR(logstring, "white", "on_green"))
+                log.status(COLORSTR(logstring, "green", "on_white"))
                 log.status(COLORSTR("-" * len(logstring), 
-                                    "white", "on_green"))
+                                    "green"))
                 
         # primset init should perhaps be called ready
         # because it needs to be called each step because though

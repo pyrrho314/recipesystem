@@ -96,6 +96,10 @@ def config(mode='standard', console_lvl=None, file_lvl=None, \
     rootlog = logging.getLogger('')
     
     # Set the console and file logging levels
+    console_lvl_asint = ll["STDINFO"]
+    if console_lvl:
+        console_lvl_asint = console_lvl_asint = ll[str(console_lvl).upper()]
+    
     if mode == 'standard':
         if console_lvl:
             console_lvl_asint = ll[str(console_lvl).upper()]
@@ -114,6 +118,7 @@ def config(mode='standard', console_lvl=None, file_lvl=None, \
             file_lvl_asint = ll[str(file_lvl).upper()]
         else:
             file_lvl_asint = ll['DEBUG']
+    
         
     # If rootlog has handlers, flush and delete them
     if len(rootlog.handlers) > 0:
