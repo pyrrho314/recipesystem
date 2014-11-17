@@ -23,6 +23,10 @@ def customize_log(log=None):
         largs = list(args)
         slargs = (largs[0].encode("utf-8").split('\n'))
         for line in slargs:
+            # @@KEYLOCATION: this is a place to track down a log message that's hard to find the source of
+            #if line == ".":
+            #    import traceback
+            #    traceback.print_stack()
             if prefix:
                 line = prefix + line
             if len(line) == 0:

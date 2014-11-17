@@ -16,6 +16,7 @@ try:
     from optparse import OptionParser
     from datetime import datetime
     import os
+    
     def echo(tstr, color = None, on_color = None, attrs = None ):
         return tstr
     try:
@@ -626,6 +627,8 @@ try:
     _typehasrec = {}
     SORTDBG = False
     for inplist in allinputs:
+        if inplist == None:
+            continue
         if SORTDBG: print "(k615)", inplist
         for inp in inplist:
             has_rec = False
@@ -688,7 +691,7 @@ try:
     from astrodata.adutils.ksutil import str2pytype
     coloron = not options.no_color
     
-    print("termcolor rc['color'] = %s" % coloron)
+    # print("termcolor rc['color'] = %s" % coloron)
     if coloron:
         termcolor.COLOR_ON = True
     else:

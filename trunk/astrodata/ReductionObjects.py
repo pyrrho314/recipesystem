@@ -320,7 +320,7 @@ class ReductionObject(object):
                     context.update({'index':indx})
                     logutils.update_indent(indx, context['logmode'])
             else:
-                log.status(".")
+                log.fullinfo("STEP FINISHED")
                 indx = context['index'] - 1
                 context.update({'index':indx})
                 logutils.update_indent(indx, context['logmode'])

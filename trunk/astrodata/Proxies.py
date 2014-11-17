@@ -214,7 +214,7 @@ class PRSProxy(object):
                     print "P120: Proxy found"
             except socket.error:
                 newProxy.found = False
-                sys.stdout.write(".")
+                sys.stdout.write("socket.error looking for ADCC (P217)")
                 sleep(.1)
                 if check_once:
                     newProxy = None
