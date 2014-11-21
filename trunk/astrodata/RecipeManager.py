@@ -268,9 +268,17 @@ class ReductionContext(dict):
     def _get_output_reported(self):
         return self._output_reported;
     output_reported = property(_get_output_reported)
-    def get_context(self):
+    def get_context(self, single = False):
         # print "RM209:",repr(self._running_contexts)
-        return ":".join(self._running_contexts)
+        if len(self._running_contexts) == 0:
+            ctxs = ["default"]
+        else:
+            ctxs = copy(self._running_contexts)
+        if single:
+            return ":".join(ctxs)
+        else:
+            return copy(ctxs)
+            
     getContext = get_context
     
     context = property(getContext)

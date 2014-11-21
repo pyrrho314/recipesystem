@@ -31,6 +31,8 @@ def get_lookup_table(modname, *lookup):
     """
     retval = None
     modname = ConfigSpace.lookup_path(modname)
+    if not os.path.exists(modname):
+        return None
     if ".py" in modname:
         f = file(modname)
         g = {}
