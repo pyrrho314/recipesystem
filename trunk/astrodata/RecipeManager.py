@@ -294,7 +294,9 @@ class ReductionContext(dict):
             self._running_contexts.append(context)
     addContext = add_context        
     
-    def set_context(self, context):
+    def set_context(self, context, insert=False):
+        if insert:
+            self._running_contexts.insert(0,context)
         if type(context) == list:
             context = [cstr.lower() for cstr in context]
             self._running_contexts = context
@@ -1506,9 +1508,12 @@ class ReductionContext(dict):
         # this clause makes sure there is a list in self.outputs
         if stream not in self.outputs:
             self.outputs.update({stream:[]})
+        #print "RM1509: type: %s" % type(inp)
+        if isinstance(inp, basestring):
+            #self.outputs[stream].append(AstroDataRecord(inp, self.display_id, load=load))
+            obj = GeneralData.create_data_object(inp)
+            self.outputs[stream].append(GeneralDataRecord(obj))
             
-        if type(inp) == str:
-            self.outputs[stream].append(AstroDataRecord(inp, self.display_id, load=load))
         elif isinstance(inp, AstroData):
             self.outputs[stream].append(AstroDataRecord(inp))
         elif isinstance(inp, GeneralData):
