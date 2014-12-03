@@ -205,13 +205,12 @@ class GeneralData(object):
         types = self.get_types()
         return settype in types
            
-    
     def add_suffix(self, suffix = None):
         fname = self.with_suffix(suffix = suffix)
         self.filename = fname
         self.is_changed()
         return fname
-        
+    
     def with_suffix(self, suffix = None):
         if not suffix:
             return self.filename
@@ -223,6 +222,23 @@ class GeneralData(object):
         
         fname = os.path.join(dirname, basecore)+baseext
         return fname    
+    
+    def add_prefix(self, prefix = None):
+        fname = self.with_prefix(prefix = prefix)
+        self.filename = fname
+        self.is_changed()
+        return fname
+        
+    def with_prefix(self, prefix = None):
+        
+        if not prefix:
+            return self.filename
+        base = self.basename
+        dirname = self.dirname
+        fname = os.path.join(dirname, "%s-%s" % (prefix, base))
+        # print "with_prefix:", prefix, fname, self.filename
+        return fname
+        
     def allow_extant_write(self):
         return False
         

@@ -235,7 +235,8 @@ class GeneralDataRecord( DataObjectRecord ):
             
     def load(self):
         self.gd = GeneralData.create_data_object(self.filename)
-        print "RCR221: loading %s %s" %(self.filename, self.gd)
+        # print "RCR221: loading %s %s" %(self.filename, self.gd)
+        return self
         
     def is_loaded(self):
         return not (self.gd == None)    
