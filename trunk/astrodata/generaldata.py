@@ -24,9 +24,9 @@ _data_object_classes = {
     "fits": ("astrodata.AstroData", "AstroData"),
     "json": ("jsondata", "JSONData"),
     "txt": ("jsondata", "TxtData"),
-    "xls": ("jsondata", "PandasData"),
-    "csv": ("jsondata", "PandasData"),
-    "h5": ("jsondata", "PandasData"),
+    "xls": ("pandasdata", "PandasData"),
+    "csv": ("pandasdata", "PandasData"),
+    "h5": ("pandasdata", "PandasData"),
     "setref": ("jsondata", "ReferenceOnlyData")
     }
 _data_object_precedence = [ "tif",
