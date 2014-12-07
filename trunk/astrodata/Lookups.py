@@ -5,7 +5,7 @@ try:
 except:
     pass
     
-def get_lookup_table(modname, *lookup):
+def get_lookup_table(modname, *lookup, **args):
     """
         get_lookup_table() is used to get lookup table style sets of variables
         from a common facility, allowing the storage in common (global) space
@@ -30,7 +30,13 @@ def get_lookup_table(modname, *lookup):
     @type lookup: string
     """
     retval = None
-    modname = ConfigSpace.lookup_path(modname)
+    context = None
+    if "context" in args:
+        context = args["context"]
+    if not context:
+        modname = ConfigSpace.lookup_path(modname)
+    else:
+        modname = ConfigSpace.lookup_context_path(modname, context=context)
     if not os.path.exists(modname):
         return None
     if ".py" in modname:
