@@ -33,11 +33,15 @@ def get_lookup_table(modname, *lookup, **args):
     context = None
     if "context" in args:
         context = args["context"]
-    if not context:
-        modname = ConfigSpace.lookup_path(modname)
+        if not context:
+            context = "default"
     else:
-        modname = ConfigSpace.lookup_context_path(modname, context=context)
-    if not os.path.exists(modname):
+        context = "default"
+    #if not context:
+    #    modname = ConfigSpace.lookup_path(modname)
+    #else:
+    modname = ConfigSpace.lookup_context_path(modname, context=context)
+    if not modname or ( not os.path.exists(modname) ):
         return None
     if ".py" in modname:
         f = file(modname)

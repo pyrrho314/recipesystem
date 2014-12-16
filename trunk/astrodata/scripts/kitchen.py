@@ -1096,7 +1096,8 @@ try:
                             msg += " "*(80-len(msg))
                             log.stdinfo(COLORSTR( msg,
                                                  "white", "on_blue", ["reverse"]))
-                            
+                            if len(outputs)==0:
+                                log.status(".. no data sets ..")
                             for output in outputs:
                                 
                                 ds = output.data_obj

@@ -26,7 +26,7 @@ _data_object_classes = {
     "txt": ("jsondata", "TxtData"),
     "xls": ("pandasdata", "PandasData"),
     "csv": ("pandasdata", "PandasData"),
-    "h5": ("pandasdata", "PandasData"),
+    "h5": ("pandasdatabm", "PandasData"),
     "setref": ("jsondata", "ReferenceOnlyData")
     }
 _data_object_precedence = [ "tif",

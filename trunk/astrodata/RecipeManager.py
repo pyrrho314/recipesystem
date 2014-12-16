@@ -829,9 +829,21 @@ class ReductionContext(dict):
             stacklist = self.get_list(sid) #.filelist
             wholelist.extend(stacklist)
         return wholelist
-    def get(self, key, default=None):
+        
+    def get(self, key, default=None, pytype = None):
         if key in self:
-            return self[key]
+            val = self[key]
+            if default and  val == None:
+                return default
+            if pytype:
+                if pytype == bool:
+                    #print "RM838: pytype bool",key,val
+                    if isinstance(val, basestring):
+                        val = val[0].upper() + val[1:].lower()
+                        return "True" == val
+                return pytype(self[key])
+            else:
+                return self[key]
         else:
             return default
                 
@@ -2319,6 +2331,8 @@ def %(name)s(self,cfgObj):
                 vkey = val[1:-1]
                 if vkey in recipeLocalParms:
                     cfgObj.localparms[pkey] = recipeLocalParms[vkey]
+                else:
+                    cfgObj.localparms[pkey] = None
         for co in self.substeps('%(line)s', cfgObj):
             if (co.is_finished()):
                 break
