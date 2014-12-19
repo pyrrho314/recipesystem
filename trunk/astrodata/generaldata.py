@@ -26,10 +26,13 @@ _data_object_classes = {
     "txt": ("jsondata", "TxtData"),
     "xls": ("pandasdata", "PandasData"),
     "csv": ("pandasdata", "PandasData"),
-    "h5": ("pandasdatabm", "PandasData"),
-    "setref": ("jsondata", "ReferenceOnlyData")
+    "h5": ("pandasdata", "PandasData"),
+    "shp": ("hbshapedata", "HBShapeData"),
+    "setref": ("jsondata", "ReferenceOnlyData"),
+    
     }
 _data_object_precedence = [ "tif",
+                            "shp",
                             "fits", 
                             "json",
                             "txt",
@@ -50,6 +53,7 @@ class GeneralData(object):
     # output_directory is a property
     _output_directory = None
     _suggested_data_classes = {
+        "SHAPEDATA":("hbshapedata", "HBShapeData"),
         "TABLE": ("jsondata", "PandasData"),
         "TXT" : ("jsondata", "TxtData")
         }
