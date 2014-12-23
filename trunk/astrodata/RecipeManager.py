@@ -740,6 +740,13 @@ class ReductionContext(dict):
                     adrec.load()
                 retl.append(adrec.ad)
             return retl
+        elif style == "GD":
+            retl = []
+            for gdrec in outputs:
+                if not gdrec.is_loaded():
+                    gdrec.load()
+                retl.append(gdrec.gd)
+            return retl
         elif style == "FN":
             retl = [ad.filename for ad in outputs]
             return retl

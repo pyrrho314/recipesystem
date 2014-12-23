@@ -124,6 +124,10 @@ try:
                       help="Add calibration to User Calibration Service of this format:"
                             "'--usercal=CALTYPE_1:CALFILEPATH_1,...,CALTYPE_N:CALFILEPATH_N', "
                             "EXAMPLE: --override_cal=processed_arc:/home/nzarate/wcal/gsN20011112S064_arc.fits ")
+    
+    parser.add_option("-o", "--one_at_a_time", dest="one_at_a_time", default= False, action="store_true",
+                     help="Process files one at a time")
+    
     parser.add_option("--writeInt", dest='writeInt', default=False, 
                       action="store_true", help="write intermediate outputs"
                       " (UNDER CONSTRUCTION)")   
@@ -621,6 +625,18 @@ try:
     ##
     ## INPUT GROUPING
     ##
+    if options.one_at_a_time:
+        from pprint import pformat
+        print "kit625:",pformat(allinputs)
+        oneatime = []
+        for itemlist in allinputs:
+            for item in itemlist:
+                oneatime.append ([item])
+                
+        allinputs = oneatime
+        print "kit632:", pformat(allinputs)
+        #sys.exit()
+        
     groupedinputs = {}
     grouplist = None
     
@@ -666,7 +682,8 @@ try:
     unsortedinputs = allinputs
     if not options.recipename and grouplist:
         allinputs = grouplist
-        
+    
+    
     #===============================================================================
     # Local PRS Components
     #===============================================================================
@@ -776,7 +793,7 @@ try:
             if numi < 1:
                 title = "  No Datasets  "
             elif numi == 1:        
-                title = "  Processing single dataset: %s  " % (str(infilenames[0])) #**
+                title = "  Processing single dataset:\n    %s  " % (str(infilenames[0])) #**
             else:
                 title = "  Processing %d datasets:" % len(infilenames)
                 for infiln in infilenames:
@@ -1090,6 +1107,8 @@ try:
                         msg += " "*(80-len(msg))
                         log.stdinfo(COLORSTR( msg,
                                              "white", "on_blue"))
+                        numouts = 0
+                        numwrit = 0
                         for streamn in allstreams:
                             outputs = allstreams[streamn]
                             msg = "Writing from Context Stream (r1048): %s" % streamn
@@ -1098,6 +1117,8 @@ try:
                                                  "white", "on_blue", ["reverse"]))
                             if len(outputs)==0:
                                 log.status(".. no data sets ..")
+                            
+                            numouts += len(outputs)
                             for output in outputs:
                                 
                                 ds = output.data_obj
@@ -1112,15 +1133,20 @@ try:
                                     needs_save = not (ds._saved if hasattr(ds,"_saved") else True)
                                     if needs_save:
                                         written = ds.write()
+                                        
                                         if written == True:
-                                            log.stdinfo("      Wrote %s in output directory" % COLORSTR(ds.filename, attrs = ["bold"]))
+                                            log.stdinfo("      Wrote %s in output directory" % 
+                                                                COLORSTR(ds.filename, attrs = ["bold"]))
+                                            numwrit += 1
                                         elif written == False:
-                                            log.stdinfo("      %s chose not to write %s" % (  COLORSTR(str(type(output)), attrs= ["bold"]), 
-                                                                                        COLORSTR(ds.filename, attrs = ["bold"])
-                                                                                      )
+                                            log.stdinfo("      %s chose not to write %s" %
+                                                             (  COLORSTR(str(type(output)), attrs= ["bold"]), 
+                                                                COLORSTR(ds.filename, attrs = ["bold"])
+                                                              )
                                                        )
                                         else:
-                                            log.stdinfo("     Dataset did not report success writing %s" % COLORSTR(ds.filename, attrs = ["bold"]))
+                                            log.stdinfo("     Dataset did not report success writing %s" 
+                                                            % COLORSTR(ds.filename, attrs = ["bold"]))
                                     else:
                                         log.status("      Does not need writing.")
                                 except Errors.OutputExists:
@@ -1132,7 +1158,16 @@ try:
                                 except:
                                     log.error("CANNOT WRITE %s, unknown reason" % ds.filename)
                                     raise
-                        msg = "(r1111) End of Recipe: WROTE FINAL OUTPUTS"
+                            
+                                #uplines = "\033[2K\033\[1A\033[2K\033[2K\033[2K\033\[1A\033[2K\033\033[2K\033\[1A\033[2K"
+                                #uplines = "\033[H"
+                                uplines = "\033[1A\033[2K"
+                                # maybe if I print they don't pollute log?
+                                if False: #len(outputs)>20:
+                                    print(uplines*3)
+                            if False: # len(outputs)>20:
+                                print "\n\n"
+                        msg = "(r1111) End of Recipe: WROTE FINAL %d OUTPUTS of %d" % (numwrit, numouts)
                         msg += " "*(80-len(msg))
                         log.stdinfo(COLORSTR( msg,
                                              "white", "on_blue"))

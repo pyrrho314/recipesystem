@@ -129,6 +129,7 @@ def colored(text, color=None, on_color=None, attrs=None):
                 text = fmt_str % (ATTRIBUTES[attr], text)
 
         text += RESET
+        
     return text
 
 
