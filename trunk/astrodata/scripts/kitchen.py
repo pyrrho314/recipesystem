@@ -1262,4 +1262,4 @@ finally:
     except:
         log.warning("Trouble unregistering from adcc shared services.")
         raise
-    
+    #print "DONE"
