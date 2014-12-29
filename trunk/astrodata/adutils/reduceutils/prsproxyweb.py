@@ -573,6 +573,7 @@ class ADCCHandler(BaseHTTPRequestHandler):
             if parms["path"] == "/recipes.xml":
                 self.send_response(200)
                 self.send_header('Content-type', 'text/xml')
+                self.send_header("Access-Control-Allow-Origin", "http://localhost")
                 self.end_headers()
                 self.wfile.write(rl.list_recipes(as_xml = True) )
                 return
@@ -985,9 +986,12 @@ class ADCCHandler(BaseHTTPRequestHandler):
 
             self.send_response(200)
             self.send_header('Content-type', 'text/plain')
+            self.send_header("Access-Control-Allow-Origin", "http://localhost")
             self.end_headers()
             
             reduce_params = json.loads(pdict)
+            from astrodata.adutils import ksutil as ks
+            print ks.dict2pretty("runreduce_params", reduce_params)
             if reduce_params.has_key("filepath"):
                 fp = reduce_params["filepath"]
             else:
@@ -1001,7 +1005,7 @@ class ADCCHandler(BaseHTTPRequestHandler):
             else:
                 prm = None
 
-            cmdlist = ["reduce", "--invoked"]
+            cmdlist = ["kit", "--invoked"]
             if opt is not None:
                 for key in opt:
                     cmdlist.extend(["--"+str(key),str(opt[key])])
@@ -1041,7 +1045,7 @@ class ADCCHandler(BaseHTTPRequestHandler):
             if os.path.exists(loglink):
                 os.remove(loglink)
             os.symlink(reducelog, loglink)
-
+            print "prs1048:", ks.dict2pretty("cmdlist", cmdlist)
             # Call reduce
             pid = subprocess.call( cmdlist,
                                    stdout = f,
