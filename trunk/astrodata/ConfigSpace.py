@@ -392,6 +392,7 @@ def general_walk( spacename="", exts=[]):
 
 def lookup_path(name):
     """This module level function takes a lookup name and returns a path to the file."""
+    import re
     global cs
     if (cs == None):
         cs = ConfigSpace()
@@ -403,7 +404,6 @@ def lookup_path(name):
     tpath = None
     #print "CS166", cs.configpacks, cs.configdirs
     for path in cs.configpacks:
-        
         if path[-(len(pack)):] == pack:
             # got the right package
             tpath = path
@@ -421,8 +421,11 @@ def lookup_path(name):
     return fpath
 
 def lookup_context_path(name, context = None):
-    """This module level function takes a lookup name and returns a path to the file."""
+    """This module level function takes a lookup name and returns a path to the file.
+        Name supports regex.
+    """
     global cs
+    import re
     if (cs == None):
         cs = ConfigSpace()
         
@@ -433,7 +436,6 @@ def lookup_context_path(name, context = None):
     tpath = None
     #print "CS166", cs.configpacks, cs.configdirs
     for path in cs.configpacks:
-        
         if path[-(len(pack)):] == pack:
             # got the right package
             tpath = path
@@ -466,10 +468,79 @@ def lookup_context_path(name, context = None):
     tries.append(fpath)
     
     for fp in tries:
+        # pathexists is the path returned back...
         pathexists = path_check(fp)
         if pathexists:
             return pathexists
             
     # NO TRY EXISTED @@IDEA: could log this
     return None
+       
+def lookup_multi_paths(name, context = None):
+    """This module level function takes a lookup name and returns a path to the file.
+        Name supports regex.
+    """
+    global cs
+    import re
+    
+    if context == None:
+        context = "default"
+    
+    if (cs == None):
+        cs = ConfigSpace()
+        
+    a = name.split("/")
+    #print "CS198LookupPath:", a
+    domain = a[0]
+    if domain == "*":
+        domain = ".*?"
+    pack = CONFIGMARKER + domain
+    tpath = None
+    allpaths = []
+    
+    #print "CS166", cs.configpacks, cs.configdirs
+    for path in cs.configpacks:
+        
+        wpatt = "(?P<lead_path>.*?)/%s" % pack
+        #print "CS500: []%s[]%s[]%s[]" %(pack, wpatt, path)
+        if re.match(wpatt, path):
+            #print "CS502: adding %s" % path
+            allpaths.append(path)
+            tpath = path
+    
+    if tpath == None:
+        raise ConfigSpaceExcept("Can't find: %s, No Configuration Package(s) Associated with %s" % (a[1:], domain))
+            
+    def path_check(path):
+        #print "CS445:",path
+        # checks the path given for existence, and adds the .py version
+        if os.path.exists(path):
+            #print "CS449: exists"
+            return path
+        if path[-3:] != ".py":
+            path += ".py"
+        if os.path.exists(path):
+            #print "CS454: added py exists"
+            return path
+        return False
+    
+    final_paths = []
+    for tpath in allpaths:
+        tries = []
+        if context:
+            overfpath = os.path.join(tpath, LOOKUPDIRNAME, CONTEXTDIRNAME, "%s-override" % context, *a[1:])
+            ctxfpath  = os.path.join(tpath, LOOKUPDIRNAME, CONTEXTDIRNAME, context, *a[1:])
+            tries.append(overfpath)
+            tries.append(ctxfpath)
+            
+        fpath = os.path.join(tpath, LOOKUPDIRNAME, *a[1:])
+        tries.append(fpath)
+        
+        for fp in tries:
+            pathexists = path_check(fp)
+            if pathexists:
+                final_paths.append(pathexists)
+                break
+        
+    return final_paths
        

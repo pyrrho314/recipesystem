@@ -1,5 +1,6 @@
 import os
 import ConfigSpace
+from copy import deepcopy
 try:
     import pyfits
 except:
@@ -163,4 +164,63 @@ def get_lookup_table(modname, *lookup, **args):
     else:
         raise "this should never happen, tell someone"
     return retval
+
+def compose_multi_table(lookaddr, *lookups, **args):
+    """ Returns a dictionary keyed by the lookups name of a composed combination
+    """
+    retdict = {}
+    context = None
+    if "context" in args:
+        context = args["context"]
+        if not context:
+            context = "default"
+    else:
+        context = "default"
+
+    paths = ConfigSpace.lookup_multi_paths(lookaddr, context = context)
+    
+    if len(paths) == 0:
+        return None
+    paths.reverse() # so early files override latter, as it's in ADCONFIG path order
+    for modname in paths:
+        #print "L185: modname = %s" % modname
+        f = file(modname)
+        g = {}
+        l = {}
+        
+        exec(f,g,l)
+        
+        #print "L191:",l.keys(),l
+        
+        f.close()
+        
+        i = 0
+        for lookup in lookups:
+            #print "L197: #%d - lookup = %s" % (i,lookup); i+= 1
+            if lookup in l:
+                lval = l[lookup]
+                valtype = type(lval)
+                if valtype == dict:
+                    if not lookup in retdict:
+                        retdict[lookup] = {}
+                    curval = retdict[lookup]
+                    curval.update(l[lookup])
+                elif valtype == list:
+                    if not lookup in retdict:
+                        retdict[lookup] = []
+                    curval = retdict[lookup]
+                    lval.extend(curval)
+                    #print "L211 lval = %s" % lval
+                    curval = lval
+                else:
+                    if not lookup in retdict:
+                        retdict[lookup] = []
+                    curval = retdict[lookup]
+                    curval.insert(0,lval)
+            retdict[lookup] = curval
+    return retdict 
+   
+   
+            
+        
     
