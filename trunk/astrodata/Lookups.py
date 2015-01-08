@@ -195,6 +195,7 @@ def compose_multi_table(lookaddr, *lookups, **args):
         f.close()
         
         i = 0
+        contributed = False
         for lookup in lookups:
             #print "L197: #%d - lookup = %s" % (i,lookup); i+= 1
             if lookup in l:
@@ -218,6 +219,12 @@ def compose_multi_table(lookaddr, *lookups, **args):
                     curval = retdict[lookup]
                     curval.insert(0,lval)
             retdict[lookup] = curval
+            contributed = True
+        if not ("_contributors" in retdict):
+            retdict["_contributors"] = []
+        contribs = retdict["_contributors"]
+        if contributed:
+            contribs.append(modname)
     return retdict 
    
    

@@ -26,6 +26,7 @@ DDLISTMARKER    = "DescriptorsList_(.*).py$"
 CALCIFACEFORMAT = "CalculatorInterface_%s.py"
 DDLISTFORMAT    = "DescriptorsList_%s.py"
 cs = None
+
 class ConfigSpaceExcept:
     """This class is an exception class for the ConfigSpace module"""
     def __init__(self, msg="Exception Raised in ConfigSpace system"):
@@ -61,6 +62,7 @@ class ConfigSpace(object):
     
     package_paths = None
     
+    current_default_context = "default"
     calc_iface_list=[]
     
     def __init__(self):
@@ -484,7 +486,7 @@ def lookup_multi_paths(name, context = None):
     import re
     
     if context == None:
-        context = "default"
+        context = cs.current_context_default
     
     if (cs == None):
         cs = ConfigSpace()
@@ -509,7 +511,9 @@ def lookup_multi_paths(name, context = None):
             tpath = path
     
     if tpath == None:
-        raise ConfigSpaceExcept("Can't find: %s, No Configuration Package(s) Associated with %s" % (a[1:], domain))
+        raise ConfigSpaceExcept(
+                "Can't find: %s, No Configuration Package(s) Associated with %s" % 
+                (a[1:], domain))
             
     def path_check(path):
         #print "CS445:",path
@@ -544,3 +548,9 @@ def lookup_multi_paths(name, context = None):
         
     return final_paths
        
+def set_current_default_context(context_name):
+    global cs
+    
+    if (cs == None):
+        cs = ConfigSpace()
+    cs.current_default_context = context_name    
