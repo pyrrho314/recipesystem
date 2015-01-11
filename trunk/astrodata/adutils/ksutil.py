@@ -2,6 +2,7 @@ from astrodata.adutils import termcolor as tc
 from pprint import pprint,pformat
 from astrodata.Errors import Error
 
+
 class KSUtilError(Error):
     msg = "error in ksutil.py"
 
@@ -221,5 +222,12 @@ def str2pytype(value, pytype = None):
             retval = pytype(value)  
     else:
         retval = pytype(value)
-    return retval                   
+    return retval         
+    
+def iter_date(start_date, end_date):
+    from datetime import timedelta
+    for n in range(int ((end_date - start_date).days)):
+        yield start_date + timedelta(n)
+    
+            
 
