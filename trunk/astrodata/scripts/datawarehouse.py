@@ -210,6 +210,7 @@ if __name__ == "__main__":
                     junk = glob.glob(os.path.join(outdir,"*"))
                     for jfile in junk:
                         if os.path.isdir(jfile):
+                            print "IS A DIR:",jfile
                             if jfile.endswith(".tmp"):
                                 shutil.rmtree(jfile)
                             else:
