@@ -1204,6 +1204,24 @@ try:
             print COLORSTR(x.message, "grey", "on_green", ["reverse"])
             print COLORSTR("-"*len(msg), "grey", "on_red", ["reverse"])
                         
+        except Exception as e:
+            import traceback
+            if infiles:
+                logtitle = ("%s while processing: \n\t" % type)
+                logfileist = "\n\t".join([inp.filename for inp in infiles])
+                logtrace = traceback.format_exc().strip()
+                
+                if COLORSTR:
+                    logtrace = COLORSTR(logtrace, color="red",
+                                        on_color="on_white", attrs = ["dark"])
+                                        
+                logerrstr = "%s%s\n%s" % ( logtitle,
+                                            logfileist,
+                                            logtrace)
+                log.error(logerrstr)
+            else:
+                log.warning("No input files %s" % traceback.format_exc())
+            
         except:
             import traceback
             if infiles:

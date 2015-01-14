@@ -218,8 +218,8 @@ def compose_multi_table(lookaddr, *lookups, **args):
                         retdict[lookup] = []
                     curval = retdict[lookup]
                     curval.insert(0,lval)
-            retdict[lookup] = curval
-            contributed = True
+                retdict[lookup] = curval
+                contributed = True
         if not ("_contributors" in retdict):
             retdict["_contributors"] = []
         contribs = retdict["_contributors"]

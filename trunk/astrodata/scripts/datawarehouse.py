@@ -28,7 +28,7 @@ def store_datasets(dataset_names):
     for fname in datasetnames:
         print "  DATASET: %s" % tc.colored(fname, attrs=["bold"])
         setref = GeneralData.create_data_object(fname)
-        print "    TYPES: %s " % tc.colored(", ".join( setref.get_types() ) , "blue", "on_white")
+        print "    TYPES: %s" % tc.colored(", ".join( setref.get_types() ) , "blue", "on_white")
         pkg = package_class(setref=setref)
         print "STORE_KEY: %s" % pkg.get_store_path(setref)
         print "STORE_DIR: %s" % os.path.dirname(pkg.get_store_path(setref))
@@ -200,8 +200,8 @@ if __name__ == "__main__":
                 if args.recipe:
                     cmdlist = ["kit", "-r", "%s" % args.recipe, "--invoked"]
                     cmdlist.extend(recinps)
-                    pid = subprocess.call(cmdlist)
-                    
+                    exit_code = subprocess.call(cmdlist)
+                    print "RECIPE PROCESS EXIT CODE: %s" % exit_code
                 if args.store:
                     outdir = os.getcwd()
                     datasets= glob.glob(os.path.join(outdir, "*.tif"))
