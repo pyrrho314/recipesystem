@@ -207,11 +207,13 @@ if __name__ == "__main__":
                     datasets= glob.glob(os.path.join(outdir, "*.tif"))
                     store_datasets(datasets)
                     ## fetch and store means wipe directory! 
-                    junk = glob.glob(os.path.join(outdir,"*"))
+                    #junk = glob.glob(os.path.join(outdir,"*"))
+                    junk = os.listdir(outdir)
                     for jfile in junk:
                         if os.path.isdir(jfile):
-                            print "IS A DIR:",jfile
+                            #print "IS A DIR:",jfile
                             if jfile.endswith(".tmp"):
+                                print "Removing .tmp directory:", jfile
                                 shutil.rmtree(jfile)
                             else:
                                 pass
