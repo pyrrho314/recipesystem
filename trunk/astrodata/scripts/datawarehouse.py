@@ -40,9 +40,18 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("datasets", nargs = "*")
-    parser.add_argument("--store", default=False, action="store_true")
-    parser.add_argument("--fetch", default=False, action="store_true")
-    parser.add_argument("--info", default=False, action="store_true")
+    parser.add_argument("--fetch", default=False, action="store_true",)
+    parser.add_argument("--recipe", default = None,
+                        help="Specify a recipe or recipes to run on the "
+                             "data in the current directory (works with fetch).  Currently will only "
+                             "pass *.tif to the kit process. Can appear multiple times."
+                        )
+    parser.add_argument("--store", default=False, action="store_true",
+                        help="Tells the program to store the files given on the commandline. The system "
+                             "will store files based on their datatype."
+                        )
+    parser.add_argument("--info", default=False, action="store_true",
+                        help="display information about the shelf definitions")
     parser.add_argument("--all", default=False, action="store_true")
     parser.add_argument("--manifest", default=False, action="store_true")
     parser.add_argument("--date_range", default=None)
@@ -52,7 +61,6 @@ if __name__ == "__main__":
     parser.add_argument("--year", default = None, type = int)
     parser.add_argument("--month", default = None, type = int)
     parser.add_argument("--day", default = None, type = int)
-    parser.add_argument("--recipe", default = None)
     parser.add_argument("--verbose", default = False, action="store_true")
     parser.add_argument("--region", default = "NPH")
     parser.add_argument("--phrase")
@@ -62,6 +70,7 @@ if __name__ == "__main__":
                             "*/warehouse_settings", "warehouse_package")
     
     args = parser.parse_args()
+    
     package_class_list = package_classes["warehouse_package"]
     package_class_struct = package_class_list[0]
     package_type = None
