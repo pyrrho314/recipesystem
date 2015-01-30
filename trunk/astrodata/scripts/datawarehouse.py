@@ -17,11 +17,13 @@ class DataWarehouse:
         self.stores = {}
         
 
-def store_datasets(dataset_names):        
+def store_datasets(dataset_names, remove_local = False):        
     datasetnames = dataset_names
     if len(args.datasets)>5:
         if not args.all:
-            print tc.colored( "%d datasets, showing first 5, use --all to show all"%len(args.datasets) , "red", "on_white")
+            print tc.colored( "%d datasets, showing first 5, use --all to show all"
+                                % len(args.datasets), 
+                                "red", "on_white")
             
             datasetnames = args.datasets[:5]
         
@@ -33,14 +35,19 @@ def store_datasets(dataset_names):
         print "STORE_KEY: %s" % pkg.get_store_path(setref)
         print "STORE_DIR: %s" % os.path.dirname(pkg.get_store_path(setref))
         print ""
-        if args.store:
-            pkg.transport_to_warehouse()
+        if args.store or args.archive:
+            pkg.transport_to_warehouse(remove_local = remove_local)
                     
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("datasets", nargs = "*")
-    parser.add_argument("--fetch", default=False, action="store_true",)
+    parser.add_argument("--fetch", default=False, action="store_true",
+                        help="Retrieves a file from the 'data_warehouse' (archive or other persistent store)"
+                            " into the current working directory. This is generally a output directory, a working"
+                            " data directory. To move something from one warehouse to another requires pulling"
+                            " data via --fetch and then --storing or --archive"
+                       )
     parser.add_argument("--recipe", default = None,
                         help="Specify a recipe or recipes to run on the "
                              "data in the current directory (works with fetch).  Currently will only "
@@ -48,10 +55,17 @@ if __name__ == "__main__":
                         )
     parser.add_argument("--store", default=False, action="store_true",
                         help="Tells the program to store the files given on the commandline. The system "
-                             "will store files based on their datatype."
+                             "will store files based on their datatype, leaving the data in it's current"
+                            " location as well as producing the copy in the data warehouse. Note:"
+                            " any data currently with that label/path location in the warehouse will be"
+                            " over written."
+                        )
+    parser.add_argument("--archive", default=False, action="store_true",
+                        help="Tells the program to store the files given on the commandline. The system "
+                             "will store files based on their datatype, removing the local version."
                         )
     parser.add_argument("--info", default=False, action="store_true",
-                        help="display information about the shelf definitions")
+                        help="display information about the shelf definitions.")
     parser.add_argument("--all", default=False, action="store_true")
     parser.add_argument("--manifest", default=False, action="store_true")
     parser.add_argument("--date_range", default=None)
@@ -63,6 +77,11 @@ if __name__ == "__main__":
     parser.add_argument("--day", default = None, type = int)
     parser.add_argument("--verbose", default = False, action="store_true")
     parser.add_argument("--region", default = "NPH")
+    parser.add_argument("--packager", default = "0", 
+                        help="specify which packager to use, either an integer or the string name. Use"
+                           " --info flag to see available packages, which are defined by all the"
+                           " contributing kits."
+                       )
     parser.add_argument("--phrase")
     
     
@@ -72,14 +91,31 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     package_class_list = package_classes["warehouse_package"]
+    # choose packager
+    packager = args.packager
+    packager_key = 0
     package_class_struct = package_class_list[0]
+    try:
+        packager_key = int(packager)
+        package_class_struct = package_class_list[packager_key]
+    except:
+        for pckr in package_class_list:
+            if packager == pckr.keys()[0]:
+                package_class_struct = pckr
+    print "packager = %s" % package_class_struct.keys()[0]
     package_type = None
     package_class = None
     
     # some flags imply others
-    if args.store:
+    if args.store or args.archive:
         args.all = True
     
+    remove_local = False
+    if args.archive:
+        remove_local = True
+    if args.store:
+        remove_local = False
+    print "remove_local",remove_local
     if args.region:
         if args.region == "NPH":
             args.region_legacy = "Northern_AOI"
@@ -211,10 +247,10 @@ if __name__ == "__main__":
                     cmdlist.extend(recinps)
                     exit_code = subprocess.call(cmdlist)
                     print "RECIPE PROCESS EXIT CODE: %s" % exit_code
-                if args.store:
+                if args.store or args.archive:
                     outdir = os.getcwd()
                     datasets= glob.glob(os.path.join(outdir, "*.tif"))
-                    store_datasets(datasets)
+                    store_datasets(datasets, remove_local=remove_local)
                     ## fetch and store means wipe directory! 
                     #junk = glob.glob(os.path.join(outdir,"*"))
                     junk = os.listdir(outdir)
@@ -230,5 +266,5 @@ if __name__ == "__main__":
                             os.remove(jfile)
                     
             sys.exit()
-if args.store:           
-    store_datasets(args.datasets)
+if args.store or args.archive:           
+    store_datasets(args.datasets, remove_local = remove_local)
