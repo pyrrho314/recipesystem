@@ -13,7 +13,7 @@ def calc_fulltab(indent):
 
 def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_type = None):
     #retstr = pformat(var)
-    retstr = ""
+    retstr = u""
     fulltab = calc_fulltab(indent)
     tabspc  = calc_fulltab(1)
     _o_namewidth = namewidth
@@ -41,6 +41,7 @@ def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_typ
             #print "ks28: indent =", indent, namewidth, _o_namewidth
             #print "ks31: newstr", newstr
             retstr += newstr
+            
     elif isinstance(var, list):
          retstr += "\n%(indent)s%(key)s %(type)s:" % { "indent":fulltab,
                                                     "key": tc.colored(name, attrs=["bold"]),
@@ -101,7 +102,7 @@ def dict2pretty(name, var, indent=0, namewidth = None, complete = False, say_typ
                                                                 , attrs=["bold"]),
                                                         "type": tc.colored(
                                                                   _pad_str(stype, len(stype)), attrs=["dark"]),
-                                                        "val": _pad_str(pvar,20)
+                                                        "val": unicode(_pad_str(pvar,20), errors="replace")
                                                        }
     if indent == 0:
         retstr = retstr.strip()

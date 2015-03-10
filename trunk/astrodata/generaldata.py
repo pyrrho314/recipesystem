@@ -29,7 +29,8 @@ _data_object_classes = {
     "h5": ("pandasdata", "PandasData"),
     "shp": ("hbshapedata", "HBShapeData"),
     "setref": ("jsondata", "ReferenceOnlyData"),
-    
+    "dmo": ("cubedata", "CubeDemoData"),
+    "dmobson":("cubedata", "CubeDemoData")
     }
 _data_object_precedence = [ "tif",
                             "shp",
@@ -40,6 +41,8 @@ _data_object_precedence = [ "tif",
                             "csv",
                             "h5",
                             "setref",
+                            "dmobson",
+                            "dmo"
                           ]
 _gen_classification_library = cl
 

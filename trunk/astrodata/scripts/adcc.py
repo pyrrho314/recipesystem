@@ -326,7 +326,14 @@ if (webinterface):
                               "verbose": args.verbosity})
 
     web.start()
-    
+
+websocketinterface = True
+
+# START WEBSOCKET INTERFACE
+# NOT YET IMPLEMENTED
+#if (websocketinterface):
+#    ws_thread = Thread(None, 
+
 outerloopdone = False
 while True:
     if outerloopdone:
