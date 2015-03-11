@@ -2258,6 +2258,7 @@ class RecipeLibrary(object):
                         print
                         print ("!@"*40)
                         print "PROBLEM CREATING PRIMITIVE SET"
+                        print "IMPORTNAME=%s, CLASSNAME=%s" % (importname, primdef[1])
                         print (("!@"*40))
                         traceback.print_exc()
                         print ("!@"*40)
