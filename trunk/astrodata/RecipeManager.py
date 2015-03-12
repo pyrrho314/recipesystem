@@ -635,6 +635,8 @@ class ReductionContext(dict):
         return self.is_finished()
     def finish(self):
         self.is_finished(True)
+        return self
+        
     finished = property(is_finished, is_finished)
     
     def get_cal(self, data, caltype):
