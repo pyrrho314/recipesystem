@@ -15,6 +15,8 @@ class FilenameReq(Requirement):
     
     def satisfied_by(self, dataset):
         import re
+        if not dataset.filename:
+            return False
         fmatch = re.match(self.file_re, dataset.basename)
         if DEBUG:
             print "gr12:", dataset.filename, self.file_re, fmatch

@@ -12,7 +12,7 @@ __version_date__ = '$Date: 2014-01-06 09:29:09 -1000 (Mon, 06 Jan 2014) $'[7:-2]
 import os
 import sys
 from optparse import OptionParser
-
+import astrodata
 from astrodata.priminspect import PrimInspect
 # ------------------------------------------------------------------------------
 # set up commandline args and options

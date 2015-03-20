@@ -633,6 +633,7 @@ class ReductionContext(dict):
                     self.status
                 raise ReduceError(mes)
         return self.is_finished()
+        
     def finish(self):
         self.is_finished(True)
         return self
