@@ -136,6 +136,11 @@ def xml_dict_load(filename):
     dic = etree_to_dict(tree.getroot())
     return dic
 
+def xml_dict_parse(xmltxt):
+    import xml.etree.ElementTree as ET
+    root = ET.fromstring(xmltxt)
+    dic = etree_to_dict(root)
+    return dic
         
 
 def maxkeylen (d):
