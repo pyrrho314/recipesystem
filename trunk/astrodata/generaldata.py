@@ -22,7 +22,7 @@ class GD_OperationNotPermitted(Error):
 _data_object_classes = {
     "tif": ("hbdata","HBRasterData"),
     "fits": ("astrodata.AstroData", "AstroData"),
-    "json": ("jsondata", "JSONData"),
+    "fc.json": ("hbfieldcondition", "HBFieldCondition"),
     "txt": ("jsondata", "TxtData"),
     "xls": ("pandasdata", "PandasData"),
     "csv": ("pandasdata", "PandasData"),
@@ -35,7 +35,7 @@ _data_object_classes = {
 _data_object_precedence = [ "tif",
                             "shp",
                             "fits", 
-                            "json",
+                            "fc.json",
                             "txt",
                             "xls",
                             "csv",
@@ -280,11 +280,13 @@ class GeneralData(object):
         if suffix:
             newname = self.add_suffix(suffix)
         if os.path.exists(newname):
-            print "(gd225) %s already exists" % newname
+            if ("be_quiet" not in args) or (args["be_quiet"] != True):
+                print "(gd225) %s already exists" % newname
             # check exists_policy
             if self.allow_extant_write():
                 # e.g.: SetrefData simply moves the extant out of the way using a ";N" postfix
-                print "        but %s allows extant write" % tc.colored(repr(type(self)), attrs=["bold"])
+                if ("be_quiet" not in args) or (args["be_quiet"] != True):
+                    print "        but %s allows extant write" % tc.colored(repr(type(self)), attrs=["bold"])
             else:
                 raise GD_OperationNotAllowed("General Data does not allow overwriting data by default.")
                 
