@@ -22,7 +22,7 @@ class GD_OperationNotPermitted(Error):
 _data_object_classes = {
     "tif": ("hbdata","HBRasterData"),
     "fits": ("astrodata.AstroData", "AstroData"),
-    "fc.json": ("hbfieldcondition", "HBFieldCondition"),
+    "fc-json": ("hbfieldcondition", "HBFieldCondition"),
     "txt": ("jsondata", "TxtData"),
     "xls": ("pandasdata", "PandasData"),
     "csv": ("pandasdata", "PandasData"),
