@@ -35,7 +35,7 @@ _data_object_classes = {
 _data_object_precedence = [ "tif",
                             "shp",
                             "fits", 
-                            "fc.json",
+                            "fc-json",
                             "txt",
                             "xls",
                             "csv",
