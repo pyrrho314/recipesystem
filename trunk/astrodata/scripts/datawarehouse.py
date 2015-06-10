@@ -114,7 +114,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
                             "*/warehouse_settings", "warehouse_package")
     
     dataset_extensions = Lookups.compose_multi_table(
-                            "*/filetypes", "data_object_precedence")
+                            "*/filetypes", "data_object_precedence")["data_object_precedence"]
     
     args = parser.parse_args()
     
@@ -268,6 +268,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
                     pkg.deliver_from_warehouse()
                     for ext in dataset_extensions:
                         mstr = ".*?\.%s" % ext
+                        #print "dw271:", mstr, fil
                         if re.match(mstr,fil):
                             recinps.append(pkg.local_path)
                 #
@@ -276,6 +277,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
                 if args.recipe:
                     cmdlist = ["kit", "-r", "%s" % args.recipe, "--invoked"]
                     cmdlist.extend(recinps)
+                    print "CMD:", " ".join(cmdlist)
                     exit_code = subprocess.call(cmdlist)
                     print "RECIPE PROCESS EXIT CODE: %s" % exit_code
                 #
