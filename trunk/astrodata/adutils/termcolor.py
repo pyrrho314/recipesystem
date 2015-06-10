@@ -116,7 +116,7 @@ def colored(text, color=None, on_color=None, attrs=None):
     """
     #if attrs and "reverse" in attrs:
     #    attrs.remove("reverse")
-    if COLOR_ON and (os.getenv('ANSI_COLORS_DISABLED') is None):
+    if COLOR_ON and ((os.getenv("NO_COLOR") is None) and (os.getenv('ANSI_COLORS_DISABLED') is None)):
         fmt_str = '\033[%dm%s'
         if color is not None:
             text = fmt_str % (COLORS[color], text)

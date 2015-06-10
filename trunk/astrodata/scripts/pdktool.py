@@ -24,9 +24,9 @@ import fcntl
 import struct
 
 from astrodata.RecipeManager import RecipeLibrary
-from astrodata.AstroDataType import ClassificationLibrary
+from astrodata.AstroDataType import get_classification_library
 recipelibrary = RecipeLibrary()
-classificationlib = ClassificationLibrary()
+classificationlib = get_classification_library()
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
