@@ -23,33 +23,44 @@ from astrodata.generaldata import GeneralData
 from datetime import datetime, timedelta
 import subprocess
 import glob
+from hbmdbstorage import MDBStorage
+
+
 class DataWarehouse:
     stores = None
     def __init__(self):
         self.stores = {}
         
 
-def store_datasets(dataset_names, remove_local = False):        
+def store_datasets(dataset_names, remove_local = False, elements = None):        
     datasetnames = dataset_names
     if len(args.datasets)>5:
         if not args.all:
             print tc.colored( "%d datasets, showing first 5, use --all to show all"
                                 % len(args.datasets), 
                                 "red", "on_white")
-            
             datasetnames = args.datasets[:5]
         
     for fname in datasetnames:
         print "  DATASET: %s" % tc.colored(fname, attrs=["bold"])
         setref = GeneralData.create_data_object(fname)
-        print "    TYPES: %s" % tc.colored(", ".join( setref.get_types() ) , "blue", "on_white")
+        setref.put("_data.warehouse.types", setref.get_types())
+        if elements:
+            setref.put("_data.warehouse.elements", elements)
+        
+        # populate_region may rely on the elements
+        if hasattr(setref, "populate_region"):
+            setref.populate_region()
+        
         pkg = package_class(setref=setref)
+        setref.put("_data.warehouse.store_path", pkg.get_store_path(setref))
+        setref.put("_data.warehouse.store_dir", os.path.dirname(pkg.get_store_path(setref)))
+        
+        print "    TYPES: %s" % tc.colored(", ".join( setref.get_types() ) , "blue", "on_white")
         print "STORE_KEY: %s" % pkg.get_store_path(setref)
         print "STORE_DIR: %s" % os.path.dirname(pkg.get_store_path(setref))
         print ""
-        setref.put("_data.warehouse.types", setref.get_types())
-        setref.put("_data.warehouse.store_path", pkg.get_store_path(setref))
-        setref.put("_data.warehouse.store_dir", os.path.dirname(pkg.get_store_path(setref)))
+        
         setref.do_write_header()
         if args.store or args.archive:
             pkg.transport_to_warehouse(remove_local = remove_local)
@@ -263,7 +274,11 @@ if __name__ == "__main__": # primarilly so sphinx can import
                 # fetch each from boto
                 # get local store name
                 recinps = []
+                print "dw266:", filgroup
                 for fil in filgroup:
+                    basenam = os.path.basename(fil)
+                    if len(basenam) == 0:
+                        continue    
                     pkg = package_class(storename = fil)
                     pkg.deliver_from_warehouse()
                     for ext in dataset_extensions:
@@ -291,7 +306,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
                         globs = glob.glob(os.path.join(outdir, globstr))
                         datasets.extend(globs)
                         
-                    store_datasets(datasets, remove_local=remove_local)
+                    store_datasets(datasets, remove_local=remove_local, elements=elements)
                     ## fetch and store means wipe directory! 
                     #junk = glob.glob(os.path.join(outdir,"*"))
                     junk = os.listdir(outdir)
@@ -307,5 +322,5 @@ if __name__ == "__main__": # primarilly so sphinx can import
                             os.remove(jfile)
                     
             sys.exit()
-    if args.store or args.archive:           
-        store_datasets(args.datasets, remove_local = remove_local)
+    if args.store or args.archive:    
+        store_datasets(args.datasets, remove_local = remove_local, elements = elements)
