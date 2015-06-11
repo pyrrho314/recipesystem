@@ -286,11 +286,18 @@ if __name__ == "__main__": # primarilly so sphinx can import
                         #print "dw271:", mstr, fil
                         if re.match(mstr,fil):
                             recinps.append(pkg.local_path)
+                        break # just do the FIRST type for now...
                 #
                 # RECIPE
                 #
                 if args.recipe:
-                    cmdlist = ["kit", "-r", "%s" % args.recipe, "--invoked"]
+                    parms = []
+                    for key in elements:
+                        parm = "%s=%s" % (key,elements[key])
+                        parms.append(parm)
+                    parmbody = ",".join(parms)
+                    parmstr = '--param="%s"' % parmbody
+                    cmdlist = ["kit", "-r", "%s" % args.recipe, "--invoked", parmstr]
                     cmdlist.extend(recinps)
                     print "CMD:", " ".join(cmdlist)
                     exit_code = subprocess.call(cmdlist)

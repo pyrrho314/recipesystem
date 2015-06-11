@@ -1023,6 +1023,8 @@ class ReductionContext(dict):
     def param_names(self, subset = None):
         if subset == "local":
             return self.localparms.keys()
+        elif subset == "global":
+            return self.keys()
         else:
             lpkeys = set(self.localparms.keys())
             rckeys = set(self.keys())
