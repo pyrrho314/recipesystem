@@ -59,6 +59,10 @@ try:
                         "sensitive to context.")
     parser.add_option("-r", "--recipe", dest="recipename", default=None,
                       help="specify which recipe to run by name")
+    parser.add_option("-q", "--quiet_final_write", dest="quiet_fn", default=False,
+                    action="store_true",
+                    help="Print minimal messages about writing the final"
+                         "dataset(s), if any.")
     parser.add_option("-t", "--settype", "--astrotype", dest="astrotype", default=None,
                       help="Run a recipe based on astrotype (either overrides the"
                       " default type, or begins without initial input (ex. "
@@ -1102,16 +1106,25 @@ try:
                             clobber = False
                         else:
                             clobber = True
+                            
                     if options.writefinal: # AUTOWRITE @@GALLEY CHANGE 
+                        
+                        be_quiet = options.quiet_fn
+                        # be quiet?
+                        
+                        total_datasets = sum([len(sl) for sl in allstreams])
                         msg = "(r1048) End of Recipe: WRITING FINAL OUTPUTS:"
-                        msg += " "*(80-len(msg))
+                        # @@problem -> msg += " %d datasets totals" % total_datasets
+                        msg += "-"*(80-len(msg))
                         log.stdinfo(COLORSTR( msg,
                                              "white", "on_blue"))
                         numouts = 0
                         numwrit = 0
                         for streamn in allstreams:
                             outputs = allstreams[streamn]
+                            num_datasets = len(outputs)
                             msg = "Writing from Context Stream (r1048): %s" % streamn
+                            msg += " : %d datasets in stream" % num_datasets
                             msg += " "*(80-len(msg))
                             log.stdinfo(COLORSTR( msg,
                                                  "white", "on_blue", ["reverse"]))
@@ -1120,10 +1133,10 @@ try:
                             
                             numouts += len(outputs)
                             for output in outputs:
-                                
                                 ds = output.data_obj
                                 name = ds.filename
-                                log.stdinfo("%s %s/%s" % 
+                                if not be_quiet:
+                                    log.stdinfo("%s %s/%s" % 
                                                 (   COLORSTR("file:", "white", "on_blue", ["reverse"]),   
                                                     ds.output_directory, 
                                                     COLORSTR(ds.basename, attrs=["bold"])
@@ -1132,23 +1145,25 @@ try:
                                 try:
                                     needs_save = not (ds._saved if hasattr(ds,"_saved") else True)
                                     if needs_save:
-                                        written = ds.write()
-                                        
+                                        written = ds.write(be_quiet = be_quiet)
                                         if written == True:
-                                            log.stdinfo("      Wrote %s in output directory" % 
-                                                                COLORSTR(ds.filename, attrs = ["bold"]))
-                                            numwrit += 1
-                                        elif written == False:
-                                            log.stdinfo("      %s chose not to write %s" %
-                                                             (  COLORSTR(str(type(output)), attrs= ["bold"]), 
-                                                                COLORSTR(ds.filename, attrs = ["bold"])
-                                                              )
-                                                       )
-                                        else:
-                                            log.stdinfo("     Dataset did not report success writing %s" 
-                                                            % COLORSTR(ds.filename, attrs = ["bold"]))
+                                                numwrit += 1
+                                        if not be_quiet:
+                                            if written == True:
+                                                log.stdinfo("      Wrote %s in output directory" % 
+                                                                    COLORSTR(ds.filename, attrs = ["bold"]))
+                                            elif written == False:
+                                                log.stdinfo("      %s chose not to write %s" %
+                                                                 (  COLORSTR(str(type(output)), attrs= ["bold"]), 
+                                                                    COLORSTR(ds.filename, attrs = ["bold"])
+                                                                  )
+                                                           )
+                                            else:
+                                                log.stdinfo("     Dataset did not report success writing %s" 
+                                                                % COLORSTR(ds.filename, attrs = ["bold"]))
                                     else:
-                                        log.status("      Does not need writing.")
+                                        if not be_quiet:
+                                            log.status("      Does not need writing.")
                                 except Errors.OutputExists:
                                     log.error( "CANNOT WRITE %s, already exists" % ds.filename)
                                 except Errors.AstroDataReadonlyError, err:

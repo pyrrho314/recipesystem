@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+"""
+Overview
+^^^^^^^^
+
+The `datawarehouse` script is used to move files between the working directory
+and a data storage location.  The default data storage object is able
+to copy files to and from a mounted disk, using pathnames created based
+on the characteristics of the file in the case of data storage, or given
+as query items in the case of data fetch.
+
+
+"""
 import sys
 import getpass
 import copy
@@ -11,37 +23,53 @@ from astrodata.generaldata import GeneralData
 from datetime import datetime, timedelta
 import subprocess
 import glob
+from hbmdbstorage import MDBStorage
+
+
 class DataWarehouse:
     stores = None
     def __init__(self):
         self.stores = {}
         
 
-def store_datasets(dataset_names, remove_local = False):        
+def store_datasets(dataset_names, remove_local = False, elements = None):        
     datasetnames = dataset_names
     if len(args.datasets)>5:
         if not args.all:
             print tc.colored( "%d datasets, showing first 5, use --all to show all"
                                 % len(args.datasets), 
                                 "red", "on_white")
-            
             datasetnames = args.datasets[:5]
         
     for fname in datasetnames:
         print "  DATASET: %s" % tc.colored(fname, attrs=["bold"])
         setref = GeneralData.create_data_object(fname)
-        print "    TYPES: %s" % tc.colored(", ".join( setref.get_types() ) , "blue", "on_white")
+        setref.put("_data.warehouse.types", setref.get_types())
+        if elements:
+            setref.put("_data.warehouse.elements", elements)
+        
+        # populate_region may rely on the elements
+        if hasattr(setref, "populate_region"):
+            setref.populate_region()
+        
         pkg = package_class(setref=setref)
+        setref.put("_data.warehouse.store_path", pkg.get_store_path(setref))
+        setref.put("_data.warehouse.store_dir", os.path.dirname(pkg.get_store_path(setref)))
+        
+        print "    TYPES: %s" % tc.colored(", ".join( setref.get_types() ) , "blue", "on_white")
         print "STORE_KEY: %s" % pkg.get_store_path(setref)
         print "STORE_DIR: %s" % os.path.dirname(pkg.get_store_path(setref))
         print ""
+        
+        setref.do_write_header()
         if args.store or args.archive:
             pkg.transport_to_warehouse(remove_local = remove_local)
                     
-if __name__ == "__main__":
+if __name__ == "__main__": # primarilly so sphinx can import
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("datasets", nargs = "*")
+    # main control options
     parser.add_argument("--fetch", default=False, action="store_true",
                         help="Retrieves a file from the 'data_warehouse' (archive or other persistent store)"
                             " into the current working directory. This is generally a output directory, a working"
@@ -60,33 +88,44 @@ if __name__ == "__main__":
                             " any data currently with that label/path location in the warehouse will be"
                             " over written."
                         )
+    # other options
     parser.add_argument("--archive", default=False, action="store_true",
-                        help="Tells the program to store the files given on the commandline. The system "
-                             "will store files based on their datatype, removing the local version."
+                        help="Tells the program to store the files given on the commandline. The system"
+                             " will store files based on their datatype, removing the local version."
                         )
+    parser.add_argument("--all", default=False, action="store_true")
+    parser.add_argument("--date_range", default=None)
+    parser.add_argument("--day", default = None, type = int)
+    parser.add_argument("--exclude", help="Used to filter matches in the warehouse by regex.")
     parser.add_argument("--info", default=False, action="store_true",
                         help="display information about the shelf definitions.")
-    parser.add_argument("--all", default=False, action="store_true")
-    parser.add_argument("--manifest", default=False, action="store_true")
-    parser.add_argument("--date_range", default=None)
-    parser.add_argument("--shelf", default = "processed_data")
-    parser.add_argument("--user", default = None)
-    parser.add_argument("--settype", default = None)
-    parser.add_argument("--year", default = None, type = int)
+    parser.add_argument("--manifest", default=False, action="store_true",
+                        help="Displays information about files in the warehouse.")
     parser.add_argument("--month", default = None, type = int)
-    parser.add_argument("--day", default = None, type = int)
-    parser.add_argument("--verbose", default = False, action="store_true")
-    parser.add_argument("--region", default = "NPH")
     parser.add_argument("--packager", default = "0", 
                         help="specify which packager to use, either an integer or the string name. Use"
                            " --info flag to see available packages, which are defined by all the"
                            " contributing kits."
                        )
-    parser.add_argument("--phrase")
+    parser.add_argument("--phrase", help="Set a phrase to appear somewhere in the path, for filtering.")
+    parser.add_argument("--region", default = "region", help=
+                        "The region, which appears in some shelf format strings as a namespace.")
+    parser.add_argument("--region_legacy", default="region_legacy", help=
+                        "The alternate region, also available to format into shelf locations,"
+                        " intended for formatting into pre-datawarehouse data layouts that"
+                        " can be copied into the warehouse.")
+    parser.add_argument("--settype", default = None)
+    parser.add_argument("--shelf", default = "processed_data")
+    parser.add_argument("--user", default = None)
+    parser.add_argument("--year", default = None, type = int)
+    parser.add_argument("--verbose", default = False, action="store_true")
     
     
     package_classes = Lookups.compose_multi_table(
                             "*/warehouse_settings", "warehouse_package")
+    
+    dataset_extensions = Lookups.compose_multi_table(
+                            "*/filetypes", "data_object_precedence")["data_object_precedence"]
     
     args = parser.parse_args()
     
@@ -115,13 +154,7 @@ if __name__ == "__main__":
         remove_local = True
     if args.store:
         remove_local = False
-    print "remove_local",remove_local
-    if args.region:
-        if args.region == "NPH":
-            args.region_legacy = "Northern_AOI"
-        elif args.region == "SPH":
-            args.region_legacy = "Southern_AOI"
-        
+    
     for key in package_class_struct:
         package_key = key
         package_class = package_class_struct[key]
@@ -199,9 +232,11 @@ if __name__ == "__main__":
             elements["type"] = args.settype
         if args.phrase:
             elements["phrase"] = args.phrase
-            
+        if args.exclude:
+            elements["exclude"] = args.exclude
         if args.region:
             elements["region"] = args.region
+        if args.region_legacy:
             elements["region_legacy"] = args.region_legacy
         pfx = pkg.get_store_prefix( elements = elements )
             
@@ -231,26 +266,54 @@ if __name__ == "__main__":
         if args.verbose:
             complete = True
         print ks.dict2pretty("files", files, complete = complete)
+        # 
+        # FETCH
         if args.fetch:
             print "fetching ... (dw168)"
             for filgroup in files:
                 # fetch each from boto
                 # get local store name
                 recinps = []
+                print "dw266:", filgroup
                 for fil in filgroup:
+                    basenam = os.path.basename(fil)
+                    if len(basenam) == 0:
+                        continue    
                     pkg = package_class(storename = fil)
                     pkg.deliver_from_warehouse()
-                    if re.match(".*?.tif",fil):
-                        recinps.append(pkg.local_path)
+                    for ext in dataset_extensions:
+                        mstr = ".*?\.%s" % ext
+                        #print "dw271:", mstr, fil
+                        if re.match(mstr,fil):
+                            recinps.append(pkg.local_path)
+                        break # just do the FIRST type for now...
+                #
+                # RECIPE
+                #
                 if args.recipe:
-                    cmdlist = ["kit", "-r", "%s" % args.recipe, "--invoked"]
+                    parms = []
+                    for key in elements:
+                        parm = "%s=%s" % (key,elements[key])
+                        parms.append(parm)
+                    parmbody = ",".join(parms)
+                    parmstr = '--param="%s"' % parmbody
+                    cmdlist = ["kit", "-r", "%s" % args.recipe, "--invoked", parmstr]
                     cmdlist.extend(recinps)
+                    print "CMD:", " ".join(cmdlist)
                     exit_code = subprocess.call(cmdlist)
                     print "RECIPE PROCESS EXIT CODE: %s" % exit_code
+                #
+                # STORE or ARCHIVE
+                #
                 if args.store or args.archive:
                     outdir = os.getcwd()
-                    datasets= glob.glob(os.path.join(outdir, "*.tif"))
-                    store_datasets(datasets, remove_local=remove_local)
+                    datasets = []
+                    for ext in dataset_extensions:
+                        globstr = "*.%s" % ext
+                        globs = glob.glob(os.path.join(outdir, globstr))
+                        datasets.extend(globs)
+                        
+                    store_datasets(datasets, remove_local=remove_local, elements=elements)
                     ## fetch and store means wipe directory! 
                     #junk = glob.glob(os.path.join(outdir,"*"))
                     junk = os.listdir(outdir)
@@ -266,5 +329,5 @@ if __name__ == "__main__":
                             os.remove(jfile)
                     
             sys.exit()
-if args.store or args.archive:           
-    store_datasets(args.datasets, remove_local = remove_local)
+    if args.store or args.archive:    
+        store_datasets(args.datasets, remove_local = remove_local, elements = elements)

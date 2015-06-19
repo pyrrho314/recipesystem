@@ -167,6 +167,7 @@ def get_lookup_table(modname, *lookup, **args):
 
 def compose_multi_table(lookaddr, *lookups, **args):
     """ Returns a dictionary keyed by the lookups name of a composed combination
+    of tables distributed throughout loaded kits.
     """
     retdict = {}
     context = None

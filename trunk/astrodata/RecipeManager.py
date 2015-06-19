@@ -633,6 +633,7 @@ class ReductionContext(dict):
                     self.status
                 raise ReduceError(mes)
         return self.is_finished()
+        
     def finish(self):
         self.is_finished(True)
         return self
@@ -1022,6 +1023,8 @@ class ReductionContext(dict):
     def param_names(self, subset = None):
         if subset == "local":
             return self.localparms.keys()
+        elif subset == "global":
+            return self.keys()
         else:
             lpkeys = set(self.localparms.keys())
             rckeys = set(self.keys())

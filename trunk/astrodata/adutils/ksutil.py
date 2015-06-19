@@ -136,6 +136,11 @@ def xml_dict_load(filename):
     dic = etree_to_dict(tree.getroot())
     return dic
 
+def xml_dict_parse(xmltxt):
+    import xml.etree.ElementTree as ET
+    root = ET.fromstring(xmltxt)
+    dic = etree_to_dict(root)
+    return dic
         
 
 def maxkeylen (d):
@@ -229,6 +234,15 @@ def iter_date(start_date, end_date):
     from datetime import timedelta
     for n in range(int ((end_date - start_date).days)):
         yield start_date + timedelta(n)
-    
-            
 
+from random import sample
+from string import digits, ascii_uppercase, ascii_lowercase
+from tempfile import gettempdir
+from os import path
+
+def rand_file_id(length=12):
+    chars = ascii_lowercase + ascii_uppercase + digits
+
+    fname = ''.join(sample(chars, length))
+
+    return fname 

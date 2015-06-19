@@ -7,7 +7,7 @@ import os
 from astrodata.Errors import Error
 from astrodata.AstroDataType import get_classification_library
 from astrodata.adutils import termcolor as tc
-
+from astrodata.Lookups import compose_multi_table
 cl = get_classification_library() 
 
 class GD_OperationNotPermitted(Error):
@@ -17,33 +17,12 @@ class GD_OperationNotPermitted(Error):
     """
     message  = "Operation Not Permitted"
 
-# needs to move to configuration space
-# make this a member of GeneralData (?)
-_data_object_classes = {
-    "tif": ("hbdata","HBRasterData"),
-    "fits": ("astrodata.AstroData", "AstroData"),
-    "json": ("jsondata", "JSONData"),
-    "txt": ("jsondata", "TxtData"),
-    "xls": ("pandasdata", "PandasData"),
-    "csv": ("pandasdata", "PandasData"),
-    "h5": ("pandasdata", "PandasData"),
-    "shp": ("hbshapedata", "HBShapeData"),
-    "setref": ("jsondata", "ReferenceOnlyData"),
-    "dmo": ("cubedata", "CubeDemoData"),
-    "dmobson":("cubedata", "CubeDemoData")
-    }
-_data_object_precedence = [ "tif",
-                            "shp",
-                            "fits", 
-                            "json",
-                            "txt",
-                            "xls",
-                            "csv",
-                            "h5",
-                            "setref",
-                            "dmobson",
-                            "dmo"
-                          ]
+filetypes = compose_multi_table("*/filetypes.py",
+                                "data_object_precedence",
+                                "data_object_classes")
+_data_object_classes = filetypes["data_object_classes"]
+_data_object_precedence = filetypes["data_object_precedence"]
+
 _gen_classification_library = cl
 
 class HDUnit(object):
@@ -280,11 +259,13 @@ class GeneralData(object):
         if suffix:
             newname = self.add_suffix(suffix)
         if os.path.exists(newname):
-            print "(gd225) %s already exists" % newname
+            if ("be_quiet" not in args) or (args["be_quiet"] != True):
+                print "(gd225) %s already exists" % newname
             # check exists_policy
             if self.allow_extant_write():
                 # e.g.: SetrefData simply moves the extant out of the way using a ";N" postfix
-                print "        but %s allows extant write" % tc.colored(repr(type(self)), attrs=["bold"])
+                if ("be_quiet" not in args) or (args["be_quiet"] != True):
+                    print "        but %s allows extant write" % tc.colored(repr(type(self)), attrs=["bold"])
             else:
                 raise GD_OperationNotAllowed("General Data does not allow overwriting data by default.")
                 
