@@ -46,6 +46,8 @@ def store_datasets(dataset_names, remove_local = False, elements = None):
     for fname in datasetnames:
         print "  DATASET: %s" % tc.colored(fname, attrs=["bold"])
         setref = GeneralData.create_data_object(fname)
+        if setref == None:
+            continue
         setref.put("_data.warehouse.types", setref.get_types())
         if elements:
             setref.put("_data.warehouse.elements", elements)
