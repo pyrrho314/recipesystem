@@ -189,7 +189,8 @@ class EventsManager:
                         qiq = "iq" in ev
                         ts = ev["timestamp"]
                         age = now - ts
-
+                        if "msgtype" not in ev:
+                            ev["msgtype"] = "generic"
                         print "AGE IN SECONDS:", age, now, ts
                         print "  em156: event #", i, ev["msgtype"],
                         print "  bg=%s, cc=%s, iq=%s" % (qbg, qcc, qiq)

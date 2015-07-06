@@ -877,6 +877,7 @@ class ADCCHandler(BaseHTTPRequestHandler):
                 self.wfile.write(data)
                 return
                 
+            #what's the problem with this.
             if self.path.startswith("/cmd_queue"):
                 self.counter += 1
                 data = str(self.counter)
@@ -902,6 +903,19 @@ class ADCCHandler(BaseHTTPRequestHandler):
                         data += "------------------------------\n"
                     data += "</pre>"
                     self.wfile.write(data)
+                return
+            
+            if self.path.startswith("/event_report.json"):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                
+                if "timestamp" in parms:
+                    timestamp = parms["timestamp"][0]
+                else:
+                    timestamp  = 0
+                print "prsprox:",timestamp
+                self.wfile.write({"youbo":"mompun"})
                 return
                 
             if self.path.startswith("/qap"):

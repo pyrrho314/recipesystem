@@ -24,6 +24,8 @@ from datetime import datetime, timedelta
 import subprocess
 import glob
 from hbmdbstorage import MDBStorage
+from astrodata.adutils.dwutil import daemon_process as dp
+
 
 
 class DataWarehouse:
@@ -94,6 +96,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
                              " will store files based on their datatype, removing the local version."
                         )
     parser.add_argument("--all", default=False, action="store_true")
+    parser.add_argument("-d", "--daemon", default=False, action = "store_true")
     parser.add_argument("--date_range", default=None)
     parser.add_argument("--day", default = None, type = int)
     parser.add_argument("--exclude", help="Used to filter matches in the warehouse by regex.")
@@ -134,6 +137,9 @@ if __name__ == "__main__": # primarilly so sphinx can import
     packager = args.packager
     packager_key = 0
     package_class_struct = package_class_list[0]
+    
+    # elements are what get's printed into the shelf/format strings
+    elements = {}
     try:
         packager_key = int(packager)
         package_class_struct = package_class_list[packager_key]
@@ -331,3 +337,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
             sys.exit()
     if args.store or args.archive:    
         store_datasets(args.datasets, remove_local = remove_local, elements = elements)
+        
+    if args.daemon:
+        print "(dw340) %s" % args.daemon
+

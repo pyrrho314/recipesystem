@@ -45,41 +45,47 @@ class GeneralData(object):
     @classmethod
     def create_data_object(cls, initarg, hint = None):
         #print "gd26: initarg", initarg, hint
-        retv = None
-        if True: 
-            found_instor = None
-            # @@ TODO: improve the generalization, externalize to configspace
-            if hint:
-                instor = hint
-                module,tclass = hint
-            else:
+        try:
+            retv = None
+            if True: 
+                found_instor = None
+                # @@ TODO: improve the generalization, externalize to configspace
+                if hint:
+                    instor = hint
+                    module,tclass = hint
+                else:
+                    if isinstance(initarg, basestring):
+                        for suffix in _data_object_precedence:
+                            completesuffix = ".%s"%suffix
+                            # print "gd71:", completesuffix
+                            instor = _data_object_classes[suffix]
+                            lowerarg = initarg.lower()
+                            # print "gd74:", lowerarg
+                            if (lowerarg.endswith(completesuffix)):
+                                found_instor = instor
+                                break;
+                        # if no file matches by extension, setref will be used
                 if isinstance(initarg, basestring):
-                    for suffix in _data_object_precedence:
-                        completesuffix = ".%s"%suffix
-                        # print "gd71:", completesuffix
-                        instor = _data_object_classes[suffix]
-                        lowerarg = initarg.lower()
-                        # print "gd74:", lowerarg
-                        if (lowerarg.endswith(completesuffix)):
-                            found_instor = instor
-                            break;
-                    # if no file matches by extension, setref will be used
-            if isinstance(initarg, basestring):
-                initarg = os.path.abspath(initarg)
-                # print "gd47:", initarg
-            if found_instor:
-                module, tclass = found_instor
-                # print "gd29:",module, tclass
-                exec("from %s import %s" % instor)
-                retv = eval("%s(initarg)" % tclass)
-            else:
-                bname,ext = os.path.splitext(initarg)
-                raise IOError("generaldata.GeneralData.create_data_object\n" +
-                              "DON'T KNOW HOW TO LOAD DATASET\n" +
-                              "     %s\n" % initarg +
-                              "     unknown suffix: %s" % ext )
-        return retv
-    
+                    initarg = os.path.abspath(initarg)
+                    # print "gd47:", initarg
+                if found_instor:
+                    module, tclass = found_instor
+                    # print "gd29:",module, tclass
+                    exec("from %s import %s" % instor)
+                    retv = eval("%s(initarg)" % tclass)
+                else:
+                    bname,ext = os.path.splitext(initarg)
+                    raise IOError("generaldata.GeneralData.create_data_object\n" +
+                                  "DON'T KNOW HOW TO LOAD DATASET\n" +
+                                  "     %s\n" % initarg +
+                                  "     unknown suffix: %s" % ext )
+            return retv
+        except:
+            import traceback as tc
+            print "()"*30
+            print "ERROR loading file: %s" % initarg
+            tc.print_exc()
+            return None
     ############
     #properties
     
