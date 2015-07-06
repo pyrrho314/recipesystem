@@ -81,9 +81,10 @@ class GeneralData(object):
                                   "     unknown suffix: %s" % ext )
             return retv
         except:
+            # @@WARNING: skips storing bad file
             import traceback as tc
             print "()"*30
-            print "ERROR loading file: %s" % initarg
+            print "ERROR couldn't load file: %s" % initarg
             tc.print_exc()
             return None
     ############
