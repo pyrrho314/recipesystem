@@ -15,7 +15,6 @@ import sys
 import getpass
 import copy
 import os, shutil, re
-from astrodata import Lookups
 from astrodata.adutils import ksutil as ks
 from astrodata.adutils import termcolor as tc
 tc.COLOR_ON = True
@@ -26,13 +25,12 @@ import glob
 from hbmdbstorage import MDBStorage
 from astrodata.adutils.dwutil import daemon_process as dp
 
-
+from astrodata.adutils.dwutil.dwsettings import package_classes, dataset_extensions
 
 class DataWarehouse:
     stores = None
     def __init__(self):
         self.stores = {}
-        
 
 def store_datasets(dataset_names, remove_local = False, elements = None):        
     datasetnames = dataset_names
@@ -102,6 +100,8 @@ if __name__ == "__main__": # primarilly so sphinx can import
     parser.add_argument("--date_range", default=None)
     parser.add_argument("--day", default = None, type = int)
     parser.add_argument("--exclude", help="Used to filter matches in the warehouse by regex.")
+    parser.add_argument("--fileinfo", default = False, action="store_true",
+                        help="Used to print info about files provided on the command line")
     parser.add_argument("--info", default=False, action="store_true",
                         help="display information about the shelf definitions.")
     parser.add_argument("--manifest", default=False, action="store_true",
@@ -119,6 +119,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
                         "The alternate region, also available to format into shelf locations,"
                         " intended for formatting into pre-datawarehouse data layouts that"
                         " can be copied into the warehouse.")
+    parser.add_argument("--remove_local", default = None, action="store_true")
     parser.add_argument("--settype", default = None)
     parser.add_argument("--shelf", default = "processed_data")
     parser.add_argument("--user", default = None)
@@ -126,11 +127,6 @@ if __name__ == "__main__": # primarilly so sphinx can import
     parser.add_argument("--verbose", default = False, action="store_true")
     
     
-    package_classes = Lookups.compose_multi_table(
-                            "*/warehouse_settings", "warehouse_package")
-    
-    dataset_extensions = Lookups.compose_multi_table(
-                            "*/filetypes", "data_object_precedence")["data_object_precedence"]
     
     args = parser.parse_args()
     
@@ -153,6 +149,11 @@ if __name__ == "__main__": # primarilly so sphinx can import
     package_type = None
     package_class = None
     
+    if args.fileinfo:
+        for fil in args.dataset:
+            gd = GeneralData.create_data_object(fil)
+            print "File: %s" % gd.basename
+            print "      %s" % ", ".join(gd.get_types())
     # some flags imply others
     if args.store or args.archive:
         args.all = True
@@ -162,6 +163,9 @@ if __name__ == "__main__": # primarilly so sphinx can import
         remove_local = True
     if args.store:
         remove_local = False
+    
+    if args.remove_local != None:
+        remove_local = args.remove_local
     
     for key in package_class_struct:
         package_key = key
@@ -178,8 +182,9 @@ if __name__ == "__main__": # primarilly so sphinx can import
         print ks.dict2pretty("shelf_addresses", pkg.shelf_addresses)
         print ks.dict2pretty("type_shelf_names", pkg.type_shelf_names)
         print ks.dict2pretty("type_store_precedence", pkg.type_store_precedence)
+        print ks.dict2pretty("daemon_settings: ingest_sources", dp.ingest_sources)
     
-    if args.fetch:
+    if args.fetch :
         args.manifest = True
     if args.manifest:
         elements = {
@@ -216,7 +221,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
                     "complete_day_end" : date_start.strftime("%Y%m%d")
                     })
                 
-
+        daypart = None
         if args.year:
             elements["year"] = args.year
             daypart = "%4d" % args.year
@@ -226,6 +231,8 @@ if __name__ == "__main__": # primarilly so sphinx can import
         if args.day:
             elements["day"] = args.day
             daypart += "%02d" % args.day
+        if not daypart:
+            daypart = datetime.now().strftime("%Y%m%d")
         if not "complete_day" in elements:
             elements["complete_day"] = daypart
         
@@ -342,4 +349,10 @@ if __name__ == "__main__": # primarilly so sphinx can import
         
     if args.daemon:
         print "(dw340) %s" % args.daemon
-
+        try:
+            dp.start_ingestion_processes()
+            dp.tend_process_queue()
+        except:
+            print "dw -d halting"
+            dp.stop_ingestion_processes()
+            raise
