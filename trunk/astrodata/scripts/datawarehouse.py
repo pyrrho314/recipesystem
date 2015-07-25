@@ -55,14 +55,13 @@ def store_datasets(dataset_names, remove_local = False, elements = None):
             setref.populate_region()
         
         pkg = package_class(setref=setref)
-        setref.put("_data.warehouse.store_path", pkg.get_store_path(setref))
+        setref.put("_data.warehouse.store_path", pkg.get_store_path(setref, 
+                    elements = elements))
         setref.put("_data.warehouse.store_dir", os.path.dirname(pkg.get_store_path(setref)))
         
         print "    TYPES: %s" % tc.colored(", ".join( setref.get_types() ) , "blue", "on_white")
         print "STORE_KEY: %s" % pkg.get_store_path(setref)
         print "STORE_DIR: %s" % os.path.dirname(pkg.get_store_path(setref))
-        print ""
-        
         setref.do_write_header()
         if args.store or args.archive:
             pkg.transport_to_warehouse(remove_local = remove_local)
@@ -121,7 +120,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
                         " can be copied into the warehouse.")
     parser.add_argument("--remove_local", default = None, action="store_true")
     parser.add_argument("--settype", default = None)
-    parser.add_argument("--shelf", default = "processed_data")
+    parser.add_argument("--shelf", default = None)
     parser.add_argument("--user", default = None)
     parser.add_argument("--year", default = None, type = int)
     parser.add_argument("--verbose", default = False, action="store_true")
@@ -344,7 +343,9 @@ if __name__ == "__main__": # primarilly so sphinx can import
                             os.remove(jfile)
                     
             sys.exit()
-    if args.store or args.archive:    
+    if args.store or args.archive:
+        if args.shelf:
+            elements["shelf_name"] = args.shelf
         store_datasets(args.datasets, remove_local = remove_local, elements = elements)
         
     if args.daemon:

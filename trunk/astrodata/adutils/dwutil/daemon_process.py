@@ -1,3 +1,11 @@
+"""
+daemon_process.py
+
+This module contains functions that help implement the datawarehouse 
+daemon mode.
+
+"""
+import shutil
 from multiprocessing import Process, Queue
 from Queue import Empty
 from datetime import datetime, timedelta
@@ -5,6 +13,7 @@ import os
 import re
 import subprocess
 import getpass
+from glob import glob
 
 from time import sleep
 from astrodata import Lookups
@@ -14,7 +23,16 @@ from astrodata.adutils.dwutil.dwsettings import warehouse_packages
 from astrodata.adutils.dwutil.dwsettings import package_dict
 
 POLL_RESOLUTION = .5 # in seconds
- 
+def clear_directory(path):
+    print "Removing contents of %s" % path
+    for fil in os.listdir(path):
+        if os.path.islink(fil):
+            shutil.remove(fil)
+        elif os.path.isdir(fil):
+            shutil.rmtree(fil)
+        elif os.path.isfile(fil):
+            os.remove(fil)
+            
 class ShelfWatch(object):
     source = None
     frequency = 10
@@ -51,7 +69,7 @@ class ShelfWatch(object):
             
             if "publish_package_type" in source:
                 pub_pt = source["publish_package_type"]
-                pub_package = package_dict[pub_pt]()
+                pub_package = package_dict[pub_pt]()     
                 self.publish_package = pub_package
                 
     def do_check(self):
@@ -81,14 +99,35 @@ class ShelfWatch(object):
                     patt = command["file_pattern"]
                     for filename in xfers:
                         if re.match(patt, filename):
+                            if False: # if command["clean_working_directory"]:
+                                # @@WARN: possibly dangerous, Ideally isolate
+                                # the daemon with it's own account/permisions
+                                rmcontents = os.getcwd()
+                                shutil.rmtree(rmcontents)
+                                os.mkdir(rmcontent)
+                                
                             for command_line in command["command_lines"]:
                                 vargs = {"dataset": os.path.basename(filename)}
                                 command_line = command_line.format(**vargs)
                                 print "running: %s" % command_line
                                 cmdparts = command_line.split()
-                                exit_code = subprocess.call(cmdparts)
+                                # check parts you want to glob
+                                convparts = []
+                                for part in cmdparts:
+                                    if "*" in part:
+                                        convparts.extend(glob(part))
+                                    else:
+                                        convparts.append(part)
+                                        
+                                exit_code = subprocess.call(convparts)
                                 print "   exit_code = %s" % exit_code
-        
+                            
+                            if command["clean_working_directory"]:
+                                # @@WARN: possibly dangerous, Ideally isolate
+                                # the daemon with it's own account/permisions
+                                rmcontents = os.getcwd()
+                                clear_directory(rmcontents)
+                                
         if not ret:
             return None
         else:
@@ -106,7 +145,7 @@ class ShelfWatch(object):
 ###### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ######
 # NOTE: The process control is done at the module level. Perhaps this should  #
 #       be wrapped in a class, but I want a singleton so all processes are    #
-#       managed in one place.                                                 #
+#       managed in one place, which modules perform well at.                  #
 ###### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ######
 
 procs_by_shelf = {}      
@@ -123,12 +162,22 @@ def start_ingestion_processes():
         source = source_by_shelf[shelfname]
         cmd_q = Queue()
         result_q = Queue()
+
+        local_wd = "workdir_for_shelf-%s" % shelfname
+        local_wd = os.path.abspath(local_wd)
+        
         queues = {"cmd_queue":cmd_q,
-                  "result_queue":result_q                
+                  "result_queue":result_q,
+                  "cwd":local_wd
                  }
+        
+        if not os.path.exists(local_wd):
+            os.mkdir(local_wd)
+            
+        
         proc = Process( target=ingestion_loop,
                         args=(source,), 
-                        kwargs= queues
+                        kwargs= queues,
                       )
         procs_by_shelf[shelfname] = proc
         queue_by_shelf[shelfname] = queues
@@ -162,6 +211,8 @@ def ingestion_loop(source, **args):
     watch = ShelfWatch(source)
     cmd_q = args["cmd_queue"]
     result_q = args["result_queue"]
+    working_dir = args["cwd"]
+    os.chdir(working_dir)
     done = False
     for tx in ingestion_loop_iterator(watch):
         # print ks.dict2pretty("d_p93: tx", tx)

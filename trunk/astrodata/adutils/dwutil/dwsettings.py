@@ -15,7 +15,6 @@ else:
 dataset_extensions_dict = Lookups.compose_multi_table(
                         "*/filetypes", "data_object_precedence")
 
-print "dwsett18",dataset_extensions_dict
 if "data_object_precedence" in dataset_extensions_dict:
     dataset_extensions = dataset_extensions_dict["data_object_precedence"]
 else:
