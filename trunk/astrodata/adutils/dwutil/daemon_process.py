@@ -27,7 +27,7 @@ def clear_directory(path):
     print "Removing contents of %s" % path
     for fil in os.listdir(path):
         if os.path.islink(fil):
-            shutil.remove(fil)
+            os.remove(fil)
         elif os.path.isdir(fil):
             shutil.rmtree(fil)
         elif os.path.isfile(fil):
