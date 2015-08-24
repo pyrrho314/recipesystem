@@ -1,4 +1,4 @@
-"""
+r"""
 daemon_process.py
 
 This module contains functions that help implement the datawarehouse 
@@ -9,7 +9,7 @@ import shutil
 from multiprocessing import Process, Queue
 from Queue import Empty
 from datetime import datetime, timedelta
-import os
+import os,sys
 import re
 import subprocess
 import getpass
@@ -18,6 +18,8 @@ from glob import glob
 from time import sleep
 from astrodata import Lookups
 from astrodata.adutils import ksutil as ks
+from astrodata.adutils import termcolor as tc
+from astrodata import ConfigSpace
 from astrodata.adutils.dwutil.dwsettings import ingest_sources
 from astrodata.adutils.dwutil.dwsettings import warehouse_packages
 from astrodata.adutils.dwutil.dwsettings import package_dict
@@ -64,7 +66,7 @@ class ShelfWatch(object):
             in_shelf = source["ingest_shelf"]
             in_package = package_dict[in_pt]()
             self.prefix = in_package.get_store_prefix( elements = elements )
-            print "d_p30: source prefix/key:", self.prefix
+            print "d_p69: __init__ source prefix/key:", self.prefix
             self.ingest_package = in_package
             
             if "publish_package_type" in source:
@@ -107,9 +109,13 @@ class ShelfWatch(object):
                                 os.mkdir(rmcontent)
                                 
                             for command_line in command["command_lines"]:
-                                vargs = {"dataset": os.path.basename(filename)}
+                                vargs = {"dataset": os.path.basename(filename),
+                                         "context": ConfigSpace.get_current_default_context()
+                                        }
                                 command_line = command_line.format(**vargs)
-                                print "running: %s" % command_line
+                                print tc.colored("-"*(len(command_line)+len("running:")+2), None, "on_green")
+                                print tc.colored("running:", None, "on_green"), "%s" % command_line
+                                print tc.colored("-"*(len(command_line)+len("running:")+2), None, "on_green")
                                 cmdparts = command_line.split()
                                 # check parts you want to glob
                                 convparts = []
@@ -237,6 +243,8 @@ def ingestion_loop_iterator(watch):
         result = None
         watchdue = watch.is_due_for_check()
         if watchdue:
+            sys.stdout.write(tc.colored("\rchecking at %s (d_p243)%s" % (datetime.now(), ""), "blue") )  # "\033[J"),
+            sys.stdout.flush()
             result = watch.do_check()
         #print "d_p58: due?", watchdue
         if result:

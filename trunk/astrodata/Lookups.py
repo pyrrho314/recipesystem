@@ -1,6 +1,7 @@
 import os
 import ConfigSpace
 from copy import deepcopy
+
 try:
     import pyfits
 except:
@@ -35,9 +36,13 @@ def get_lookup_value(modname, *lookup, **args):
     if "context" in args:
         context = args["context"]
         if not context:
-            context = "default"
+            context = None
     else:
-        context = "default"
+        context = None
+    
+    if context == None:
+        ConfigSpace.get_current_default_context()
+        
     #if not context:
     #    modname = ConfigSpace.lookup_path(modname)
     #else:
@@ -114,10 +119,9 @@ def get_lookup_table(modname, *lookup, **args):
     context = None
     if "context" in args:
         context = args["context"]
-        if not context:
-            context = "default"
-    else:
-        context = "default"
+
+    if context == None:
+        context = ConfigSpace.get_current_default_context()
     #if not context:
     #    modname = ConfigSpace.lookup_path(modname)
     #else:
@@ -173,10 +177,8 @@ def compose_multi_table(lookaddr, *lookups, **args):
     context = None
     if "context" in args:
         context = args["context"]
-        if not context:
-            context = "default"
-    else:
-        context = "default"
+    if context == None:
+        context = ConfigSpace.get_current_default_context()
 
     paths = ConfigSpace.lookup_multi_paths(lookaddr, context = context)
     

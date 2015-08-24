@@ -23,7 +23,7 @@ else:
 ingest_sources_dict = Lookups.compose_multi_table(
                             "*/warehouse_daemon.py",
                             "ingest_sources")
-if "ingest_sources" in ingest_sources_dict:
+if ingest_sources_dict and "ingest_sources" in ingest_sources_dict:
     ingest_sources = ingest_sources_dict["ingest_sources"]
 else:
     ingest_sources = None

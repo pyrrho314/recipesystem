@@ -23,9 +23,7 @@ from datetime import datetime, timedelta
 import subprocess
 import glob
 from hbmdbstorage import MDBStorage
-from astrodata.adutils.dwutil import daemon_process as dp
 
-from astrodata.adutils.dwutil.dwsettings import package_classes, dataset_extensions
 
 class DataWarehouse:
     stores = None
@@ -95,6 +93,11 @@ if __name__ == "__main__": # primarilly so sphinx can import
                              " will store files based on their datatype, removing the local version."
                         )
     parser.add_argument("--all", default=False, action="store_true")
+    parser.add_argument("--context", default = None, 
+                        help = "Specify context. Can be formated into commands using the {context}"
+                               " format specifier."
+                        )
+                    
     parser.add_argument("-d", "--daemon", default=False, action = "store_true")
     parser.add_argument("--date_range", default=None)
     parser.add_argument("--day", default = None, type = int)
@@ -121,13 +124,39 @@ if __name__ == "__main__": # primarilly so sphinx can import
     parser.add_argument("--remove_local", default = None, action="store_true")
     parser.add_argument("--settype", default = None)
     parser.add_argument("--shelf", default = None)
+    parser.add_argument("--out_shelf", default = None)
     parser.add_argument("--user", default = None)
     parser.add_argument("--year", default = None, type = int)
     parser.add_argument("--verbose", default = False, action="store_true")
     
-    
-    
     args = parser.parse_args()
+    
+    ########
+    ######
+    ####    TAKE CARE OF CONTEXT IN A GLOBAL WAY
+    ### @@NOTE: the issue is, we don't want to, nor do we have arguments
+    ###       : for, passing context through the system. Instead we take
+    ###       : advantage of the ability to set the current default context.
+    ###       : This necessitates setting the context string prior to importing
+    ###       : anything that uses the ConfigSpace or Lookups modules. 
+    from astrodata import ConfigSpace
+    
+    if args.context:
+        ConfigSpace.set_current_default_context(args.context)
+        print "setting context='%s' (dw142)" % args.context
+    
+    from astrodata.adutils.dwutil.dwsettings import package_classes
+    from astrodata.adutils.dwutil.dwsettings import warehouse_packages
+    from astrodata.adutils.dwutil.dwsettings import dataset_extensions
+    # this relies on ConfigSpace, and therefore context
+    # AGAIN: the point is we have to be careful to set the context before
+    # any modules use the ConfigSpace or Lookups modules.
+    from astrodata.adutils.dwutil import daemon_process as dp
+    
+    ###
+    ####
+    ######
+    ########
     
     package_class_list = package_classes["warehouse_package"]
     # choose packager
@@ -188,6 +217,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
     if args.manifest:
         elements = {
                 "shelf_name"  : args.shelf,
+                "out_shelf_name": args.out_shelf,
                 }
         pkg = package_class()
         if args.date_range:
@@ -252,7 +282,14 @@ if __name__ == "__main__": # primarilly so sphinx can import
             elements["region"] = args.region
         if args.region_legacy:
             elements["region_legacy"] = args.region_legacy
+            
+        
         pfx = pkg.get_store_prefix( elements = elements )
+        
+        if not pfx:
+            print "No shelf set, use --shelf to specify shelf, and --info to see available shelves."
+            print "NOTE: a 'shelf' is a pathname format string used for storing or fetching files from"
+            print "      long term data storage."
             
         # declare files one of two ways
         if "complete_day_end" not in elements:
@@ -344,8 +381,8 @@ if __name__ == "__main__": # primarilly so sphinx can import
                     
             sys.exit()
     if args.store or args.archive:
-        if args.shelf:
-            elements["shelf_name"] = args.shelf
+        if args.out_shelf:
+            elements["shelf_name"] = args.out_shelf
         store_datasets(args.datasets, remove_local = remove_local, elements = elements)
         
     if args.daemon:

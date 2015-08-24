@@ -3,7 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.import generalclassification
 
-import os
+import os, re
 from astrodata.Errors import Error
 from astrodata.AstroDataType import get_classification_library
 from astrodata.adutils import termcolor as tc
@@ -55,10 +55,29 @@ class GeneralData(object):
                     module,tclass = hint
                 else:
                     if isinstance(initarg, basestring):
+                        fixless, ext = os.path.splitext(initarg)
                         for suffix in _data_object_precedence:
                             completesuffix = ".%s"%suffix
                             # print "gd71:", completesuffix
-                            instor = _data_object_classes[suffix]
+                            
+                            ## FIND THE RIGHT INSTOR
+                            instor = None # will hold py_class
+                            
+                            classdesc = _data_object_classes[suffix]
+                            if isinstance(classdesc, tuple):
+                                instor = classdesc
+                            elif isinstance(classdesc, dict) or isinstance(classdesc, list):
+                                if isinstance(classdesc, dict):
+                                    candidates = [classdesc]
+                                else:
+                                    candidates = classdesc
+                                    
+                                for cand in candidates:
+                                    print "gd75:", fixless, repr(cand)
+                                    if re.match(cand["file_re"], fixless):
+                                        instor = cand["py_class"]
+                                        break
+                            # print "gd77 instor:", repr(instor)    
                             lowerarg = initarg.lower()
                             # print "gd74:", lowerarg
                             if (lowerarg.endswith(completesuffix)):

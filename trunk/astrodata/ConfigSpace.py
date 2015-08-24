@@ -547,7 +547,13 @@ def lookup_multi_paths(name, context = None):
                 break
         
     return final_paths
-       
+    
+def get_current_default_context():
+    global cs
+    if (cs == None):
+        cs = ConfigSpace()
+    return cs.current_default_context
+    
 def set_current_default_context(context_name):
     global cs
     
