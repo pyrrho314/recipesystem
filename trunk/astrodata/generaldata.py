@@ -73,7 +73,7 @@ class GeneralData(object):
                                     candidates = classdesc
                                     
                                 for cand in candidates:
-                                    print "gd75:", fixless, repr(cand)
+                                    # print "gd75:", fixless, repr(cand)
                                     if re.match(cand["file_re"], fixless):
                                         instor = cand["py_class"]
                                         break
