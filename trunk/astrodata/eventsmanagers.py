@@ -78,6 +78,10 @@ class EventsManager:
 
     def append_event(self, ad = None, name=None, mdict=None, 
                      metadata = None, msgtype="qametric"):
+        """Used to report a dict to the event system.  Has artifacts from
+        astrodata image usage statistics. Ad can be many forms, however, 
+        including the mdict directly.
+        """
         # print "em32:"+repr(metadata)
         if isinstance(ad, AstroData):
             if metadata != None:
@@ -88,7 +92,8 @@ class EventsManager:
             curtime = time.time()
             wholed = { "msgtype":msgtype,
                        name : mdict,
-                       "timestamp": curtime
+                       "timestamp": curtime,
+                       "info_type": name
                    }
             wholed.update(md)
         elif type(ad) == list:
@@ -100,11 +105,18 @@ class EventsManager:
             self.persist_add(ad)    
             return
         elif type(ad) == dict:
-            if "timestamp" not in ad:
-                ad.update({"timestamp":time.time()})
-            if "timestamp" in ad and "reported_timestamp" not in ad:
-                ad.update({"reported_timestamp":ad["timestamp"]})
-            wholed = ad
+            if not name:
+                if "timestamp" not in ad:
+                    ad.update({"timestamp":time.time()})
+                if "timestamp" in ad and "reported_timestamp" not in ad:
+                    ad.update({"reported_timestamp":ad["timestamp"]})
+                wholed = ad
+            else:
+                wholed = {"msgtype":msgtype,
+                          name:ad,
+                          "timestamp": time.time(),
+                          "info_type":name
+                          }
         else:
             raise "EVENT ARGUMENTS ERROR"
         import pprint

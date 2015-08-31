@@ -386,7 +386,7 @@ if __name__ == "__main__": # primarilly so sphinx can import
         store_datasets(args.datasets, remove_local = remove_local, elements = elements)
         
     if args.daemon:
-        print "(dw340) %s" % args.daemon
+        # print "(dw340) %s" % args.daemon
         try:
             dp.start_ingestion_processes()
             dp.tend_process_queue()
@@ -394,3 +394,4 @@ if __name__ == "__main__": # primarilly so sphinx can import
             print "dw -d halting"
             dp.stop_ingestion_processes()
             raise
+        print "dw -d finished"

@@ -66,7 +66,7 @@ class ShelfWatch(object):
             in_shelf = source["ingest_shelf"]
             in_package = package_dict[in_pt]()
             self.prefix = in_package.get_store_prefix( elements = elements )
-            print "d_p69: __init__ source prefix/key:", self.prefix
+            print "Daemon Process __init__: source prefix/key: %s (d_p68)" % self.prefix
             self.ingest_package = in_package
             
             if "publish_package_type" in source:
@@ -200,16 +200,21 @@ def tend_process_queue():
     global procs_by_shelf, queue_by_shelf
     done = False
     while not done:
-        sleep(POLL_RESOLUTION)
-        for shelf_name in queue_by_shelf:
-            result_q = queue_by_shelf[shelf_name]["result_queue"]
-            try:
-                mess = result_q.get(False)
-            except Empty:
-                mess = None
-            if mess and ("result" in mess) and mess["result"]:
-                print ks.dict2pretty("d_p92 main proc Queue.get: %s" % shelf_name, mess)
-    
+        try:
+            sleep(POLL_RESOLUTION)
+            for shelf_name in queue_by_shelf:
+                result_q = queue_by_shelf[shelf_name]["result_queue"]
+                try:
+                    mess = result_q.get(False)
+                except Empty:
+                    mess = None
+                if mess and ("result" in mess) and mess["result"]:
+                    print ks.dict2pretty("d_p92 main proc Queue.get: %s" % shelf_name, mess)
+        except KeyboardInterrupt:
+            print "keyboard interupt, finishing..."
+            done = True
+            
+            
 def ingestion_loop(source, **args):
     """Meant to ingest_report in ingestion_loop_iterator(source):
         sleep(.5)
@@ -220,22 +225,26 @@ def ingestion_loop(source, **args):
     working_dir = args["cwd"]
     os.chdir(working_dir)
     done = False
-    for tx in ingestion_loop_iterator(watch):
-        # print ks.dict2pretty("d_p93: tx", tx)
-        result_q.put(tx)
-        try:
-            cmd = cmd_q.get(False)
-        except Empty:
-            cmd = None
-        if cmd :
-            print "d_p146:",cmd
-            if "command" in cmd:
-                #possibly the iterator should handle this
-                command = cmd["command"]
-                if command == "stop":
-                    print "d_p148: stopping ingestion_loop"
-                    break;
-        sleep(POLL_RESOLUTION)
+    try:
+        for tx in ingestion_loop_iterator(watch):
+            # print ks.dict2pretty("d_p93: tx", tx)
+            result_q.put(tx)
+            try:
+                cmd = cmd_q.get(False)
+            except Empty:
+                cmd = None
+            if cmd :
+                print "d_p146:",cmd
+                if "command" in cmd:
+                    #possibly the iterator should handle this
+                    command = cmd["command"]
+                    if command == "stop":
+                        print "d_p148: stopping ingestion_loop"
+                        break;
+            sleep(POLL_RESOLUTION)
+    except KeyboardInterrupt:
+        print "\nIngestion Process Recieved KeyboardInterrupt..."
+        return False
         
 def ingestion_loop_iterator(watch):
     done = False

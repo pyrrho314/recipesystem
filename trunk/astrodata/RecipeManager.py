@@ -1668,6 +1668,18 @@ class ReductionContext(dict):
         
     def report_qametric(self, ad=None, name=None, metric_report = None, metadata = None):
         # print "RM1575:"+repr(metric_report)
+        # rcann -> recipe_system_annotation
+        rcann = {"datasets":[]}
+        dslist = rcann["datasets"]
+        for inp in  self.get_inputs():
+            typs = inp.get_types()
+            typs.sort()
+            dsmeta = {"filename":inp.filename,
+                        "types": str(typs)
+                    }
+            dslist.append(dsmeta)
+        if isinstance(ad, dict):
+            ad["_recipe_system"] = rcann
         self._metricEvents.append_event(ad, name, metric_report, metadata = metadata)
         
     

@@ -179,6 +179,9 @@ def compose_multi_table(lookaddr, *lookups, **args):
         context = args["context"]
     if context == None:
         context = ConfigSpace.get_current_default_context()
+    just_one = False
+    if "just_one" in args and args["just_one"] == True:
+        just_one = True
 
     paths = ConfigSpace.lookup_multi_paths(lookaddr, context = context)
     
@@ -228,6 +231,8 @@ def compose_multi_table(lookaddr, *lookups, **args):
         contribs = retdict["_contributors"]
         if contributed:
             contribs.append(modname)
+        if just_one:
+            break;
     return retdict 
    
    

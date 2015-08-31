@@ -8,6 +8,8 @@ import inspect
 import urllib2 #(to get httperror)
 from usercalibrationservice import user_cal_service
 import pprint
+import traceback as tb
+
 try:
     from astrodata.adutils import termcolor
     COLORSTR = termcolor.line_color
@@ -264,7 +266,16 @@ class ReductionObject(object):
             #    print "it's a primitive"
             #else:
             #    print "it's not a primitive"
-            
+            begin_step_report = { "module": primset.__module__,
+                            "step_name":primname,
+                            "primset": {
+                                    "prim_name":prim.__name__,
+                                    "settype":primset.astrotype
+                                    },
+                            "depth":context["index"] if "index" in context else [-1],
+                            }
+                
+            context.report_qametric(begin_step_report, "begin_step")
             for rc in prim(context):
                 # @@note: call the command clause callback here
                 # @@note2: no, this yields and the command loop act that way
@@ -273,6 +284,11 @@ class ReductionObject(object):
                 # problem, creates a lot of noisy entries due to
                 # recipies and subrecipes --> self.memtrack(primname, "YIELD")
                 # needs to be made smarter 
+                
+                # @@PLANS: it  used to be yeild rc was required
+                # @@     : but now returning None is ok
+                # @@     : the code below implements this. Returning rc allows 
+                # @@     : things like `yield rc.finish()`
                 if rc == None:
                     rc = context
                     if False:                    
@@ -288,6 +304,17 @@ class ReductionObject(object):
                     break
                 yield rc
             gc.collect() # @@MEM
+            end_step_report = { "module": primset.__module__,
+                            "step_name":primname,
+                            "primset": {
+                                    "prim_name":prim.__name__,
+                                    "settype":primset.astrotype
+                                    },
+                            "depth":context["index"] if "index" in context else [-1],
+                            }
+                
+            context.report_qametric(end_step_report, "end_step")
+
         except SettingFixedParam, e:
             print str(e)
         except TypeError,e:
@@ -297,6 +324,17 @@ class ReductionObject(object):
         except:
             print COLORSTR("recipe: '%(name)s' failed due to an exception." %{'name':primname}, "yellow", "on_red", ["bold"])
             logutils.update_indent(0, context['logmode'])
+            failreport = { "module":primset.__module__,
+                            "step_name":primname,
+                            "failure_type": "python exception",
+                            "primset":  {
+                                    "prim_name":prim.__name__,
+                                    "settype":primset.astrotype
+                                    },
+                            "depth":context["index"] if "index" in context else [-1],
+                            "exception": tb.format_exc()
+                        }
+            context.report_qametric(failreport, "failure_report")
             raise
         context.curPrimName = None
         self.curPrimName = prevprimname
