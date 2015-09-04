@@ -23,10 +23,12 @@ except ImportError:
 from numpy  import uint32
 
 from astrodata import AstroData
+from astrodata.adutils import ksutil as ks
 from astrodata.StackKeeper import StackKeeper
 from astrodata.eventsmanagers import EventsManager
 from astrodata.adutils.reduceutils.CmdQueue import TSCmdQueue
 from astrodata.adutils.reduceutils.CacheManager import get_cache_dir, put_cache_file
+from astrodata.Lookups import compose_multi_table
 # ------------------------------------------------------------------------------
 def numpy2im(ad):
     if isinstance(ad, AstroData):
@@ -39,6 +41,7 @@ def numpy2im(ad):
 
 
 class ReduceInstanceManager(object):
+    """Object runs in ADCC"""
     numinsts = 0
     finished = False
     reducecmds = None
@@ -47,6 +50,7 @@ class ReduceInstanceManager(object):
     cmdNum = 0
     #stackKeeper = None
     events_manager = None
+    publishers = None
     
     def __init__(self, reduceport):
         # get my client for the reduce commands
@@ -64,6 +68,26 @@ class ReduceInstanceManager(object):
         self.stackKeeper = StackKeeper(local=True)
         self.displayCmdHistory = TSCmdQueue()
         self.events_manager = EventsManager(persist="adcc_events.jsa")
+        
+        # publishers
+        self.publishers = []
+        pubret = compose_multi_table("*/adcc_settings", "publish_qametrics")
+        print ks.dict2pretty("em37:publish_qametrics", pubret)
+        if "publish_qametrics" in pubret:
+            pubconfig = pubret["publish_qametrics"]
+            for publer in pubconfig:
+                module = publer["publisher"][0]
+                classname = publer["publisher"][1]
+                dbinfo = publer["db_info"]
+                collection_name = publer["collection"]
+                
+                exec("import %s" % module)
+                publisher = eval("%s.%s()" % (module,classname))
+                publisher.configure({ "collection_name": collection_name,
+                                      "db_info":dbinfo
+                                     })
+                self.publishers.append(publisher)
+                                      
         
     def register(self, pid, details):
         """This function is exposed to the xmlrpc interface, and is used
@@ -182,4 +206,8 @@ class ReduceInstanceManager(object):
         
     def report_qametrics_2adcc(self, qd):
         self.events_manager.append_event(qd)
+        print ks.dict2pretty("rIM209:",qd)
+        # if publishers, publish
+        for publisher in self.publishers:
+            publisher.publish_document(qd)
         return

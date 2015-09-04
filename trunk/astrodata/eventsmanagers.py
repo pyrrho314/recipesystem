@@ -14,6 +14,8 @@ import json
 import time
 
 from astrodata import AstroData
+from adutils import ksutil as ks
+from Lookups import compose_multi_table
 # ------------------------------------------------------------------------------
 
 class EventsManager:
@@ -23,16 +25,18 @@ class EventsManager:
     # reject reloading events older, in secs (cur 7 days)
     lose_duration = float(24*60*60)*7 
     rc = None
+    publishers = None
 
     def __init__(self, rc=None, persist=False):
         self.rc = rc
         self.event_list  = []
         self.event_index = {}
         self.persist     = persist   #  False or filename in .adcc
-
+        self.publishers = []
+        # @@TODO: if persist:
         self.persist_load()
-
-
+        
+            
     def get_metadict(self, ad):
         # Key: metadata dictionary key, Value: descriptor name
         descriptor_dict = {"datalabel":"data_label",
@@ -131,6 +135,7 @@ class EventsManager:
             self.event_index.update({timestamp:[]})
         ts_list = self.event_index[timestamp]
         ts_list.append(self.event_list.index(wholed))
+        
         return
 
 

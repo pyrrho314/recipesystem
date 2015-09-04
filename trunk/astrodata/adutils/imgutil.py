@@ -13,7 +13,7 @@ try:
             nd = zoom(innd, zoom_factor, prefilter=False)
         else:
             nd = innd
-        a = plt.imshow(nd)
+        a = plt.imshow(nd, interpolation="none")
         return a
 except:
     def mpl_img(*args, **argv):

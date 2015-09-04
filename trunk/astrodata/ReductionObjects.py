@@ -266,12 +266,15 @@ class ReductionObject(object):
             #    print "it's a primitive"
             #else:
             #    print "it's not a primitive"
-            begin_step_report = { "module": primset.__module__,
+            begin_step_report = { 
+                            "status":"normal",
+                            "module": primset.__module__,
                             "step_name":primname,
                             "primset": {
                                     "prim_name":prim.__name__,
                                     "settype":primset.astrotype
                                     },
+                            "_reporter":__name__,
                             "depth":context["index"] if "index" in context else [-1],
                             }
                 
@@ -304,13 +307,16 @@ class ReductionObject(object):
                     break
                 yield rc
             gc.collect() # @@MEM
-            end_step_report = { "module": primset.__module__,
+            end_step_report = { 
+                            "status":"normal",
+                            "module": primset.__module__,
                             "step_name":primname,
                             "primset": {
                                     "prim_name":prim.__name__,
                                     "settype":primset.astrotype
                                     },
                             "depth":context["index"] if "index" in context else [-1],
+                            "_reporter":__name__,
                             }
                 
             context.report_qametric(end_step_report, "end_step")
@@ -324,7 +330,8 @@ class ReductionObject(object):
         except:
             print COLORSTR("recipe: '%(name)s' failed due to an exception." %{'name':primname}, "yellow", "on_red", ["bold"])
             logutils.update_indent(0, context['logmode'])
-            failreport = { "module":primset.__module__,
+            failreport = {  "status":"error",
+                            "module":primset.__module__,
                             "step_name":primname,
                             "failure_type": "python exception",
                             "primset":  {

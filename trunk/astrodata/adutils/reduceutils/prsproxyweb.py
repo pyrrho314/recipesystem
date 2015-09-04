@@ -340,6 +340,7 @@ class ADCCHandler(BaseHTTPRequestHandler):
             # Metrics query employing fitsstore
 
             if parms["path"].startswith("/cmdqueue.json"):
+                self.send_header('Content-type', "application/json")
                 self._handle_cmdqueue_json(rim, parms)
                 return
 
