@@ -54,7 +54,7 @@ You can see if the system is working by using the listPrimitives.py command.
     
 This command will list transformation primitives from `kit_Novem`, which was cloned from the `recipe_kit.git` repository. Running this ensures you have the scripts directory in the PATH and `astrodata` in PYTHONPATH. If the primitives below appear, this also shows the kits are being loaded. Which should list available transformation primitives from the kit_Novem.
 
-For a 101 Tutorial see (./QUICK_TOTORIAL.md).
+For a 101 Tutorial see [QUICK TUTORIAL](./QUICK_TOTORIAL.md).
 
 
 `listPrimitives.py` output:
