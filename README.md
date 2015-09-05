@@ -48,11 +48,16 @@ The recipe_kits need to be added to the `RECIPEPATH` (or `ADCONFIGPATH`)
 
     export RECIPEPATH=/home/craiga/nrm_demo/recipe_kits
     
-You can see if the system is working by typeing:
+You can see if the system is working by using the listPrimitives.py command.
 
-    listPrimitives.py
+    listPrimitives.py -i
     
-This command will list transformation primitives from `kit_Novem`, which was cloned from the `recipe_kit.git` repository. Running this ensures you have the scripts directory in the PATH and `astrodata` in PYTHONPATH. If the primitives below appear, this also shows the kits are being loaded. Which should list available transformation primitives from the kit_Novem:
+This command will list transformation primitives from `kit_Novem`, which was cloned from the `recipe_kit.git` repository. Running this ensures you have the scripts directory in the PATH and `astrodata` in PYTHONPATH. If the primitives below appear, this also shows the kits are being loaded. Which should list available transformation primitives from the kit_Novem.
+
+For a 101 Tutorial see (./QUICK_TOTORIAL.md).
+
+
+`listPrimitives.py` output:
 
 ```
 ===============================================================================
