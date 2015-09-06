@@ -599,6 +599,9 @@ try:
             try:
                 # OLD ad = AstroData(inp)
                 ad = GeneralData.create_data_object(inp)
+                if ad == None:
+                    print "Skipping %s" % inp
+                    continue
                 # renaming files to output (current) directory
                 # helps to ensure we don't overwrite raw data (i.e. on auto-write at end)
                 # todo: formalize these rules more

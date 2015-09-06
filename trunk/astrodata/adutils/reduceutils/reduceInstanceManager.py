@@ -73,7 +73,7 @@ class ReduceInstanceManager(object):
         self.publishers = []
         pubret = compose_multi_table("*/adcc_settings", "publish_qametrics")
         print ks.dict2pretty("em37:publish_qametrics", pubret)
-        if "publish_qametrics" in pubret:
+        if pubret and "publish_qametrics" in pubret:
             pubconfig = pubret["publish_qametrics"]
             for publer in pubconfig:
                 module = publer["publisher"][0]
