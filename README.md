@@ -1,13 +1,23 @@
 recipesystem
 ============
 
-The code in the *recipesystem* repository is released under the Mozilla Public License v. 2. The software is derived from the Gemini Observatory Python Package, sans Gemini Specific configuration packages and dependencies. Gemini released this system at ADASS 2013 in Kona, Hawaii, under a BSD license and subsequently, and it is expected to arrive on GitHub or some other public git repository.
+The code in the *recipesystem* repository is released under the Mozilla Public License v. 2. And is meant to be used with the Novem Recipe Kit, at (https://github.com/pyrrho314/recipe_kits)[https://github.com/pyrrho314/recipe_kits]. Collectively these are the Novem Recipe Machine. 
 
-This version is released under MPL 2. 
+The recipe system executes data transformations in a controlled way. The scientific programming environment is simple, the author does not need to understand any particular object models of the recipe system, and writes "primitive" data transformations in the form of python generator functions which, although of course any python sophistication is possible, can be written merely as scripts with "yield" statements. This makes existing python code easy to translate into the recipe system, which means it can be automated, monitored, controlled, and also used interactively or embedded in other projects (the code behind the `kit` command which runs recipe simply calls a factory that can execute recipes, which any python program or CLI can do. 
+
+Having said that, a proper recipe system will not limit itself to something similar to a well controlled family of related scripts, but will have good object modeling for it's data. These objects will become sophisticated helpers handling the specific type of data involved. However, they initially can and will start as very simple, perhaps empty, classes descending from `astrodata.generaldata.GeneralData`.  This provides the minimal interface needed by the recipe system which will probably include writing a "load_header", "load" and "do_write" functions. Generally one will want also to add the get and set property functions, to help with this one can use the `SetRefData` familly of classes in the Novem Kit.
+
+*See installation instructions below, also a simple tutorial (sample code is included in the Novem Recipe Kit).*
+
+brief history
+-------------
+The Novem Recipe Machine software is derived from the Gemini Observatory Python Package started circa 2005. The system model involves a core infrastructure (the Recipe System) which load external "recipe kits" which contain all the code specific to a particular organization or data type. Gemini released this system at ADASS 2013 in Kona, Hawaii, under a BSD license, though currently there is no public repository for that version of the system. It is planned to arrive on GitHub or some other public git repository, and also to merge changes made to the NRM fork.
+
+The Novem Recipe Machine version is released under MPL 2. 
 
 At the present time, Novem LLC is generalizing the system for commercial use and using the system to automate its clients' particular data processing pipelines using the recipe model. Key development goals for the immediate future:
 
-* relocation of AstroData source code into the astrodata_FITS configuration package
+* relocation of AstroData Class source code into the astrodata_FITS configuration package
 * general purpose documentation (available documentation is Astronomy Oriented)
 * automatic cloud-based scaling, job cooperation
 * general purpose HTML5/Javascript interfaces for system control and monitoring
@@ -15,8 +25,8 @@ At the present time, Novem LLC is generalizing the system for commercial use and
 * expansion of the general purpose Set Reference Data Type
 * creation of a project roadmap
 
-Install
--------
+**Install**
+-----------
 
 I'm creating a directory `nrm_demo` and executing the following there.
 
@@ -24,7 +34,7 @@ First get the instrastructure in the Novem Recipe System from git.
 
     git clone https://github.com/pyrrho314/recipesystem.git
 
-We'll add a script directory to the path, and a python directory to PYTHONPATH below, but first, get the standard recipe kit, kit_Novem.
+We'll add a script directory to the PATH environment variable below, and a python directory to PYTHONPATH, but first, get the standard recipe kit, kit_Novem, in the recipe_kits directory.
 
     git clone https://github.com/pyrrho314/recipe_kits.git
     
@@ -36,9 +46,9 @@ This gives us:
     drwxrwxr-x   4 craiga craiga  4096 Sep  5 16:53 recipe_kits/
     drwxrwxr-x   5 craiga craiga  4096 Sep  5 16:50 recipesystem/
 
-The recipe execution and other commands must be added to the path. This is especially true since some of the commands need to be able to run each other. Note, `/home/craiga/nrm_demo` should be changed to your installation location.
+The recipe execution and other commands must be added to the path. This is especially true since some of the commands need to be able to run each other. **Note, `/home/craiga/nrm_demo` should be changed to your installation location**.
 
-    export PATH=/home/craiga/nrm_demo/recipesystem/trunk/astrodata/scripts:$PATH
+    export PATH=**/home/craiga/nrm_demo/**recipesystem/trunk/astrodata/scripts:$PATH
 
 The `astrodata` package needs to be in the PYTHONPATH
 
