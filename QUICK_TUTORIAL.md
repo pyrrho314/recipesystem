@@ -38,7 +38,7 @@ To execute a simple recipe:
 
     $ kit -r showInputs ../nrm_sample_data/*.xls
     
-This should output the following:
+This should output the following (albeit in color, to turn off color either use the kit command line option (see`kit --help`) or export NOCOLOR=nocolor:
 
     $ kit -r showInputs ../nrm_sample_data/*.xls
     About to process 1 lists of datasets.
@@ -59,9 +59,5 @@ This should output the following:
           Does not need writing.
     (r1111) End of Recipe: WROTE FINAL 0 OUTPUTS of 1                               
 
-This executes the "kit" command which runs recipes. `-r showInputs` says to run the recipe names "showInputs" which can in fact be either a "recipe" or a "primitive", a distinction we'll address later. Recipes and primitives are generally data transformations in principle, but of course some extract data or in the case of `showInputs`, just emits information to the log.
-
-Datasets handled by the system descend from a GeneralData class in `astrodata`, which links them to the type system, listed as "data types". This data is recognized as type TABLE due to it's `xls` extension, and that it was successfully loaded by the PandasData class in `kit_Novem`, which is listed as "data_obj" on the following line.
-
-Then this simple one step recipe ends, and the `kit` program checks if the input dataset should be written. Since showInputs doesn't modify input, it doesn't need to be.
+If this works the system is operational,  See [[QUICK_TUTORIAL_BUSINESS_DATA.md]].
 
