@@ -59,5 +59,5 @@ This should output the following (albeit in color, to turn off color either use 
           Does not need writing.
     (r1111) End of Recipe: WROTE FINAL 0 OUTPUTS of 1                               
 
-If this works the system is operational,  See [[QUICK_TUTORIAL_BUSINESS_DATA.md]].
+If this works the system is operational,  See [BUSINESS DATA TUTORIAL](QUICK_TUTORIAL_BUSINESS_DATA.md).
 
