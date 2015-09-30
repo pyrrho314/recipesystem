@@ -31,7 +31,9 @@ class EventsManager:
         self.rc = rc
         self.event_list  = []
         self.event_index = {}
-        self.persist     = persist   #  False or filename in .adcc
+        self.persist     = False # bug in events persistence, grows forever
+                                 # also not needed
+                                 # persist   #  False or filename in .adcc
         self.publishers = []
         # @@TODO: if persist:
         self.persist_load()
@@ -156,6 +158,8 @@ class EventsManager:
 
 
     def persist_add(self, ev = None):
+        if (self.persist == False):
+            return
         if type(ev) == list:
             if len(ev) == 0:
                 return # raise Error("no way")
