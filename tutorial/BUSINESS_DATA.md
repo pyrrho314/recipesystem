@@ -1,8 +1,12 @@
 Recipe and Primitive Tutorial
 =============================
 
-For the sample data we are going to use US Census 2012 County Business patterns data, "Complete Metropolitcan Area File"
-which is 7.6MB compressed and about 63MB uncompressed. It's a comma separated text file. The file we are looking for is at [http://www.census.gov/econ/cbp/download/](County Business Patterns). We are using the "complete Metropolitan Area File" from 2012. Data all the way back to 1986 is available, and up to 2013 at the time of this writing. 
+The dataset:
+------------
 
-The first issue is this file has a .txt extension. The system support data classes defined in the configuration space (inheriting from astrodata.generaldata.GeneralData to cooperate with the recipe system infrastructure, or alternately SetrefData which is a childe of GeneralData). It chooses the class based on an extention. So rename the file to csv. In an automated environment we would make a *primitive* to perform this rename, to force loading through pandas.
+For the sample data we are going to use US Census 2012 County Business Patterns data, specifically the "Complete Metropolitan Area File", which is 7.6MB compressed and about 63MB uncompressed, named **cbp12msa.txt**. This is a comma separated value text file. It's located at [http://www.census.gov/econ/cbp/download/](County Business Patterns), where data from 19986-2013 are available at the time of this writing.
+
+The first issue is this file has a **.txt** extension. Data handling classes used by the recipe system are defined in configuration "kits" where all data-specific code resides. Each kit contains configuration to add particular DataHandling object to particular file extensions. We don't want to assume "*.txt" is csv, though a particular kit to set that and if placed early in the path will override the setting in other kits.
+
+
 
