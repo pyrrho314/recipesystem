@@ -1,7 +1,7 @@
 recipesystem
 ============
 
-The code in the *recipesystem* repository is released under the Mozilla Public License v. 2. And is meant to be used with the Novem Recipe Kit, at (https://github.com/pyrrho314/recipe_kits)[https://github.com/pyrrho314/recipe_kits]. Collectively these are the Novem Recipe Machine. 
+The code in the *recipesystem* repository is released under the Mozilla Public License v. 2. And is meant to be used with the Novem Recipe Kit, at [https://github.com/pyrrho314/recipe_kits](https://github.com/pyrrho314/recipe_kits). Collectively these are the Novem Recipe Machine. 
 
 The recipe system executes data transformations in a controlled way. The scientific programming environment is simple, the author does not need to understand any particular object models of the recipe system, and writes "primitive" data transformations in the form of python generator functions which, although of course any python sophistication is possible, can be written merely as scripts with "yield" statements. This makes existing python code easy to translate into the recipe system, which means it can be automated, monitored, controlled, and also used interactively or embedded in other projects (the code behind the `kit` command which runs recipe simply calls a factory that can execute recipes, which any python program or CLI can do. 
 
