@@ -1,17 +1,17 @@
 recipesystem
 ============
 
-The code in the *recipesystem* repository is released under the Mozilla Public License v. 2. And is meant to be used with the Novem Recipe Kit, at [https://github.com/pyrrho314/recipe_kits](https://github.com/pyrrho314/recipe_kits). Collectively these are the Novem Recipe Machine. 
+The code in the *recipesystem* repository is released under the Mozilla Public License v. 2 and is meant to be used with the Novem Recipe Kit, at [https://github.com/pyrrho314/recipe_kits](https://github.com/pyrrho314/recipe_kits). Collectively these are the Novem Recipe Machine. 
 
-The recipe system executes data transformations in a controlled way. The scientific programming environment is simple, the author does not need to understand any particular object models of the recipe system, and writes "primitive" data transformations in the form of python generator functions which, although of course any python sophistication is possible, can be written merely as scripts with "yield" statements. This makes existing python code easy to translate into the recipe system, which means it can be automated, monitored, controlled, and also used interactively or embedded in other projects (the code behind the `kit` command which runs recipe simply calls a factory that can execute recipes, which any python program or CLI can do. 
+The recipe system executes data transformations in a controlled way. The scientific programming environment is simple, the author does not need to understand any particular object models of the recipe system, and writes "primitive" data transformations in the form of python generator functions which, although of course any python sophistication is possible, can be written much like scripts with "yield" statements. This makes existing python code easy to translate into the recipe system, which means existing code can be automated, monitored, and controlled with minimal refactoring at first. The recipe system can also be used interactively or embedded in other projects. The code behind the `kit` command which runs recipes simply calls a factory for an object which can execute recipes. Any python program can thus use this to execute recipies and primitives. 
 
-Having said that, a proper recipe system will not limit itself to something similar to a well controlled family of related scripts, but will have good object modeling for it's data. These objects will become sophisticated helpers handling the specific type of data involved. However, they initially can and will start as very simple, perhaps empty, classes descending from `astrodata.generaldata.GeneralData`.  This provides the minimal interface needed by the recipe system which will probably include writing a "load_header", "load" and "do_write" functions. Generally one will want also to add the get and set property functions, to help with this one can use the `SetRefData` familly of classes in the Novem Kit.
+Having said that, a proper recipe system will not limit itself to something similar to a well controlled family of related scripts, but will have good object modeling for it's data. These objects will become sophisticated helpers handling the specific type of data involved. However, they initially can and will start as very simple, perhaps empty, classes descending from `astrodata.generaldata.GeneralData`.  This provides the minimal interface needed by the recipe system which will probably include writing a "load_header", "load" and "do_write" functions. Generally one will want also to add the get and set property functions, to help with this one can descend from the `SetRefData` family of classes in the Novem Kit configuration package.
 
 *See installation instructions below, also a simple tutorial (sample code is included in the Novem Recipe Kit).*
 
 brief history
 -------------
-The Novem Recipe Machine software is derived from the Gemini Observatory Python Package started circa 2005. The system model involves a core infrastructure (the Recipe System) which load external "recipe kits" which contain all the code specific to a particular organization or data type. Gemini released this system at ADASS 2013 in Kona, Hawaii, under a BSD license, though currently there is no public repository for that version of the system. It is planned to arrive on GitHub or some other public git repository, and also to merge changes made to the NRM fork.
+The Novem Recipe Machine software is derived from the Gemini Observatory Python Package started circa 2005. The system model involves a core infrastructure (the Recipe System) which loads external "recipe kits" which contain all the code specific to a particular organization or data type. Gemini released this system at ADASS 2013 in Kona, Hawaii, under a BSD license, though currently there is no public repository for that version of the system. It is planned to arrive on GitHub or some other public git repository, and also to merge changes made to the NRM fork.
 
 The Novem Recipe Machine version is released under MPL 2. 
 
@@ -46,7 +46,7 @@ This gives us:
     drwxrwxr-x   4 craiga craiga  4096 Sep  5 16:53 recipe_kits/
     drwxrwxr-x   5 craiga craiga  4096 Sep  5 16:50 recipesystem/
 
-The recipe execution and other commands must be added to the path. This is especially true since some of the commands need to be able to run each other. **Note, `/home/craiga/nrm_demo` should be changed to your installation location**.
+The recipe execution and other commands must be added to the path. Edit your `.bashrc` or equivalent with the following exports. This is especially true since some of the commands need to be able to run each other. **Note, `/home/craiga/nrm_demo` should be changed to your installation location**.
 
     export PATH=**/home/craiga/nrm_demo/**recipesystem/trunk/astrodata/scripts:$PATH
 
@@ -58,7 +58,9 @@ The recipe_kits need to be added to the `RECIPEPATH` (or `ADCONFIGPATH`)
 
     export RECIPEPATH=/home/craiga/nrm_demo/recipe_kits
     
-You can see if the system is working by using the listPrimitives.py command.
+Source your .bashrc or otherwise execute the exports above for your own environment.
+    
+You can see if the system is working by using the listPrimitives.py command. 
 
     listPrimitives.py -i
     
