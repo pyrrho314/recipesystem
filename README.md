@@ -1,9 +1,9 @@
 recipesystem
 ============
 
-The code in the *recipesystem* repository is released under the Mozilla Public License v. 2 and is meant to be used with the Novem Recipe Kit, at [https://github.com/pyrrho314/recipe_kits](https://github.com/pyrrho314/recipe_kits). Collectively these are the Novem Recipe Machine. 
+The code in the *recipesystem* repository is released under the Mozilla Public License v. 2 and is meant to be used with the Novem Recipe Kit, at [https://github.com/pyrrho314/recipe_kits](https://github.com/pyrrho314/recipe_kits). Collectively these are the Novem Recipe Machine.
 
-The recipe system executes data transformations in a controlled way. The scientific programming environment is simple, the author does not need to understand any particular object models of the recipe system, and writes "primitive" data transformations in the form of python generator functions which, although of course any python sophistication is possible, can be written much like scripts with "yield" statements. This makes existing python code easy to translate into the recipe system, which means existing code can be automated, monitored, and controlled with minimal refactoring at first. The recipe system can also be used interactively or embedded in other projects. The code behind the `kit` command which runs recipes simply calls a factory for an object which can execute recipes. Any python program can thus use this to execute recipies and primitives. 
+The recipe system executes data transformations in a controlled way. The scientific programming environment is simple, the author does not need to understand any particular object models of the recipe system, and writes "primitive" data transformations in the form of python generator functions which, although of course any python sophistication is possible, can be written much like scripts with "yield" statements. This makes existing python code easy to translate into the recipe system, which means existing code can be automated, monitored, and controlled with minimal refactoring at first. The recipe system can also be used interactively or embedded in other projects. The code behind the `kit` command which runs recipes simply calls a factory for an object which can execute recipes. Any python program can thus use this to execute recipies and primitives.
 
 Having said that, a proper recipe system will not limit itself to something similar to a well controlled family of related scripts, but will have good object modeling for it's data. These objects will become sophisticated helpers handling the specific type of data involved. However, they initially can and will start as very simple, perhaps empty, classes descending from `astrodata.generaldata.GeneralData`.  This provides the minimal interface needed by the recipe system which will probably include writing a "load_header", "load" and "do_write" functions. Generally one will want also to add the get and set property functions, to help with this one can descend from the `SetRefData` family of classes in the Novem Kit configuration package.
 
@@ -13,7 +13,7 @@ brief history
 -------------
 The Novem Recipe Machine software is derived from the Gemini Observatory Python Package started circa 2005. The system model involves a core infrastructure (the Recipe System) which loads external "recipe kits" which contain all the code specific to a particular organization or data type. Gemini released this system at ADASS 2013 in Kona, Hawaii, under a BSD license, though currently there is no public repository for that version of the system. It is planned to arrive on GitHub or some other public git repository, and also to merge changes made to the NRM fork.
 
-The Novem Recipe Machine version is released under MPL 2. 
+The Novem Recipe Machine version is released under MPL 2.
 
 At the present time, Novem LLC is generalizing the system for commercial use and using the system to automate its clients' particular data processing pipelines using the recipe model. Key development goals for the immediate future:
 
@@ -37,7 +37,7 @@ First get the instrastructure in the Novem Recipe System from git.
 We'll add a script directory to the PATH environment variable below, and a python directory to PYTHONPATH, but first, get the standard recipe kit, kit_Novem, in the recipe_kits directory.
 
     git clone https://github.com/pyrrho314/recipe_kits.git
-    
+
 This gives us:
     craiga@pleiades:~/nrm_demo$ ll
     total 24
@@ -48,22 +48,22 @@ This gives us:
 
 The recipe execution and other commands must be added to the path. Edit your `.bashrc` or equivalent with the following exports. This is especially true since some of the commands need to be able to run each other. **Note, `/home/craiga/nrm_demo` should be changed to your installation location**.
 
-    export PATH=**/home/craiga/nrm_demo/**recipesystem/trunk/astrodata/scripts:$PATH
+    export PATH=/home/craiga/nrm_demo/recipesystem/trunk/astrodata/scripts:$PATH
 
 The `astrodata` package needs to be in the PYTHONPATH
 
     export PYTHONPATH=/home/craiga/nrm_demo/recipesystem/trunk:$PYTHONPATH
-    
+
 The recipe_kits need to be added to the `RECIPEPATH` (or `ADCONFIGPATH`)
 
     export RECIPEPATH=/home/craiga/nrm_demo/recipe_kits
-    
+
 Source your .bashrc or otherwise execute the exports above for your own environment.
-    
-You can see if the system is working by using the listPrimitives.py command. 
+
+You can see if the system is working by using the listPrimitives.py command.
 
     listPrimitives.py -i
-    
+
 This command will list transformation primitives from `kit_Novem`, which was cloned from the `recipe_kit.git` repository. Running this ensures you have the scripts directory in the PATH and `astrodata` in PYTHONPATH. If the primitives below appear, this also shows the kits are being loaded. Which should list available transformation primitives from the kit_Novem.
 
 For a 101 Tutorial see [QUICK TUTORIAL](QUICK_TUTORIAL.md).
@@ -73,7 +73,7 @@ For a 101 Tutorial see [QUICK TUTORIAL](QUICK_TUTORIAL.md).
 
 ```
 ===============================================================================
-MetroBusiness 
+MetroBusiness
 ===============================================================================
 1. collapse_naics
 2. convertToPercent
@@ -115,7 +115,7 @@ MetroBusiness
     32. writeOutputs
 
 ===============================================================================
-Pandas 
+Pandas
 ===============================================================================
 1. columnRelate
 2. loadTables
@@ -149,7 +149,7 @@ Pandas
     26. writeOutputs
 
 ===============================================================================
-SetRef 
+SetRef
 ===============================================================================
 1. adaptSetType
 2. emitQAReport
@@ -172,7 +172,7 @@ SetRef
 19. writeOutputs
 
 ===============================================================================
-Txt 
+Txt
 ===============================================================================
 1. parseAsDataDictionary
 2. parseAsSpecial (OVERRIDES SetRef)
@@ -204,4 +204,4 @@ Txt
 ```
 
 
-<sup>*</sup> Novem is Novem, llc, of Bar Harbor, Maine at http://novem.technology/.
+<sup>*</sup> Novem is Novem, Inc, of Waterville, Maine; http://novem.technology/
